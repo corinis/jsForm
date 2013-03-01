@@ -1,0 +1,50 @@
+<html>
+<head>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="https://raw.github.com/corinis/jsForm/master/src/jquery.jsForm.js"></script>
+<script>
+$(function(){
+	// some json data
+	var jsonData = {
+		name: "TestName",	// standard inputs
+		description: "long Description\nMultiline",	// textarea
+		links: [{href:'http://www.gargan.org',description:'Gargan.org'},{href:'http://www.github.com',description:'GitHub'}],	// lists
+		active: true,	// checkbox
+		state: "VISIBLE"	// selects (enums)
+	};
+
+	// initialize the form, prefix is optional and defaults to data
+	$("#details").jsForm({
+		data:jsonData
+	});
+
+	$("#show").click(function() {
+		// show the json data
+		alert(JSON.stringify($("#details").jsForm("get"), null, " "));
+	});
+});
+</script>
+</head>
+<body>
+<h1>Simpel Form Test</h1>
+<div id="details">
+	Name: <input name="data.name"/><br/>
+	<input type="checkbox" name="data.active"/> active<br/>
+	<textarea name="data.description"></textarea><br/>
+	<select name="data.state">
+		<option value="VISIBLE">visible</option>
+		<option value="IMPORTANT">important</option>
+		<option value="HIDDEN">hidden</option>		
+	</select>
+	<fieldset>
+		<legend>Links</legend>
+		<ul class="collection" data-field="data.links">
+			<li><span class="field">links.description</span> Link: <input name="links.href"/> <button class="delete">x</button></li>
+		</ul>
+	</fieldset>
+	<button class="add" data-field="data.links">add a link</button><br/>
+	Additional field: <input name="data.addedField"/>
+</div>
+<button id="show">Show Object</button>
+</body>
+</html>

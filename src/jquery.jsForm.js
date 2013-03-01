@@ -1337,7 +1337,6 @@
 
 	// init and call methods
 	$.fn.jsForm = function ( method ) {
-		
 		// Method calling logic
 	    if ( typeof method === 'object' || ! method ) {
 	        return this.each(function () {
