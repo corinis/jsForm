@@ -19,8 +19,7 @@ The main features of this library are:
 
 # Quickstart
 
-* Download the current version of [jquery.jsForm.js](https://github.com/corinis/jsForm/blob/master/src/jquery.jsForm.js)
-* Start with a simple html to show you the basic usage You can also [try it](https://raw.github.com/corinis/jsForm/master/sample.html):
+* Start with a simple html to show you the basic usage [download sample](https://raw.github.com/corinis/jsForm/master/sample.html):
 ```html
 <html>
 <head>
@@ -81,7 +80,7 @@ $(function(){
 ### jsForm(config)
 
 Constructor with the config object:
-```JSON
+```javascript
 $("#myForm").jsForm({
 	data: myDataObject,
 	prefix: "customPrefix"
@@ -96,6 +95,19 @@ Note: the default prefix is "data" all fields are accessed through html using th
 Deserialize the object based on the form and returns the new object. This will analyze any
 fields matching the given prefix and update the existing data object.
 
+```javascript
+alert(JSON.stringify($("#details").jsForm("get"), null, " "));
+```
+
+## jsForm("clear")
+Calling this will clear the given form.
+
+```javascript
+$("#clear").click(functin(){
+	$("#details").jsForm("clear");
+});
+```
+
 
 ## Dom Layout
 
@@ -103,11 +115,11 @@ fields matching the given prefix and update the existing data object.
 The name attribute is used for matching the object structure.
 
 Following form fields are supported:
-* <input type="text">
-* <input type="checkbox">
-* <input type="password">
-* <textarea>
-* <select>
+* input type="text"
+* input type="checkbox"
+* input type="password"
+* textarea
+* select
 
 ### Display
 You can also jsut display any data by using an element with the class="field":
