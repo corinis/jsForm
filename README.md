@@ -120,6 +120,10 @@ Following form fields are supported:
 * input type="password"
 * textarea
 * select
+* input type="file" class="blob": blobs will be converted to base64 
+	encoded strings and added to the object. make sure to annotate
+	the input with class="blob". This only works for current browsers
+	(so no IE<10!)
 
 ### Display
 You can also jsut display any data by using an element with the class="field":
@@ -149,7 +153,43 @@ Note: it does not matter what kind of tags are used for wrapper/container. It ca
 You can add simple controls for modifying the collection (adding/removing elements). This is accomplished by adding 
 specific classes to tags within the collection:
 
-* class="delete": any element with this class within the container will get a click event that removes the current element.
+```html
+<table>
+<tbody class="collection" data-field="data.links"> <!-- the wrapper -->
+	<tr> <!--the container -->
+		<td><input name="links.href"/></td>
+		<td><span class="ui-icon ui-icon-trash delete"></span></td> <!-- class="delete" this control will delete the row -->
+	</tr>
+</tbody>
+</table>
+<span class="ui-icon ui-icon-plusthick add" data-field="data.links"></span> <!-- class="add" this control will create a new empty row -->
+```
+
+* class="delete": any element with this class within the container will get a click event that removes the current element. 
 * class="add" data-field="data.collection": any element OUTSIDE of the wrapper with the class add will act as a trigger 
 	for adding a new element
 
+```javascript
+$(".collection").on("deleteCollection", function(ev, line, data) {
+	// additional code when removing an element in the collection
+	alert("deleted: " + data.href);
+});
+
+$(".collection").on("addCollection", function(ev, line, data) {
+	// additional code when add an element to the collection, i.e. init the data
+	data.href = "http://www.example.com";
+	data.name = "unknown";
+});
+
+```
+
+# Field Validation
+
+Field validation within a JsForm is done by setting the correct classes to the input fields (or textareas).
+
+If there is an issue with a field, it will be marked with the css class "invalid", if everything is correct it will get the class "valid"
+
+* mandatory: at least one non-whitespace character must be in the field
+* number: only allows number (can use autoclean to only allow correct input)
+* date: you can set the date-format by use the "data-format=''" attribute (java style)
+* regexp: do a regular expression check with the value in "data-regexp=''"

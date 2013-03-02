@@ -1,58 +1,8 @@
 /**
+ * jquery.jsForm
+ * -------------
  * JsForm control for handling html UI with json objects
- * @example
-<h2>JSON Data Structure</h2>
-{
-	"name": "Test Name",
-	"description": "description text",
-	"links": [
-	]
-}
-<h2>HTML</h2>
-			&lt;h2>Details&lt;/h2>
-			&lt;div id="details">
-				&lt;fieldset>
-				&lt;legend>Base&lt;/legend>
-				Name: &lt;input name="data.name" class="required"/>&lt;br/>
-				Description: &lt;textarea name="data.description">&lt;/textarea>&lt;br/>
-				&lt;/fieldset>
-				&lt;fieldset>
-				&lt;legend>Links&lt;/legend>
-					&lt;table>
-						&lt;thead>
-							&lt;tr>
-								&lt;th>Name&lt;/th>&lt;th>description&lt;/th>
-							&lt;/tr>
-						&lt;/thead>
-						&lt;tbody class="collection" data-field="data.links">
-							&lt;tr>
-								&lt;td>&lt;input name="links.href" class="required"/>&lt;/td>
-								&lt;td>&lt;input name="links.description"/>&lt;/td>
-								&lt;td>&lt;span class="ui-icon ui-icon-trash delete">&lt;/span>&lt;/td>
-							&lt;/tr>
-						&lt;/tbody>
-					&lt;/table>		
-					&lt;span class="ui-icon ui-icon-plusthick add" data-field="project.links">&lt;/span>
-				&lt;/fieldset> 
-				 
-			&lt;/div>
-			&lt;button id="test">Test&lt;/button>
-		&lt;/div>
-<h2>JavaScript</h2>
-	// init the form as pojo form with prefix "test"
-	$("#details").jsForm({
-		prefix: "data"	// data is the default prefix
-	});
-
-	// enable create and update functionality (create pojo - send to service)
-	$("#create, #update").button().click(function(){
-		var pojo = $("#details").jsForm("get");
-	});
-	
-	// clear the form
-	$("#clear").button().click(function(){
-		$("#details").jsForm("clear");
-	});
+ * @version 1.0
  * @class
  * @author Niko Berger
  * @license MIT License GPL
@@ -139,36 +89,77 @@
 		var that = this;
 		
 		// validation
-		$(".required,.number,.validate", form).each(function(){
-			$(this).on("keyup change validate", function(){
-				$(this).removeClass("invalid");
-				
-				var val = $(this).val();
-				if(val.length === 0) {
-					if($(this).hasClass("required")) {
-						$(this).addClass("invalid");
-					}
-					return;
+		// check required (this is the first check)
+		$("input.mandatory,textarea.mandatory", location).keyup(function(){
+			if($(this).val().length > 0) {
+				$(this).addClass("valid").removeClass("invalid");
+			} else {
+				$(this).removeClass("valid").addClass("invalid");
+			}
+		});
+
+		
+		// show datepicker for all inputs
+		$("input.date", location).each(function(){
+			var format = $(this).attr("data-format");
+			if(!format) {
+				format = "dd.mm.yy";
+			}
+			// only if jquery ui is available
+			if($(this).datepicker) {
+				$(this).datepicker({
+					dateFormat: format
+				});
+			}
+		});
+			
+		
+		// input validation (number)
+		var numberRegexp =  new RegExp("^[0-9]+$");
+		$("input.number", location).keyup(function(){
+			var val = $(this).val();
+			if(val.length > 0) {
+				if($(this).hasClass("autoclean")) {
+					$(this).val(val.replace(/[^0-9]/g, ""));
 				}
-				
-				if($(this).hasClass("number")) {
-					if(isNaN(val)) {
-						$(this).addClass("invalid");
-						return;
+				else {
+					if(numberRegexp.test($(this).val())) {
+						$(this).addClass("valid").removeClass("invalid");
+					} else {
+						$(this).removeClass("valid").addClass("invalid");
 					}
 				}
-				
-				var validation = $(this).attr("data-valid");
-				if(validation) {
-					if(!value.match(validation)) {
-						$(this).addClass("invalid");
-						return;
-					}
-				}
-				
-			});
+			}
 		});
 		
+		// regular expression
+		$("input.regexp", location).each(function(){
+			if($(this).hasClass("autoclean")) {
+				$(this).data("regexp", new RegExp($(this).attr("data-regexp"), "g"));
+			}
+			else {
+				$(this).data("regexp", new RegExp($(this).attr("data-regexp")));
+			}
+			
+			$(this).keyup(function(){
+				var val = $(this).val();
+				if(val.length > 0) {
+					var regexp = $(this).data("regexp");
+					if($(this).hasClass("autoclean")) {
+						$(this).val(val.replace(regexp, ""));
+					}
+					else {
+						if(regexp.test($(this).val())) {
+							$(this).addClass("valid").removeClass("invalid");
+						} else {
+							$(this).removeClass("valid").addClass("invalid");
+						}
+					}
+				}
+			});
+			
+		});
+			
 		// all collections
 		var collectionMap = {};
 		
@@ -194,9 +185,11 @@
 		});
 		
 		$(".add", form).each(function(){
-			if(!$(this).attr("data-field")) {
+			var fieldName = $(this).attr("data-field"); 
+			if(!fieldName) {
 				return;
 			}
+			
 			// only init once
 			if($(this).data("collections")) {
 				return;
@@ -217,8 +210,15 @@
 						
 						// enable delete
 						$(".delete", line).click(function(){
+							// trigger a callback
+							$(this).trigger("deleteCollection", [line, $(line).data().pojo]);
 							line.remove();
 						});
+						// trigger a callback
+						$(this).trigger("addCollection", [line, $(line).data().pojo]);
+						
+						// fill the line with data
+						that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1));
 					}
 				});
 			});
