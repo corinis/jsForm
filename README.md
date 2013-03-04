@@ -22,7 +22,7 @@ The main features of this library are:
 can be found in the github wiki:
 
 * [Dom Layout](https://github.com/corinis/jsForm/wiki/JsForm-Dom-Layout)
-* [Form Controlsand Validation](https://github.com/corinis/jsForm/wiki/Controls)
+* [Form Controls and Validation](https://github.com/corinis/jsForm/wiki/Controls)
 
 
 # Quickstart
@@ -81,40 +81,3 @@ $(function(){
 </body>
 </html>
 ```
-
-# Documentation
-
-## Function
-
-### jsForm(config)
-
-Constructor with the config object:
-```javascript
-$("#myForm").jsForm({
-	data: myDataObject,
-	prefix: "customPrefix"
-})
-```
-
-Note: the default prefix is "data" all fields are accessed through html using the prefix and
-	using dot-notation (i.e. prefix.field.value). It is NOT possible to reference into collections
-	use javascript for that.
-
-### jsForm("get")
-Deserialize the object based on the form and returns the new object. This will analyze any
-fields matching the given prefix and update the existing data object.
-
-```javascript
-alert(JSON.stringify($("#details").jsForm("get"), null, " "));
-```
-
-## jsForm("clear")
-Calling this will clear the given form.
-
-```javascript
-$("#clear").click(functin(){
-	$("#details").jsForm("clear");
-});
-```
-
-

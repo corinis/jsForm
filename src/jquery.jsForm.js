@@ -71,7 +71,6 @@
 	 * @private 
 	 */
 	JsForm.prototype._init = function() { 
-		var $this = $(this.element);
 		// init the basic dom functionality
 		this._domInit();
 		// fill/init with the first that
@@ -1033,7 +1032,46 @@
 			container.append(line);
 		}
 	};
-    
+
+    /**
+     * Retrieve a value from a given object by using dot-notation
+     * @private
+     */
+    JsForm.prototype._get = function(obj, expr) {
+    	var ret, p, prm = "", i;
+    	if(typeof expr === "function") {
+    		return expr(obj); 
+    	}
+    	if (!obj) {
+    		return "";
+    	}
+    	ret = obj[expr];
+    	if(!ret) {
+    		try {
+    			if(typeof expr === "string") {
+    				prm = expr.split('.');
+    			}
+
+    			i = prm.length; 
+    			if(i) {
+    				ret = obj;
+    			    while(ret && i--) {
+    					p = prm.shift();
+    					ret = ret[p];
+    				}
+    			}
+    		} catch(e) { /* ignore */ }
+    	}
+    	if(ret === null || ret === undefined) {
+    		ret = "";
+    	}
+    	// trim the return
+    	if(ret.trim) {
+    		return ret.trim();
+    	}
+    	return ret;
+    };
+
     /**
      * helper function to get the number of a value
      * @param num the string
@@ -1279,46 +1317,24 @@
 
 		// we want to know if its equals -> return not
 		return !differs;
-	}
-
-    /**
-     * Retrieve a value from a given object by using dot-notation
-     * @private
-     */
-    JsForm.prototype._get = function(obj, expr) {
-    	var ret, p, prm = "", i;
-    	if(typeof expr === "function") {
-    		return expr(obj); 
-    	}
-    	if (!obj) {
-    		return "";
-    	}
-    	ret = obj[expr];
-    	if(!ret) {
-    		try {
-    			if(typeof expr === "string") {
-    				prm = expr.split('.');
-    			}
-
-    			i = prm.length; 
-    			if(i) {
-    				ret = obj;
-    			    while(ret && i--) {
-    					p = prm.shift();
-    					ret = ret[p];
-    				}
-    			}
-    		} catch(e) { /* ignore */ }
-    	}
-    	if(ret === null || ret === undefined) {
-    		ret = "";
-    	}
-    	// trim the return
-    	if(ret.trim) {
-    		return ret.trim();
-    	}
-    	return ret;
+	};
+	
+	/**
+	 * fill the form with data.
+	 * <ul>
+	 * 	<li>&lt;span class="field"&gt;prefix.fieldname&lt;/span&gt;
+	 *  <li>&lt;input name="prefix.fieldname"/&gt;
+	 *  <li>&lt;a class="field" href="prefix.fieldname"&gt;linktest&lt;/a&gt;
+	 *  <li>&lt;img class="field" src="prefix.fieldname"/&gt;
+	 * </ul>
+	 * @param data {object} the data
+	 * @private
+	 */
+    JsForm.prototype.fill = function(pojo) {
+    	this.options.data = pojo;
+    	this._fill(this.element, this.options.data, this.options.prefix);
     };
+
 
     /**
 	 * destroy the jsform  and its resources.
