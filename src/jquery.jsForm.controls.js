@@ -496,3 +496,44 @@
     };
 
 })( jQuery, window );
+
+
+/**
+ * @returns the trimmed string
+ */
+String.prototype.trim = function() {
+    return this.replace(/^\s+|\s+$/g, "");
+};
+
+/* check start of a string */
+String.prototype.startsWith = function(str) {
+	if((this == null) || (this.length <= 0))
+		return false;
+	if((str == null) || (str == "null") || (str.length <= 0))
+		return false;
+	if(this.substr(0, str.length) == str)
+		return true;
+	return false;
+};
+
+/* check start of a string */
+String.prototype.startsWithIgnoreCase = function(str) {
+	if((this == null) || (this.length <= 0))
+		return false;
+	if((str == null) || (str == "null") || (str.length <= 0))
+		return false;
+	if(this.substr(0, str.length).toLowerCase() == str.toLowerCase())
+		return true;
+	return false;
+};
+
+/* check end of a string */
+String.prototype.endsWith = function(str) {
+	if((this == null) || (this.length <= 0))
+		return false;
+	if((str == null) || (str == "null") || (str.length <= 0) || (str.length > this.length))
+		return false;
+	if(this.substr(this.length - str.length) == str)
+		return true;
+	return false;
+};
