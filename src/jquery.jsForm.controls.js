@@ -121,30 +121,99 @@
 			});
 			
 		});
-			
-		// all collections
-		var collectionMap = {};
 		
-		// collection lists with buttons
-		$(".collection", form).each(function() {
-			var colName = $(this).attr("data-field");
-			// skip collections without a data-field mapping
-			if(!colName || colName.length === 0)
-			{
+		/* rotatestate stontrol */
+		$("input.rotatestate", location).each(function(){
+			var states = $(this).attr("data-state-values");
+			var defaultClass = $(this).attr("data-state-class");
+			// no need to continue if there are no states
+			if(!states) {
 				return;
 			}
 			
-			// remember the collection
-			var cols = collectionMap[colName];
-			if(cols) {
-				cols.push($(this));
-			} else {
-				collectionMap[colName] = [$(this)];
+			try {
+				states = JSON.parse(states);
+			} catch (ex) {
+				// do not need to continue if we cannot parse the states
+				return;
 			}
 			
-			//init the collection
-			that._initList($(this));
-		});
+			var stateControl = $("<span></span>");
+			if($(this).attr("title")) {
+				stateControl.attr("title", $(this).attr("title"));
+			}
+			if($(this).attr("data-state-style")) {
+				stateControl.attr("style", $(this).attr("data-state-style"));
+			}
+			stateControl.data("states", states);
+			stateControl.data("control", this);
+			stateControl.data("activeState", null);
+			$(this).data("control", stateControl);
+			if(defaultClass) {
+				stateControl.addClass(defaultClass);
+			}
+			
+			// click on the control starts rotating
+			stateControl.click(function(){
+				var cState = $(this).data().activeState;
+				var cStates = $(this).data().states;
+				var control = $(this).data().control;
+				var newState = null;
+
+				if(cState != null) {
+					// go to the 'next' state
+					for(var i = 0; i < cStates.length; i++) {
+						if(cStates[i].value === cState.value) {
+							// last element
+							if(i === cStates.length - 1) {
+								newState = cStates[0];
+							} else {
+								newState = cStates[i+1];
+							}
+							break;
+						}
+					}
+				} else {
+					// no state yet - set the first entry as state
+					newState = cStates[0];
+				}
+				
+				$(control).attr("value", newState.value);
+				// trigger change
+				$(control).change();
+			});
+			
+			// make sure to update state if the value is changed
+			$(this).change(function(){
+				var control = $($(this).data().control);
+				var cState = control.data().activeState;
+				var cStates = control.data().states;
+				
+				if(cState != null) {
+					// remove "old state"
+					control.removeClass(cState['class']);
+				}
+				
+				// add new State
+				var val = $(this).val();
+				$.each(cStates, function(){
+					if(this.value === val) {
+						control.data().activeState = this;
+						if(this.title) {
+							control.attr("title", this.title);
+						}
+						control.addClass(this['class']);
+						return false;
+					}
+				});
+			});
+			
+			// trigger initial state
+			$(this).change();
+			$(this).after(stateControl);
+			$(this).hide();
+		});		
+});
 		
 
 	/**
