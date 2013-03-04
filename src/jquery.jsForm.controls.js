@@ -11,10 +11,10 @@
 
 ;(function( $, window, undefined ){
 	var DATE_FORMAT = "dd.MM.yyyy",
-	TIME_FORMAT = "hh:mm",
-	DATETIME_FORMAT = "dd.MM.yyyy hh:mm",
-	JSFORM_INIT_FUNCTIONS = {},	// remember initialization functions
-	JSFORM_MAP = {};	// remember all forms
+		TIME_FORMAT = "hh:mm",
+		DATETIME_FORMAT = "dd.MM.yyyy hh:mm",
+		JSFORM_INIT_FUNCTIONS = {},	// remember initialization functions
+		JSFORM_MAP = {};	// remember all forms
 
 	/**
 	 * handlebars extension (+simple date format)
@@ -35,11 +35,10 @@
 	}
 	
 	JsFormControls = function(element) {
-		var $this = $(element);
 		this.element = element;
 		// init the dom funcitonality
 		this._domInit();
-	}
+	};
 	
 	/**
 	 * init the dom. This can be called multiple times.
@@ -47,9 +46,6 @@
 	 * @private 
 	 */
 	JsFormControls.prototype._domInit = function() {
-		var form = $(this.element);
-		var that = this;
-		
 		// validation
 		// check required (this is the first check)
 		$("input.mandatory,textarea.mandatory", location).keyup(function(){
@@ -69,9 +65,7 @@
 			}
 			// only if jquery ui is available
 			if($(this).datepicker) {
-				$(this).datepicker({
-					dateFormat: format
-				});
+				$(this).datepicker({dateFormat: format});
 			}
 		});
 			
@@ -119,7 +113,6 @@
 					}
 				}
 			});
-			
 		});
 		
 		/* rotatestate stontrol */
@@ -213,7 +206,7 @@
 			$(this).after(stateControl);
 			$(this).hide();
 		});		
-});
+	};
 		
 
 	/**
@@ -221,9 +214,6 @@
 	 * @return true if the form has no invalid fields, false otherwise
 	 */
 	JsFormControls.prototype.validate = function() {
-		// get the prefix from the form if not given
-		var prefix = this.options.prefix;
-		
 		// validation
 		$(".required,.regexp,.date,.mandatory,.number,.validate", this.element).change();
 		
