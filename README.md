@@ -17,9 +17,18 @@ The main features of this library are:
 * Compatible with jquery ui 
 * fully unit tested using qunit
 
+# Documentation
+
+can be found in the github wiki:
+
+* [Dom Layout](https://github.com/corinis/jsForm/wiki/JsForm-Dom-Layout)
+* [Form Controlsand Validation](https://github.com/corinis/jsForm/wiki/Controls)
+
+
 # Quickstart
 
 * Start with a simple html to show you the basic usage [download sample](https://raw.github.com/corinis/jsForm/master/sample.html):
+
 ```html
 <html>
 <head>
@@ -109,87 +118,3 @@ $("#clear").click(functin(){
 ```
 
 
-## Dom Layout
-
-### Form Fields
-The name attribute is used for matching the object structure.
-
-Following form fields are supported:
-* input type="text"
-* input type="checkbox"
-* input type="password"
-* textarea
-* select
-* input type="file" class="blob": blobs will be converted to base64 
-	encoded strings and added to the object. make sure to annotate
-	the input with class="blob". This only works for current browsers
-	(so no IE<10!)
-
-### Display
-You can also jsut display any data by using an element with the class="field":
-* <span class="field">prefix.field</span>
-
-Note: the matching is in the content of the field. A name attribute will not work!
-
-### Collections
-A collection can contain either primitives (i.e. String, Number) or whole object structures. These have to be handled in the ui and the data structures.
-
-A collection needs two tags: a wrapper with the collection marker, and a container that is used as template.
-
-```html
-<div class="collection" data-field="data.links"> <!-- the wrapper -->
-	<div> <!--the container -->
-		... stuff to be repeated for each element of the collection ...
-	</div>
-</div>
-```
-
-Note: it does not matter what kind of tags are used for wrapper/container. It can be ul/li, tbody/tr, div/span. It is just
-	important to note, that only the FIRST CHILD of the wrappter is used as collection. If you have multiple elements,
-	they will be ignored.
-
-#### Collection Editing
-
-You can add simple controls for modifying the collection (adding/removing elements). This is accomplished by adding 
-specific classes to tags within the collection:
-
-```html
-<table>
-<tbody class="collection" data-field="data.links"> <!-- the wrapper -->
-	<tr> <!--the container -->
-		<td><input name="links.href"/></td>
-		<td><span class="ui-icon ui-icon-trash delete"></span></td> <!-- class="delete" this control will delete the row -->
-	</tr>
-</tbody>
-</table>
-<span class="ui-icon ui-icon-plusthick add" data-field="data.links"></span> <!-- class="add" this control will create a new empty row -->
-```
-
-* class="delete": any element with this class within the container will get a click event that removes the current element. 
-* class="add" data-field="data.collection": any element OUTSIDE of the wrapper with the class add will act as a trigger 
-	for adding a new element
-
-```javascript
-$(".collection").on("deleteCollection", function(ev, line, data) {
-	// additional code when removing an element in the collection
-	alert("deleted: " + data.href);
-});
-
-$(".collection").on("addCollection", function(ev, line, data) {
-	// additional code when add an element to the collection, i.e. init the data
-	data.href = "http://www.example.com";
-	data.name = "unknown";
-});
-
-```
-
-# Field Validation
-
-Field validation within a JsForm is done by setting the correct classes to the input fields (or textareas).
-
-If there is an issue with a field, it will be marked with the css class "invalid", if everything is correct it will get the class "valid"
-
-* mandatory: at least one non-whitespace character must be in the field
-* number: only allows number (can use autoclean to only allow correct input)
-* date: you can set the date-format by use the "data-format=''" attribute (java style)
-* regexp: do a regular expression check with the value in "data-regexp=''"
