@@ -34,9 +34,10 @@
 		});
 	}
 	
-	JsFormControls = function(element) {
+	function JsFormControls(element) {
 		this.element = element;
-		// init the dom funcitonality
+		
+		// init the dom functionality
 		this._domInit();
 	};
 	
@@ -46,16 +47,27 @@
 	 * @private 
 	 */
 	JsFormControls.prototype._domInit = function() {
+		var location = $(this.element);
+		
 		// validation
 		// check required (this is the first check)
 		$("input.mandatory,textarea.mandatory", location).keyup(function(){
-			if($(this).val().length > 0) {
+			// check for "null" as value as well 
+			if($(this).val().length > 0 && $(this).val() !== "null") {
 				$(this).addClass("valid").removeClass("invalid");
 			} else {
 				$(this).removeClass("valid").addClass("invalid");
 			}
-		});
+		}).keyup();
 
+		$("select.mandatory", location).change(function(){
+			// check for "null" as value as well 
+			if($(this).val() !== null && $(this).val() !== "null" && $(this).val().length > 0) {
+				$(this).addClass("valid").removeClass("invalid");
+			} else {
+				$(this).removeClass("valid").addClass("invalid");
+			}
+		}).change();
 		
 		// show datepicker for all inputs
 		$("input.date", location).each(function(){
@@ -86,7 +98,7 @@
 					}
 				}
 			}
-		});
+		}).keyup();
 		
 		// regular expression
 		$("input.regexp", location).each(function(){
@@ -112,7 +124,7 @@
 						}
 					}
 				}
-			});
+			}).keyup();
 		});
 		
 		/* rotatestate stontrol */
@@ -226,6 +238,46 @@
 	};
 	
 	    
+	// init and call methods
+	$.fn.jsFormControls = function ( method ) {
+		// Method calling logic
+	    if ( typeof method === 'object' || ! method ) {
+	        return this.each(function () {
+	            if (!$(this).data('jsFormControls')) {
+	                $(this).data('jsFormControls', new JsFormControls( this, method ));
+	            }
+	        });
+	    } else {
+	    	var args = Array.prototype.slice.call( arguments, 1 );
+	    	
+	    	// only one - return directly
+	    	if(this.length == 1) {
+	        	var jsFormControls = $(this).data('jsFormControls'); 
+	            if (jsFormControls) {
+	            	if(method.indexOf("_") !== 0 && jsFormControls[method]) {
+	            		var ret =  jsFormControls[method].apply(jsFormControls, args);
+	            		return ret;
+	            	}
+	            	
+          	        $.error( 'Method ' +  method + ' does not exist on jQuery.jsFormControls' );
+          	        return false;
+	            }
+	    	}
+	    	
+	        return this.each(function () {
+	        	var jsFormControls = $.data(this, 'jsFormControls'); 
+	            if (jsFormControls) {
+	            	if(method.indexOf("_") !== 0 && jsFormControls[method]) {
+	            		return jsFormControls[method].apply(jsFormControls, args);
+	            	} else {
+	          	      $.error( 'Method ' +  method + ' does not exist on jQuery.jsFormControls' );
+	          	      return false;
+	            	}
+	            }
+	        });
+	    }   
+    };
+    
     /**
      * global jsForm function for intialisation
      */
@@ -233,7 +285,7 @@
     	// initFunc is a function -> initialize
     	if($.isFunction(initFunc)) {
 	    	// call init if already initialized
-	    	var jsForms = PORTLET_MAP[name];
+	    	var jsForms = JSFORM_MAP[name];
 	    	if(jsForms) {
 	    		$.each(jsForms, function(){
 	    			initFunc(this, $(this.element));

@@ -30,7 +30,10 @@
 			return $.simpledateformat.format(data, DATETIME_FORMAT);
 		});
 		Handlebars.registerHelper("timespan", function(data){
-			return AjaxForm.format.humanTime(data);
+			return $.jsFormControls.Format.humanTime(data);
+		});
+		Handlebars.registerHelper("betweentime", function(data){
+			return $.jsFormControls.Format.timspan(data);
 		});
 	}
 	
@@ -45,11 +48,15 @@
 		// create the options
 		this.options = $.extend({}, {
 			/**
+			 * enable form control rendering (if jsForm.controls is available) and validation
+			 */
+			controls: true,
+			/**
 			 * the object used to fill/collect data
 			 */
 			data: null,
 			/**
-			 * the preix used to annotate theinput fields
+			 * the prefix used to annotate theinput fields
 			 */
 			prefix: "data"
 		}, options);
@@ -75,6 +82,16 @@
 		this._domInit();
 		// fill/init with the first that
 		this._fill(this.element, this.options.data, this.options.prefix);
+		// enable form controls
+		if(this.options.controls) {
+			if($.jsFormControls) {
+				$(this.element).jsFormControls();
+			} else {
+				if(typeof console !== "undefined") {
+					console.log("jquery.JsForm.controls not available!");
+				}
+			}
+		}
 	};
 	
 	
@@ -87,78 +104,6 @@
 		var form = $(this.element);
 		var that = this;
 		
-		// validation
-		// check required (this is the first check)
-		$("input.mandatory,textarea.mandatory", location).keyup(function(){
-			if($(this).val().length > 0) {
-				$(this).addClass("valid").removeClass("invalid");
-			} else {
-				$(this).removeClass("valid").addClass("invalid");
-			}
-		});
-
-		
-		// show datepicker for all inputs
-		$("input.date", location).each(function(){
-			var format = $(this).attr("data-format");
-			if(!format) {
-				format = "dd.mm.yy";
-			}
-			// only if jquery ui is available
-			if($(this).datepicker) {
-				$(this).datepicker({
-					dateFormat: format
-				});
-			}
-		});
-			
-		
-		// input validation (number)
-		var numberRegexp =  new RegExp("^[0-9]+$");
-		$("input.number", location).keyup(function(){
-			var val = $(this).val();
-			if(val.length > 0) {
-				if($(this).hasClass("autoclean")) {
-					$(this).val(val.replace(/[^0-9]/g, ""));
-				}
-				else {
-					if(numberRegexp.test($(this).val())) {
-						$(this).addClass("valid").removeClass("invalid");
-					} else {
-						$(this).removeClass("valid").addClass("invalid");
-					}
-				}
-			}
-		});
-		
-		// regular expression
-		$("input.regexp", location).each(function(){
-			if($(this).hasClass("autoclean")) {
-				$(this).data("regexp", new RegExp($(this).attr("data-regexp"), "g"));
-			}
-			else {
-				$(this).data("regexp", new RegExp($(this).attr("data-regexp")));
-			}
-			
-			$(this).keyup(function(){
-				var val = $(this).val();
-				if(val.length > 0) {
-					var regexp = $(this).data("regexp");
-					if($(this).hasClass("autoclean")) {
-						$(this).val(val.replace(regexp, ""));
-					}
-					else {
-						if(regexp.test($(this).val())) {
-							$(this).addClass("valid").removeClass("invalid");
-						} else {
-							$(this).removeClass("valid").addClass("invalid");
-						}
-					}
-				}
-			});
-			
-		});
-			
 		// all collections
 		var collectionMap = {};
 		
@@ -523,6 +468,7 @@
 	JsForm.prototype._createPojoFromInput = function (start, prefix, pojo) {
 		// check if we have an "original" pojo
 		var startObj = null;
+		var that = this;
 		
 		// get it from the starting dom element
 		if($(start).data("pojo")) {
@@ -576,7 +522,7 @@
 				val = null;
 			}
 			if ($(this).hasClass("number") || $(this).hasClass("currency")) {
-				val = AjaxForm._getNumber(val);
+				val = that._getNumber(val);
 				if(isNaN(val)) {
 					val = 0;
 				}
@@ -713,11 +659,11 @@
 					}
 					
 					if($(this).hasClass("dateTime")) {
-						cdata = AjaxForm.dateFormatter(cdata) + ' ' + AjaxForm.timeFormatter(cdata);
+						cdata = $.jsFormControls.Format.dateTime(cdata);
 					} else if($(this).hasClass("date")) {
-						cdata = AjaxForm.dateFormatter(cdata);
+						cdata = $.jsFormControls.Format.date(cdata);
 					} else if ($(this).hasClass("currency")) {
-						cdata = AjaxForm.moneyFormatter(cdata);
+						cdata = $.jsFormControls.Format.currency(cdata);
 					}
 					$(this).val(cdata);
 				}
@@ -833,6 +779,21 @@
 		}
 
 		return pojo;
+	};
+	
+	/**
+	 * Get the data object used as a base for get().
+	 * Note that modifying this directly migh result into unwanted results
+	 * when working with some functions that rely on this object.
+	 * 
+	 * @returns the original data object
+	 */
+	JsForm.prototype.getData = function() {
+		// make srue we do have an object to work with
+		if(!this.options.data) {
+			this.options.data = {};
+		}
+		return this.options.data;
 	};
 
 	/**
@@ -1198,7 +1159,7 @@
     			val = null;
     		}
     		if ($(this).hasClass("number") || $(this).hasClass("currency")) {
-    			val = AjaxForm._getNumber(val);
+    			val = that._getNumber(val);
     			if(isNaN(val)) {
     				val = 0;
     			}
@@ -1362,10 +1323,13 @@
 	        });
 	    } else {
 	    	var args = Array.prototype.slice.call( arguments, 1 );
-	    	
+	    	// none found
+	    	if(this.length == 0) {
+	    		return null;
+	    	}
 	    	// only one - return directly
 	    	if(this.length == 1) {
-	        	var jsForm = $(this).data('jsForm'); 
+	        	var jsForm = $(this).data('jsForm');
 	            if (jsForm) {
 	            	if(method.indexOf("_") !== 0 && jsForm[method]) {
 	            		var ret =  jsForm[method].apply(jsForm, args);
@@ -1398,7 +1362,7 @@
     	// initFunc is a function -> initialize
     	if($.isFunction(initFunc)) {
 	    	// call init if already initialized
-	    	var jsForms = PORTLET_MAP[name];
+	    	var jsForms = JSFORM_MAP[name];
 	    	if(jsForms) {
 	    		$.each(jsForms, function(){
 	    			initFunc(this, $(this.element));
