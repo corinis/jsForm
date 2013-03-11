@@ -58,7 +58,12 @@
 			/**
 			 * the prefix used to annotate theinput fields
 			 */
-			prefix: "data"
+			prefix: "data",
+			/**
+			 * set to false to only validate visible fields. 
+			 * This is discouraged especially when you have tabs or similar elements in your form.
+			 */
+			validateHidden: true
 		}, options);
 
 		// read prefix from dom
@@ -728,11 +733,21 @@
 		
 		// fill the base
 		that._createPojoFromInput(form, prefix, pojo);
-		var invalid = false;
-		
+				
 		// check for invalid fields
-		if($(".invalid", form).length > 0) {
-			invalid = true;
+		var invalid = false;
+		if(!this.options.validateHidden) {
+			form.find(".invalid").filter(":visible").each(function(){
+				invalid = true;
+				$(this).focus();
+				return false;
+			});
+		} else {
+			form.find(".invalid").each(function(){
+				invalid = true;
+				$(this).focus();
+				return false;
+			});
 		}
 		
 		$(".collection", form).each(function() {
@@ -1292,10 +1307,22 @@
 	 * @private
 	 */
     JsForm.prototype.fill = function(pojo) {
+    	// clear first
+    	this.clear();
+    	// set the new data
     	this.options.data = pojo;
+    	// fill everything
     	this._fill(this.element, this.options.data, this.options.prefix);
     };
 
+
+    /**
+     * Clear all fields in a form
+     */
+    JsForm.prototype.clear = function() {
+    	// clear first
+    	this._clear(this.element, this.options.prefix);
+    };
 
     /**
 	 * destroy the jsform  and its resources.
@@ -1613,4 +1640,5 @@
     			return out.trim();
     		}
     };
+
 })( jQuery, window );
