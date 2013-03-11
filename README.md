@@ -22,6 +22,7 @@ The main features of this library are:
 can be found in the github wiki:
 
 * [Dom Layout](https://github.com/corinis/jsForm/wiki/JsForm-Dom-Layout)
+* [API Documentation](https://github.com/corinis/jsForm/wiki/JsForm-Documentation)
 * [Form Controls and Validation](https://github.com/corinis/jsForm/wiki/Controls)
 
 
