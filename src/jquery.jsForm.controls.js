@@ -416,13 +416,13 @@
     		 */
     		date: function(row, cell, cellvalue, columnDef, dataContext) {
     			// cleanup parameters (direct call vs. slickgrid)
-    			if(typeof cellvalue === "undefined") {
+    			if(!cellvalue) {
     				cellvalue = row;
     				row = null;
     			}
 
-    			if(typeof cellvalue === "undefined") {
-    				if(options) {
+    			if(!cellvalue) {
+    				if(cell) {
     					return "&#160;";
     				}
     				return "";
@@ -443,18 +443,18 @@
     		 */
     		time: function(row, cell, value, columnDef, dataContext) {
     			// cleanup parameters (direct call vs. slickgrid)
-    			if(typeof value === "undefined") {
+    			if(!value) {
     				value = row;
     				row = null;
     			}
 
-    			if(typeof value === "undefined") {
-    				if(options) {
+    			if(!value) {
+    				if(cell) {
     					return "&#160;";
     				}
     				return "";
     			}
-
+    			
     			var d = new Date();
     			d.setTime(value);								
     			return this._pad(d.getHours()) + ":" + this._pad(d.getMinutes()); //  + ":" + pad(d.getSeconds()); don't need seconds
@@ -469,7 +469,7 @@
     		 */
     		timespan: function(row, cell, value, columnDef, dataContext, allowcomma) {
     			// cleanup parameters (direct call vs. slickgrid)
-    			if(typeof value === "undefined") {
+    			if(!value) {
     				value = row;
     				allowcomma = cell;
     				row = null;
@@ -508,14 +508,14 @@
     		 */
     		humanTime: function(row, cell, value, columnDef, dataContext) {
     			// cleanup parameters (direct call vs. slickgrid)
-    			if(typeof value === "undefined") {
+    			if(!value) {
     				value = row;
     				row = null;
     			}
     			
     			
     			if (isNaN(value)) {
-    				if(typeof value === "undefined" || value === null || value.length === 0) {
+    				if(!value || value.length === 0) {
     					return "-";
     				}
     				return value;
