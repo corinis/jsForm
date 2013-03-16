@@ -10,27 +10,43 @@
 "use strict";
 
 ;(function( $, window, undefined ){
-	var DATE_FORMAT = "dd.MM.yyyy",
-		TIME_FORMAT = "hh:mm",
-		DATETIME_FORMAT = "dd.MM.yyyy hh:mm",
-		JSFORM_INIT_FUNCTIONS = {},	// remember initialization functions
+	var JSFORM_INIT_FUNCTIONS = {},	// remember initialization functions
 		JSFORM_MAP = {};	// remember all forms
 
 	/**
 	 * handlebars extension (+simple date format)
 	 */
-	if(typeof Handlebars !== "undefined" && typeof $.simpledateformat !== "undefined") {
+	if(typeof Handlebars !== "undefined") {
+		Handlebars.registerHelper("currency", function(data){
+			if(!data)
+				return "0";
+			return $.jsFormControls.Format.currency(data);
+		});
+		Handlebars.registerHelper("dec", function(data){
+			if(!data)
+				return "";
+			return $.jsFormControls.Format.decimal(data);
+		});
 		Handlebars.registerHelper("date", function(data){
-			return $.simpledateformat.format(data, DATE_FORMAT);
+			if(!data)
+				return "";
+			return $.jsFormControls.Format.date(data);
 		});
 		Handlebars.registerHelper("time", function(data){
+			if(!data)
+				return "";
+			return $.jsFormControls.Format.time(data);
 			return $.simpledateformat.format(data, TIME_FORMAT);
 		});
 		Handlebars.registerHelper("datetime", function(data){
-			return $.simpledateformat.format(data, DATETIME_FORMAT);
+			if(!data)
+				return "";
+			return $.jsFormControls.Format.datetime(data);
 		});
 		Handlebars.registerHelper("timespan", function(data){
-			return AjaxForm.format.humanTime(data);
+			if(!data)
+				return "";
+			return $.jsFormControls.Format.humanTime(data);
 		});
 	}
 	
@@ -51,14 +67,14 @@
 		
 		// validation
 		// check required (this is the first check)
-		$("input.mandatory,textarea.mandatory", location).keyup(function(){
+		$("input.mandatory,textarea.mandatory", location).on("keyup,change", function(){
 			// check for "null" as value as well 
 			if($(this).val().length > 0 && $(this).val() !== "null") {
 				$(this).addClass("valid").removeClass("invalid");
 			} else {
 				$(this).removeClass("valid").addClass("invalid");
 			}
-		}).keyup();
+		}).change();
 
 		$("select.mandatory", location).change(function(){
 			// check for "null" as value as well 

@@ -10,32 +10,9 @@
 "use strict";
 
 ;(function( $, window, undefined ){
-	var DATE_FORMAT = "dd.MM.yyyy",
-	TIME_FORMAT = "hh:mm",
-	DATETIME_FORMAT = "dd.MM.yyyy hh:mm",
-	JSFORM_INIT_FUNCTIONS = {},	// remember initialization functions
+	var JSFORM_INIT_FUNCTIONS = {},	// remember initialization functions
 	JSFORM_MAP = {};	// remember all forms
-
-	/**
-	 * handlebars extension (+simple date format)
-	 */
-	if(typeof Handlebars !== "undefined" && typeof $.simpledateformat !== "undefined") {
-		Handlebars.registerHelper("date", function(data){
-			return $.simpledateformat.format(data, DATE_FORMAT);
-		});
-		Handlebars.registerHelper("time", function(data){
-			return $.simpledateformat.format(data, TIME_FORMAT);
-		});
-		Handlebars.registerHelper("datetime", function(data){
-			return $.simpledateformat.format(data, DATETIME_FORMAT);
-		});
-		Handlebars.registerHelper("timespan", function(data){
-			return $.jsFormControls.Format.humanTime(data);
-		});
-		Handlebars.registerHelper("betweentime", function(data){
-			return $.jsFormControls.Format.timspan(data);
-		});
-	}
+	
 	
 	/**
 	 * @param element {Node} the cotnainer node that should be converted to a jsForm
@@ -85,8 +62,7 @@
 	JsForm.prototype._init = function() { 
 		// init the basic dom functionality
 		this._domInit();
-		// fill/init with the first that
-		this._fill(this.element, this.options.data, this.options.prefix);
+		
 		// enable form controls
 		if(this.options.controls) {
 			if($.jsFormControls) {
@@ -97,6 +73,9 @@
 				}
 			}
 		}
+
+		// fill/init with the first data
+		this._fill(this.element, this.options.data, this.options.prefix);
 	};
 	
 	
@@ -658,6 +637,7 @@
 				var cdata = that._get(data, cname);
 				if($(this).attr("type") === "checkbox") {
 					$(this).prop("checked", (cdata === true || cdata === "true"));
+					$(this).change();
 				} else {
 					if(!cdata) {
 						cdata = "";
@@ -671,9 +651,11 @@
 						cdata = $.jsFormControls.Format.currency(cdata);
 					}
 					$(this).val(cdata);
+					$(this).change();
 				}
 			}
 		});
+		
 		$("select", $parent).each(function() {
 			var name = $(this).attr("name");
 			if(!name) {
@@ -685,14 +667,23 @@
 				if (prefix) {
 					cname = cname.substring(prefix.length + 1);
 				}
+				// remove "old" selected options
+				$(this).children("option").removeAttr("selected");
+				
 				var value = that._get(data, cname);
-				$(this).children("option[value='"+value+"']").attr("selected", "selected");
-				// try selecting the id (if one exists...)
+				// try selecting based on the id 
 				if (value.id) {
-					$(this).children("option[value='"+value.id+"']").attr("selected", "selected");
+					$(this).children("option[value='"+value.id+"']").attr("selected", true);
+					// actually set the value and trigger the change
+					$(this).val(value.id).change();
+					return;
 				}
+				
+				$(this).children("option[value='"+value+"']").attr("selected", true);
+				$(this).val(value).change();
 			}		
 		});
+		
 		$("textarea", $parent).each(function() {
 			var name = $(this).attr("name");
 			if(!name) {
@@ -705,6 +696,7 @@
 					cname = cname.substring(prefix.length + 1);
 				}
 				$(this).val(that._get(data,cname));
+				$(this).change();
 			}		
 		});
 	};
@@ -894,7 +886,7 @@
 	 */
 	JsForm.prototype.validate = function() {
 		// get the prefix from the form if not given
-		var prefix = this.options.prefix;
+		//var prefix = this.options.prefix;
 		
 		// validation
 		$(".required,.regexp,.date,.mandatory,.number,.validate", this.element).change();
