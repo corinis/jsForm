@@ -464,7 +464,7 @@
 			$.extend(true, pojo, startObj);
 		}
 		
-		$("input,select,textarea", start).each(function(){
+		$(start).find("input,select,textarea").each(function(){
 			var name = $(this).attr("name");
 			
 			// empty name - ignore
@@ -725,7 +725,7 @@
 		
 		// fill the base
 		that._createPojoFromInput(form, prefix, pojo);
-				
+		
 		// check for invalid fields
 		var invalid = false;
 		if(!this.options.validateHidden) {
@@ -742,7 +742,7 @@
 			});
 		}
 		
-		$(".collection", form).each(function() {
+		form.find(".collection").each(function() {
 			if(!ignoreInvalid && invalid) {
 				return;
 			}
@@ -1321,7 +1321,7 @@
 	 * @private
 	 */
     JsForm.prototype.destroy = function( ) {
-		return this.each(function(){
+		return $(this.element).each(function(){
 
 	         var $this = $(this),
 	             data = $this.data('jsForm');

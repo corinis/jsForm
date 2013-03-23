@@ -67,7 +67,7 @@
 		
 		// validation
 		// check required (this is the first check)
-		$("input.mandatory,textarea.mandatory", location).on("keyup,change", function(){
+		location.find("input.mandatory,textarea.mandatory").on("keyup,change", function(){
 			// check for "null" as value as well 
 			if($(this).val().length > 0 && $(this).val() !== "null") {
 				$(this).addClass("valid").removeClass("invalid");
@@ -76,7 +76,7 @@
 			}
 		}).change();
 
-		$("select.mandatory", location).change(function(){
+		location.find("select.mandatory").change(function(){
 			// check for "null" as value as well 
 			if($(this).val() !== null && $(this).val() !== "null" && $(this).val().length > 0) {
 				$(this).addClass("valid").removeClass("invalid");
@@ -86,7 +86,7 @@
 		}).change();
 		
 		// show datepicker for all inputs
-		$("input.date", location).each(function(){
+		location.find("input.date").each(function(){
 			var format = $(this).attr("data-format");
 			if(!format) {
 				format = "dd.mm.yy";
@@ -100,7 +100,7 @@
 		
 		// input validation (number)
 		var numberRegexp =  new RegExp("^[0-9]+$");
-		$("input.number", location).keyup(function(){
+		location.find("input.number").keyup(function(){
 			var val = $(this).val();
 			if(val.length > 0) {
 				if($(this).hasClass("autoclean")) {
@@ -117,7 +117,7 @@
 		}).keyup();
 		
 		// regular expression
-		$("input.regexp", location).each(function(){
+		location.find("input.regexp").each(function(){
 			if($(this).hasClass("autoclean")) {
 				$(this).data("regexp", new RegExp($(this).attr("data-regexp"), "g"));
 			}
@@ -144,7 +144,7 @@
 		});
 		
 		/* rotatestate stontrol */
-		$("input.rotatestate", location).each(function(){
+		location.find("input.rotatestate").each(function(){
 			var states = $(this).attr("data-state-values");
 			var defaultClass = $(this).attr("data-state-class");
 			// no need to continue if there are no states
