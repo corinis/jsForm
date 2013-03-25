@@ -324,6 +324,23 @@
     };
     
     $.jsFormControls.Format = {
+			/**
+			 * format a string based on teh classes in a dom element
+			 */
+			format: function(ele, cdata) {
+				if($(ele).hasClass("dateTime")) {
+					return $.jsFormControls.Format.dateTime(cdata);
+				} else if($(ele).hasClass("date")) {
+					return $.jsFormControls.Format.date(cdata);
+				} else if($(ele).hasClass("currency")) {
+					return $.jsFormControls.Format.currency(cdata);
+				} else if($(ele).hasClass("number")) {
+					return $.jsFormControls.Format.decimal(cdata);
+				}
+				
+				return cdata;
+			},
+			
     		/**
     		 * format boolean into an ui-icon 
     		 * @param value true or false
