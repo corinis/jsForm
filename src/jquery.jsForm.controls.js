@@ -27,6 +27,11 @@
 				return "";
 			return $.jsFormControls.Format.decimal(data);
 		});
+		Handlebars.registerHelper("percent", function(data){
+			if(!data)
+				return "0";
+			return $.jsFormControls.Format.decimal(data*100);
+		});
 		Handlebars.registerHelper("date", function(data){
 			if(!data)
 				return "";
