@@ -87,31 +87,60 @@
 	JsForm.prototype._domInit = function() {
 		var form = $(this.element);
 		var that = this;
-		
-		// all collections
-		var collectionMap = {};
+		var prefix = this.options.prefix;
 		
 		// collection lists with buttons
+		that._initCollection(form, prefix);
+	};
+	
+	/**
+	 * initialize collections
+	 */
+	JsForm.prototype._initCollection = function(form, prefix) {
+		// all collections
+		var collectionMap = {},
+			that = this;
+			
 		$(".collection", form).each(function() {
 			var colName = $(this).attr("data-field");
 			// skip collections without a data-field mapping
-			if(!colName || colName.length === 0)
-			{
+			if (!colName || colName.indexOf(prefix + ".") !== 0) {
 				return;
 			}
+
+			var container = $(this);
 			
 			// remember the collection
 			var cols = collectionMap[colName];
 			if(cols) {
-				cols.push($(this));
+				cols.push(container);
 			} else {
-				collectionMap[colName] = [$(this)];
+				collectionMap[colName] = [container];
 			}
 			
 			//init the collection
-			that._initList($(this));
+			that._initList(container);
+			
+			// after adding: check if we want reorder control
+			if(!container.hasClass("ui-sortable") && container.hasClass("sortable") && container.sortable) {
+				// get the config object
+				var config = container.attr("data-sortable");
+				if(!config) {
+					config = {};
+				} else {
+					config = JSON.parse(config);
+				}
+				
+				container.sortable(config);
+				container.on("sortstop", function( event, ui ) {
+					that._reorder(container);
+				});
+			} 
+
 		});
-		
+
+
+
 		$(".add", form).each(function(){
 			var fieldName = $(this).attr("data-field"); 
 			if(!fieldName) {
@@ -134,19 +163,20 @@
 					if(tmpl) {
 						var line = tmpl.clone(true);
 						$(this).append(line);
+						$(line).addClass("POJO");
 						$(line).data("pojo", {});
 						
-						// enable delete
-						$(".delete", line).click(function(){
-							// trigger a callback
-							$(this).trigger("deleteCollection", [line, $(line).data().pojo]);
-							line.remove();
-						});
+						that._addCollectionControls(line);
+						
 						// trigger a callback
 						$(this).trigger("addCollection", [line, $(line).data().pojo]);
-						
+
 						// fill the line with data
 						that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1));
+						
+						// its possible to have "sub" collections
+						that._initCollection(line, fieldName.substring(fieldName.indexOf('.')+1));
+						
 					}
 				});
 			});
@@ -196,15 +226,18 @@
 						// add the pojo
 						line.data().pojo = pojo;
 
+						that._addCollectionControls(line);
+						
+						// its possible to have "sub" collections
+						that._initCollection(line);
+
+						// trigger a callback
+						$(this).trigger("addCollection", [line, $(line).data().pojo]);
+
 						// fill the "information"
 						that._fillData(line, pojo, fieldName.substring(fieldName.indexOf('.')+1));
 						
 						$(this).append(line);
-						
-						// enable delete
-						$(".delete", line).click(function(){
-							line.remove();
-						});
 					}
 				});
 				
@@ -283,7 +316,6 @@
 			
 			
 		});
-		
 		
 		// manage - obsolete
 		$(".manage", form).each(function(){
@@ -370,9 +402,7 @@
 				});
 			});
 		});
-	};
-	
-	
+	}
 	/**
 	 * init a container that has a tempalate child (first child). 
 	 * @param container the contianer element
@@ -565,7 +595,7 @@
 		var that = this;
 		var $parent = $(parent);
 		
-		// localte all "fields"
+		// locate all "fields"
 		$parent.find(".field").each(function() {
 			var name = $(this).data("name");
 			if(!name) {
@@ -596,15 +626,11 @@
 					cdata = "";
 				}
 				
-				if($(this).hasClass("dateTime")) {
-					$(this).text($.jsForm.format.date(cdata) + ' ' + $.jsForm.format.time(cdata));
-				} else if($(this).hasClass("date")) {
-					$(this).text($.jsForm.format.date(cdata));
-				} else if($(this).hasClass("currency")) {
-					$(this).text($.jsForm.format.currency(cdata));
-				} else if($(this).hasClass("number")) {
-					$(this).text($.jsForm.format.decimal(cdata));
-				} else if(this.nodeName.toUpperCase() === 'A') {
+				// format the string
+				if($.jsFormControls)
+					cdata = $.jsFormControls.Format.format(this, cdata);
+				
+				if(this.nodeName.toUpperCase() === 'A') {
 					$(this).attr("href", cdata);
 				} else if(this.nodeName.toUpperCase() === 'IMG') {
 					$(this).attr("src", cdata);
@@ -643,13 +669,10 @@
 						cdata = "";
 					}
 					
-					if($(this).hasClass("dateTime")) {
-						cdata = $.jsFormControls.Format.dateTime(cdata);
-					} else if($(this).hasClass("date")) {
-						cdata = $.jsFormControls.Format.date(cdata);
-					} else if ($(this).hasClass("currency")) {
-						cdata = $.jsFormControls.Format.currency(cdata);
-					}
+					// format the string
+					if($.jsFormControls)
+						cdata = $.jsFormControls.Format.format(this, cdata);
+
 					$(this).val(cdata);
 					$(this).change();
 				}
@@ -742,6 +765,29 @@
 			});
 		}
 		
+		// get the collection
+		invalid = this._getCollection(form, prefix, pojo, ignoreInvalid);
+		
+		if(!ignoreInvalid && invalid) {
+			return null;
+		}
+
+		return pojo;
+	};
+	
+	/**
+	 * fill a pojo based on collections
+	 * @param form {DOMElement} the base element to start looking for collections
+	 * @param prefix {string} the prefix used
+	 * @param pojo {object} the object to fill
+	 * @param ignoreInvalid {boolean} if true the function will return as soon as an invalid field is found
+	 * @return true if the colelction encountered an invalid field
+	 */
+	JsForm.prototype._getCollection = function(form, prefix, pojo, ignoreInvalid) {
+		var that = this;
+		// check for invalid fields
+		var invalid = false;
+		
 		form.find(".collection").each(function() {
 			if(!ignoreInvalid && invalid) {
 				return;
@@ -769,6 +815,10 @@
 				
 				var ele = {};
 				that._createPojoFromInput($(this), fieldname, ele);
+				
+				// also collect sub-collections
+				that._getCollection($(this), fieldname, ele, ignoreInvalid);
+				
 				// check if the pojo is empty
 				if(!that._isEmpty(ele)) {
 					if($(".invalid", this).length > 0) {
@@ -781,12 +831,8 @@
 			});
 		});
 		
-		if(!ignoreInvalid && invalid) {
-			return null;
-		}
-
-		return pojo;
-	};
+		return invalid;
+	}
 	
 	/**
 	 * Get the data object used as a base for get().
@@ -920,27 +966,40 @@
 
 		// fill base 
 		this._fillData(form, data, prefix);
-		
+		this._fillCollection(form, data, prefix);
+	};
+
+	/**
+	 * @param container the container element
+	 * @param data an array containing the the data
+	 * @param prefix a prefix for each line of data
+	 * @private
+	 */
+	JsForm.prototype._fillCollection = function(container, data, prefix) {
+		var that = this;
 		// fill collections
-		$(".collection", form).each(function() {
-			var fieldname = $(this).attr("data-field");
+		$(".collection", container).each(function() {
+			var container = $(this),
+				fieldname = $(this).attr("data-field");
 			// only collections with the correct prefix
-			if(!fieldname || fieldname.indexOf(prefix+".") !== 0) {
+			if(!data || !fieldname || fieldname.indexOf(prefix+".") !== 0) {
 				return;
 			}
+
+			// data for the collection filling
+			var colData = null;
 			
-			fieldname = fieldname.substring((prefix+".").length);
-			if(fieldname.length < 1) {
-				return;
-			}
-			
-			if(data) {
+			var fieldLookup = fieldname.split(".");
+			// fieldname: last entry 
+			fieldname = fieldLookup.pop();
+			colData = data[fieldname];
+
+			if(colData) {
 				// fill the collection
-				that._fillList($(this), data[fieldname], fieldname);
+				that._fillList(container, colData, fieldname);
 			}
 		});
-	};
-	
+	}
 	/**
 	 * @param container the container element
 	 * @param data an array containing the the data
@@ -949,7 +1008,8 @@
 	 * @private
 	 */
 	JsForm.prototype._fillList = function(container, data, prefix, lineFunc) {
-		var tmpl = container.data("template");
+		var tmpl = container.data("template"),
+			that = this;
 		if(!tmpl) {
 			return;
 		}
@@ -960,14 +1020,46 @@
 		if(!$.isArray(data)) {
 			return;
 		}
-
+		
+		// check if we need to sort the array
+		if($(container).hasClass("sort")) {
+			var sortField = $(container).attr("data-sort");
+			if(sortField) {
+				switch($(container).attr("data-sorttype")) {
+				case 'alpha':
+					data.sort();
+					break;
+				case 'alphainsensitiv':
+					data.sort(function(a,b){
+						a = a[sortField];
+						b = b[sortField];
+						if(a) a = a.toLowerCase();
+						if(b) b = b.toLowerCase();
+						if(a<b) 
+							return -1;
+						if(a>b) 
+							return 1;
+						return 0;
+					});
+					break;
+				default:
+					data.sort(function(a,b){
+						return a[sortField] - b[sortField];
+					});
+				}
+				// descending: reverse
+				if($(container).attr("data-sortdesc")) {
+					data.reverse();
+				}
+			}
+		}
+		
 		if(!lineFunc) {
 			if($.isFunction(prefix)) {
 				lineFunc = prefix;
 				prefix = null;
 			}
 		}
-		
 		
 		for(var i = 0; i < data.length; i++) {
 			var cur = data[i];
@@ -982,24 +1074,96 @@
 				}
 			}
 			
-			// enable delete
-			$(".delete", line).click(function(){
-				var delFunc = $(this).data("function");
-				if(delFunc && $.isFunction(delFunc)) {
-					if(delFunc(line) === false) {
-						return;
-					}
-				} 
-				$(this).closest(".POJO").remove();
-			});
-
-
+			that._addCollectionControls(line);
+			
 			if(prefix) {
-				this._fillData(line, cur, prefix);
+				that._fillData(line, cur, prefix);
+				// enable collection controls
+				that._initCollection(line, prefix);
+				// fill with data
+				that._fillCollection(line, cur, prefix);
 			}
 			container.append(line);
+
 		}
 	};
+	
+	/**
+	 * add controls into a collection entry(i.e. delete)
+	 * @param line the new collection 
+	 * @private
+	 */
+	JsForm.prototype._addCollectionControls = function(line) {
+		var that = this;
+		$(".delete", line).click(function(){
+			var ele = $(this).closest(".POJO");
+			// trigger a callback
+			$(this).closest(".collection").trigger("deleteCollection", [ele, $(ele).data().pojo]);
+			ele.remove();
+		});
+		$(".sortUp", line).click(function(){
+			// check if there is an up
+			var ele = $(this).closest(".POJO");
+			var prev = ele.prev(".POJO");
+			if(prev.size() === 0) {
+				// no previous element - return
+				return;
+			}
+			ele.detach();
+			prev.before(ele);
+			// reorder (if possible)
+			that._reorder(ele);
+		});
+		$(".sortDown", line).click(function(){
+			// check if there is a down
+			var ele = $(this).closest(".POJO");
+			var next = ele.next(".POJO");
+			if(next.size() === 0) {
+				// no next element - return
+				return;
+			}
+			ele.detach();
+			next.after(ele);
+			// reorder (if possible)
+			that._reorder(ele);
+		});
+		
+		// if collection is sortable: refresh it
+		var container = $(line).closest(".collection");
+		if(container.hasClass("sortable")&& $(container).sortable) {
+			container.sortable("refresh");
+		}
+	}
+	/**
+	 * Reorder a collection (actually its fields)
+	 * @param ele one element of the collection or the collection itself
+	 * @private
+	 */
+	JsForm.prototype._reorder = function(ele) {
+		if(!ele.attr("data-sort")) {
+			ele = ele.closest(".collection");
+		}
+
+		// get the field to use for sorting
+		var sortField = $(ele).attr("data-sort");
+		if(!sortField || ($(ele).attr("data-sorttype") && $(ele).attr("data-sorttype") !== "number") || 
+			($(ele).attr("data-sortdesc") && $(ele).attr("data-sortdesc") !== "false")) {
+			return;
+		}
+		
+		// go through each child and get the pojo
+		var prio = 0;
+		$.each($(ele).children(), function(){
+			var data = $(this).data("pojo");
+			// no data yet - add one
+			if(!data) {
+				data = {};
+				$(this).data("pojo", data);
+			}
+			
+			data[sortField] = prio++;
+		});
+	}
 
     /**
      * Retrieve a value from a given object by using dot-notation
@@ -1401,236 +1565,6 @@
 	    		});
 	    	}
     	}
-    };
-    
-    $.jsForm.format = {
-    		/**
-    		 * format boolean into an ui-icon 
-    		 * @param value true or false
-    		 * @returns the ui-icon span
-    		 */
-    		checkBox: function(row, cell, value, columnDef, dataContext) {
-    			// cleanup parameters (direct call vs. slickgrid)
-    			if(typeof value === "undefined") {
-    				value = row;
-    				row = null;
-    			}
-    			
-    			if(value) {
-    				return '<span class="ui-icon ui-icon-check">&nbsp;</span>';
-    			} else {
-    				return '<span class="ui-icon ui-icon-close">&nbsp;</span>';
-    			}
-    			
-    			return value;
-    		}, 
-    		
-
-    		/**
-    		 * @private
-    		 */
-    		_getNumber: function(num) {
-    			if (!num) {
-    				return null;
-    			}
-    			
-    			// either we have , (for komma) or a . and at least 3 following numbers (not a rounden komma)
-    			if(num.indexOf(",") !== -1 || (num.length - num.indexOf('.') > 3))
-    			{
-    				num = num.replace(/\./g, "").replace(",", ".");
-    			}
-    			return Number(num);
-    		},
-
-
-    		/**
-    		 * @private
-    		 */
-    		_pad: function(val) {
-    			var o = (val < 10) ? "0" : "";
-    			o += val;
-    			return o;
-    		},
-
-
-    		/**
-    		 * @private
-    		 */
-    		decimal: function(num) {
-    			if (num === "" || !num) {
-    				return num;
-    			}
-    			
-    			var comma = 0;
-    			if ((num - Math.abs(num)) > 0.001) {
-    				comma = 2;
-    			}
-    			// convert to a nice number for display
-    			var n = num, 
-    				c = isNaN(c = Math.abs(comma)) ? 2 : comma, 
-    				d = ',', // decimal d == undefined ? "," : d, 
-    				t = '.', // thousand: t == undefined ? "." : t, 
-    				i = parseInt(n = Math.abs( +n || 0).toFixed(c), 10) + "", 
-    				j = (j = i.length) > 3 ? j % 3 : 0;
-    			
-    		   return (num<0 ? "-" : "") + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
-    		},
-
-
-    		/**
-    		 * @private
-    		 */
-    		currency: function(num) {
-    		   return this.decimal(num);
-    		},
-
-    		/**
-    		 * @private
-    		 */
-    		dateTime: function(cellvalue, options, rowObject) {
-    			return (this.date(cellvalue) + " " + this.time(cellvalue));
-    		},
-
-    		/**
-    		 * @private
-    		 */
-    		date: function(row, cell, cellvalue, columnDef, dataContext) {
-    			// cleanup parameters (direct call vs. slickgrid)
-    			if(typeof cellvalue === "undefined") {
-    				cellvalue = row;
-    				row = null;
-    			}
-
-    			if(typeof cellvalue === "undefined") {
-    				if(options) {
-    					return "&#160;";
-    				}
-    				return "";
-    			}
-    			
-    			var d = new Date();
-    			d.setTime(cellvalue);								
-    			var year = d.getYear();
-    			if(year < 1900) {
-    				year += 1900;
-    			}
-    				
-    			return this._pad(d.getDate()) + "." + this._pad((d.getMonth()+1)) + "." + this._pad(year);
-    		},
-
-    		/**
-    		 * @private
-    		 */
-    		time: function(row, cell, value, columnDef, dataContext) {
-    			// cleanup parameters (direct call vs. slickgrid)
-    			if(typeof value === "undefined") {
-    				value = row;
-    				row = null;
-    			}
-
-    			if(typeof value === "undefined") {
-    				if(options) {
-    					return "&#160;";
-    				}
-    				return "";
-    			}
-
-    			var d = new Date();
-    			d.setTime(value);								
-    			return this._pad(d.getHours()) + ":" + this._pad(d.getMinutes()); //  + ":" + pad(d.getSeconds()); don't need seconds
-    		},
-
-    		/**
-    		 * 
-    		 * @param value a string value to format
-    		 * @param allowms true to allow komma (i.e. 00.00)
-    		 * @return something in the form of 00:00.00
-    		 * @private
-    		 */
-    		timespan: function(row, cell, value, columnDef, dataContext, allowcomma) {
-    			// cleanup parameters (direct call vs. slickgrid)
-    			if(typeof value === "undefined") {
-    				value = row;
-    				allowcomma = cell;
-    				row = null;
-    				cell = null;
-    			}
-
-    			var tokens = value.split(":");
-    			// check each token
-    			for(var i=0; i<tokens.length; i++) {
-    				var nt = Number(tokens[i]);
-    				if(!nt || nt === 'NaN') {
-    					nt = 0;
-    				}
-    				tokens[i] = this._pad(nt);
-    			}
-    			
-    			if(tokens.length <= 0) {
-    				return "0:00";
-    			}
-
-    			if(tokens.length == 1) {
-    				return "0:" + this._pad(allowkomma ? tokens[0] : Math.floor(tokens[0]));
-    			}
-    			
-    			if(tokens.length == 2) {
-    				return allowkomma ? tokens[0] : Math.floor(tokens[0]) + ":" + this._pad(allowkomma ? tokens[1] : Math.floor(tokens[1]));
-    			}
-    			
-    			return allowkomma ? tokens[0] : Math.floor(tokens[0]) + ":" + this._pad(allowkomma ? tokens[1] : Math.floor(tokens[1])) + ":" + pad(allowkomma ? tokens[2] : Math.floor(tokens[2]));
-    		},
-    		
-    		/**
-    		 * Formats a time to "human"
-    		 * @param value the time in milliseconds
-    		 * @returns the time for display in human readable
-    		 */
-    		humanTime: function(row, cell, value, columnDef, dataContext) {
-    			// cleanup parameters (direct call vs. slickgrid)
-    			if(typeof value === "undefined") {
-    				value = row;
-    				row = null;
-    			}
-    			
-    			
-    			if (isNaN(value)) {
-    				if(typeof value === "undefined" || value === null || value.length === 0) {
-    					return "-";
-    				}
-    				return value;
-    			}
-    			
-    			var h = Math.floor(value/3600000);
-    			value -= h * 3600000;
-    			var m = Math.floor(value/60000);
-    			value -= m * 60000;
-    			var s = Math.floor(value/1000);
-    			value -= s * 1000;
-    			
-    			var out = "";
-    			if (h > 0) {
-    				out += h + "h ";
-    				// ignore seconds and milliseconds if we have hours
-    				s = 0;
-    				value = 0;
-    			}
-    			if (m > 0) {
-    				out += m + "m ";
-    				// ignore milliseconds
-    				value = 0;
-    			}
-    			if (s > 0) {
-    				out += s + "s ";
-    				value = 0;
-    			}
-    			
-    			if (value > 0) {
-    				out += value + "ms";
-    			}
-    			// trim output
-    			return out.trim();
-    		}
     };
 
 })( jQuery, window );
