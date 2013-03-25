@@ -1,0 +1,71 @@
+<html>
+<head>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
+<script src="src/jquery.jsForm.controls.js"></script>
+<script src="src/jquery.jsForm.js"></script>
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css"/>
+
+<script>
+$(function(){
+	// some json data
+	var jsonData = {
+		name: "TestName",	// standard inputs
+		groups: [{
+			name: "Base",
+			priority: 0,
+			tasks: [{ id:0, name: "base task1", priority: 1}, {id:1,name: "base task0", priority: 0}, {id:2,name: "base task2", priority: 2}]
+		},
+		{
+			name: "Important",
+			priority: 2,
+			tasks: [{id:0, name: "imp task1", priority: 1}, {id:1,name: "imp task0", priority: 0}]
+		},
+		{
+			name: "Other",
+			priority: 1,
+			tasks: [{id:0, name: "other", priority: 1}]
+		}],
+		active: true,	// checkbox
+		state: "VISIBLE"	// selects (enums)
+	};
+
+	// initialize the form, prefix is optional and defaults to data
+	$("#details").jsForm({
+		data:jsonData
+	});
+
+	$("#show").click(function() {
+		// show the json data
+		alert(JSON.stringify($("#details").jsForm("get"), null, " "));
+	});
+});
+</script>
+</head>
+<body>
+<h1>Multi level array testform</h1>
+<div id="details">
+	Name: <input name="data.name"/><br/>
+	<input type="checkbox" name="data.active"/> active<br/>
+	<select name="data.state">
+		<option value="VISIBLE">visible</option>
+		<option value="IMPORTANT">important</option>
+		<option value="HIDDEN">hidden</option>		
+	</select>
+	<div class="collection sort" data-field="data.groups" data-sort="priority">
+	<fieldset>
+		<legend>Group</legend>
+		Name <input name="groups.name"/>
+		<ul class="collection sort sortable" data-field="groups.tasks" data-sort="priority" data-sortable='{"placeholder":"ui-state-highlight"}'>
+			<li><input name="tasks.name"/><span class="ui-icon ui-icon-trash delete" style="float:left"></span></li>
+		</ul>
+		<span class="ui-icon ui-icon-plusthick add" data-field="groups.tasks"></span>
+		<button class="sortUp">up</button> <button class="sortDown">down</button> 
+	</fieldset>
+	</div>
+	<span class="ui-icon ui-icon-plusthick add" data-field="data.groups"></span>
+
+</div>
+<button id="show">Show Object</button>
+</body>
+</html>
