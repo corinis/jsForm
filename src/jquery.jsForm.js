@@ -402,7 +402,8 @@
 				});
 			});
 		});
-	}
+	};
+	
 	/**
 	 * init a container that has a tempalate child (first child). 
 	 * @param container the contianer element
@@ -414,7 +415,9 @@
 			return;
 		}
 		
-		var tmpl = container.children().first().detach();
+		// get all children
+		var tmpl = container.children().detach();
+		
 		// remove an id if there is one
 		tmpl.removeAttr("id");
 		container.data("template", tmpl);
@@ -832,7 +835,7 @@
 		});
 		
 		return invalid;
-	}
+	};
 	
 	/**
 	 * Get the data object used as a base for get().
@@ -953,7 +956,6 @@
 	 * @private
 	 */
 	 JsForm.prototype._fill = function(form, data, prefix) {
-		var that = this;
 		// get the prefix from the form if not given
 		if(!prefix) {
 			prefix = this.config.prefix;
@@ -999,7 +1001,8 @@
 				that._fillList(container, colData, fieldname);
 			}
 		});
-	}
+	};
+	
 	/**
 	 * @param container the container element
 	 * @param data an array containing the the data
@@ -1133,7 +1136,8 @@
 		if(container.hasClass("sortable")&& $(container).sortable) {
 			container.sortable("refresh");
 		}
-	}
+	};
+	
 	/**
 	 * Reorder a collection (actually its fields)
 	 * @param ele one element of the collection or the collection itself
@@ -1163,7 +1167,7 @@
 			
 			data[sortField] = prio++;
 		});
-	}
+	};
 
     /**
      * Retrieve a value from a given object by using dot-notation
