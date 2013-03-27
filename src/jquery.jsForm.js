@@ -139,8 +139,6 @@
 
 		});
 
-
-
 		$(".add", form).each(function(){
 			var fieldName = $(this).attr("data-field"); 
 			if(!fieldName) {
@@ -417,6 +415,11 @@
 		
 		// get all children
 		var tmpl = container.children().detach();
+		
+		// enable controls on the template
+		if($.jsFormControls) {
+			$(tmpl).jsFormControls();
+		} 
 		
 		// remove an id if there is one
 		tmpl.removeAttr("id");

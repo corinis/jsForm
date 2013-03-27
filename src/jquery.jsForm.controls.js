@@ -160,6 +160,9 @@
 					}
 				}
 			}).keyup();
+			$(this).change(function(){
+				$(this).keyup();
+			});
 		});
 		
 		/* rotatestate stontrol */
@@ -418,7 +421,7 @@
     			}
     			
     			var comma = 0;
-    			if ((num - Math.abs(num)) > 0.001) {
+    			if (Math.abs(num - Math.floor(num)) > 0.001) {
     				comma = 2;
     			}
     			// convert to a nice number for display

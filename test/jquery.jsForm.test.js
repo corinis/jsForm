@@ -1,16 +1,18 @@
 module('jquery.jsForm.js');
 
 test("data formatting", function(){
-	equal($.jsForm.format.humanTime(320), "320ms", "milliseconds");
-	equal($.jsForm.format.humanTime(6000), "6s", "milliseconds");
-	equal($.jsForm.format.humanTime(4320), "4s", "seconds");
-	equal($.jsForm.format.humanTime(184200), "3m 4s", "minutest and seconds");
-	equal($.jsForm.format.humanTime(5*3600000 + 32*60000 + 3580), "5h 32m", "hours and minutes");
+	equal($.jsFormControls.Format.humanTime(320), "320ms", "milliseconds");
+	equal($.jsFormControls.Format.humanTime(6000), "6s", "milliseconds");
+	equal($.jsFormControls.Format.humanTime(4320), "4s", "seconds");
+	equal($.jsFormControls.Format.humanTime(184200), "3m 4s", "minutest and seconds");
+	equal($.jsFormControls.Format.humanTime(5*3600000 + 32*60000 + 3580), "5h 32m", "hours and minutes");
+	equal($.jsFormControls.Format.decimal(51234.1234), "51.234,12", "decimal");
+	equal($.jsFormControls.Format.decimal(4.1234), "4,12", "decimal");
 });
 
 
 test("slickgrid parameter formatting", function(){
-	equal($.jsForm.format.humanTime(10, 10, 320), "320ms", "human time");
+	equal($.jsFormControls.Format.humanTime(10, 10, 320), "320ms", "human time");
 });
 
 
