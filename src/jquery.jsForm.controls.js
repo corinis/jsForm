@@ -153,6 +153,11 @@
 							$(this).removeClass("valid").addClass("invalid");
 						}
 					}
+				} else {
+					// if not mandatory: nothing is valid
+					if(!$(this).hasClass("mandatory")) {
+						$(this).removeClass("invalid").addClass("valid");
+					}
 				}
 			}).keyup();
 		});
