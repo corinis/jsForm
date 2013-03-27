@@ -72,7 +72,16 @@
 		
 		// validation
 		// check required (this is the first check)
-		location.find("input.mandatory,textarea.mandatory").on("keyup,change", function(){
+		location.find("input.mandatory,textarea.mandatory").on("keyup", function(){
+			// check for "null" as value as well 
+			if($(this).val().length > 0 && $(this).val() !== "null") {
+				$(this).addClass("valid").removeClass("invalid");
+			} else {
+				$(this).removeClass("valid").addClass("invalid");
+			}
+		});
+		
+		location.find("input.mandatory,textarea.mandatory").on("change", function(){
 			// check for "null" as value as well 
 			if($(this).val().length > 0 && $(this).val() !== "null") {
 				$(this).addClass("valid").removeClass("invalid");

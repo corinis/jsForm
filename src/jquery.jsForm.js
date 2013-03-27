@@ -457,6 +457,8 @@
 			if($(this).hasClass("blob")) {
 				$(this).removeData("blob");
 			}
+			// trigger change
+			$(this).change();
 		});
 		
 		$(".collection", form).each(function() {
@@ -969,6 +971,8 @@
 		// fill base 
 		this._fillData(form, data, prefix);
 		this._fillCollection(form, data, prefix);
+		
+		// mark fields
 	};
 
 	/**
