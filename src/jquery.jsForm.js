@@ -772,9 +772,11 @@
 				return false;
 			});
 		}
-		
+
 		// get the collection
-		invalid = this._getCollection(form, prefix, pojo, ignoreInvalid);
+		if(this._getCollection(form, prefix, pojo, ignoreInvalid)) {
+			invalid = true;
+		}
 		
 		if(!ignoreInvalid && invalid) {
 			return null;
