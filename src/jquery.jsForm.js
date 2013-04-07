@@ -456,9 +456,15 @@
 			} else {
 				$(this).val("");
 			}
-			
 			if($(this).hasClass("blob")) {
 				$(this).removeData("blob");
+			}
+			// special type select box: select the FIRST child
+			if($(this).is("select")) {
+				$('option[selected="selected"]', this).removeAttr('selected');
+				$('option:first', this).attr('selected', true);
+
+				$(this).val($("option:first", this).val()).change();
 			}
 			// trigger change
 			$(this).change();
@@ -543,6 +549,17 @@
 			if(val === "" && ($(this).hasClass("number") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
 				val = null;
 			}
+			
+			// check for percentage: this is input / 100
+			if ($(this).hasClass("percent")) {
+				val = that._getNumber(val);
+				if(isNaN(val)) {
+					val = 0;
+				} else {
+					val /= 100;
+				}
+			}
+
 			if ($(this).hasClass("number") || $(this).hasClass("currency")) {
 				val = that._getNumber(val);
 				if(isNaN(val)) {
@@ -552,7 +569,7 @@
 			if($(this).attr("type") === "checkbox" || $(this).attr("type") === "CHECKBOX") {
 				val = $(this).is(':checked');
 			}
-					
+
 			// check if we have a . - if so split
 			if (name.indexOf(".") === -1)
 			{
@@ -565,10 +582,12 @@
 				var d0 = pojo[parts[0]];
 				var d1, d2;
 				
-				if (!d0) {
+				// multiple parts: make sure its an object
+				if (!d0 || !$.isPlainObject(d0)) {
 					pojo[parts[0]] = {};
 					d0 = pojo[parts[0]]; 
 				}
+				
 				if (parts.length === 2) {
 					d0[parts[1]] = val;
 				} else if (parts.length === 3) {
@@ -634,6 +653,11 @@
 					cdata = "";
 				}
 				
+				// check for percentage: this is value * 100
+				if ($(this).hasClass("percent") && !isNaN(cdata)) {
+					cdata = 100 * Number(cdata);
+				}
+				
 				// format the string
 				if($.jsFormControls)
 					cdata = $.jsFormControls.Format.format(this, cdata);
@@ -669,6 +693,12 @@
 				}
 				
 				var cdata = that._get(data, cname);
+				
+				// check for percentage: this is value * 100
+				if ($(this).hasClass("percent") && !isNaN(cdata)) {
+					cdata = 100 * Number(cdata);
+				}
+
 				if($(this).attr("type") === "checkbox") {
 					$(this).prop("checked", (cdata === true || cdata === "true"));
 					$(this).change();
