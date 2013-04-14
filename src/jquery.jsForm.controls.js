@@ -439,8 +439,13 @@
     		/**
     		 * @private
     		 */
-    		currency: function(num) {
-    		   return this.decimal(num);
+    		currency: function(row, cell, cellvalue, columnDef, dataContext) {
+    			// cleanup parameters (direct call vs. slickgrid)
+    			if(!cellvalue || !dataContext) {
+    				cellvalue = row;
+    			}
+    			
+    		   return $.jsFormControls.Format.decimal(cellvalue);
     		},
 
     		/**

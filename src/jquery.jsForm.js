@@ -542,6 +542,8 @@
 				if(val === "" || val.trim() === "") {
 					val = null;
 				}
+			} else if($(this).hasClass("object") || $(this).hasClass("POJO")) {
+				val = $(this).data("pojo");
 			} else if($(this).hasClass("blob")) { // file upload blob
 				val = $(this).data("blob");
 			} else
@@ -697,7 +699,12 @@
 				// check for percentage: this is value * 100
 				if ($(this).hasClass("percent") && !isNaN(cdata)) {
 					cdata = 100 * Number(cdata);
+				} else if($.isPlainObject(cdata)) {
+					$(this).data().pojo = cdata;
+					$(this).addClass("POJO");
+					cdata = that._renderObject(cdata, $(this).attr("data-display"));
 				}
+				
 
 				if($(this).attr("type") === "checkbox") {
 					$(this).prop("checked", (cdata === true || cdata === "true"));
@@ -1206,6 +1213,29 @@
 			
 			data[sortField] = prio++;
 		});
+	};
+	
+	/**
+	 * render an object based on a string.
+	 * Note: comma is a special char and cannot be used!
+	 * @param obj the object
+	 * @param skin the string to render with (i.e. id, ":", test)
+	 * @private
+	 */
+	JsForm.prototype._renderObject = function(obj, skin) {
+		if(!skin || !obj)
+			return "";
+		var that = this;
+		var ret = "";
+		$.each(skin.split(","), function(){
+			var val = this.trim();
+			if(val.indexOf("'") === 0 || val.indexOf('"') === 0) {
+				ret += val.substring(1, val.length - 1);
+			} else {
+				ret += that._get(obj, val);
+			}
+		});
+		return ret;
 	};
 
     /**
