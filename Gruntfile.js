@@ -43,7 +43,7 @@ module.exports = function( grunt ) {
 		uglify: {
 			all: {
 				files: {
-					"dist/jquery.jsForm.min-<%= pkg.version %>.js": [ "dist/jquery.jsForm-<%= pkg.version %>.js" ]
+					"dist/jquery.jsForm.<%= pkg.version %>.min.js": [ "dist/jquery.jsForm-<%= pkg.version %>.js" ]
 				},
 				options: {
 					banner: "/*!\n * jQuery.jsForm v<%= pkg.version %> | (c) 2013 <%=pkg.author.name%> <%=pkg.author.url%>\n * Usage: <%=pkg.homepage%>\n */\n",

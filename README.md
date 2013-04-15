@@ -7,7 +7,7 @@ It allows you to handle data within a javascript object (like from a JSON reques
 
 The main features of this library are:
 
-* Fill standard html with data available in a js object
+* Full standard html with data available in a js object
 * Update an existing js object with changes done within a form
 * Provide basic functions for formatting (i.e. date/time, money) using html markup
 * Provide form validation functionality
@@ -16,12 +16,14 @@ The main features of this library are:
 * Can be used in connection with an autocomplete function to add new array objects
 * Compatible with jquery ui 
 * fully unit tested using qunit
+* jslint clean
+* Minified+Gzipped: 6kb
 
 # Download
 
 Current Version: 1.0 Release Candidate 1
 
-* [Minified](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm.min-1.0.rc.1.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
+* [Minified](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.0.rc.1.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
 * [Source](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.0.rc.1.js)
 
 # Documentation
