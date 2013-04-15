@@ -82,6 +82,14 @@
 		});
 		
 		location.find("input.mandatory,textarea.mandatory").on("change", function(){
+			if($(this).hasClass("object")) {
+				if($(this).data().pojo) {
+					$(this).addClass("valid").removeClass("invalid");
+				} else {
+					$(this).removeClass("valid").addClass("invalid");
+				}
+				return;
+			} 
 			// check for "null" as value as well 
 			if($(this).val().length > 0 && $(this).val() !== "null") {
 				$(this).addClass("valid").removeClass("invalid");

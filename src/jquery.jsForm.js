@@ -275,6 +275,14 @@
 
 		});
 
+		$("input.object", form).each(function(){
+			$(this).on("update", function(evt){
+				var pojo = $(this).data().pojo;
+				if (pojo && $(this).attr("data-display")) {
+					$(this).val(that._renderObject(pojo, $(this).attr("data-display")));
+				}
+			});
+		});
 		
 		// fileupload
 		$("input.blob", form).each(function(){
@@ -450,6 +458,9 @@
 			if(name.length < 1) {
 				return;
 			}
+			
+			// remove all pojos
+			$(this).removeData("pojo");
 			
 			if($(this).attr("type") === "checkbox") {
 				$(this).prop("checked", false);
