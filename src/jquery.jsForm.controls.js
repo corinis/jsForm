@@ -7,9 +7,9 @@
  * @author Niko Berger
  * @license MIT License GPL
  */
-"use strict";
-
 ;(function( $, window, undefined ){
+	"use strict";
+	
 	var JSFORM_INIT_FUNCTIONS = {},	// remember initialization functions
 		JSFORM_MAP = {};	// remember all forms
 
@@ -41,7 +41,6 @@
 			if(!data)
 				return "";
 			return $.jsFormControls.Format.time(data);
-			return $.simpledateformat.format(data, TIME_FORMAT);
 		});
 		Handlebars.registerHelper("datetime", function(data){
 			if(!data)
@@ -60,7 +59,7 @@
 		
 		// init the dom functionality
 		this._domInit();
-	};
+	}
 	
 	/**
 	 * init the dom. This can be called multiple times.
@@ -211,7 +210,7 @@
 				var control = $(this).data().control;
 				var newState = null;
 
-				if(cState != null) {
+				if(cState !== null) {
 					// go to the 'next' state
 					for(var i = 0; i < cStates.length; i++) {
 						if(cStates[i].value === cState.value) {
@@ -240,7 +239,7 @@
 				var cState = control.data().activeState;
 				var cStates = control.data().states;
 				
-				if(cState != null) {
+				if(cState !== null) {
 					// remove "old state"
 					control.removeClass(cState['class']);
 				}
@@ -282,78 +281,78 @@
 		
 		return true;
 	};
-	
-	    
+
 	// init and call methods
 	$.fn.jsFormControls = function ( method ) {
 		// Method calling logic
-	    if ( typeof method === 'object' || ! method ) {
-	        return this.each(function () {
-	            if (!$(this).data('jsFormControls')) {
-	                $(this).data('jsFormControls', new JsFormControls( this, method ));
-	            }
-	        });
-	    } else {
-	    	var args = Array.prototype.slice.call( arguments, 1 );
-	    	
-	    	// only one - return directly
-	    	if(this.length == 1) {
-	        	var jsFormControls = $(this).data('jsFormControls'); 
-	            if (jsFormControls) {
-	            	if(method.indexOf("_") !== 0 && jsFormControls[method]) {
-	            		var ret =  jsFormControls[method].apply(jsFormControls, args);
-	            		return ret;
-	            	}
-	            	
-          	        $.error( 'Method ' +  method + ' does not exist on jQuery.jsFormControls' );
-          	        return false;
-	            }
-	    	}
-	    	
-	        return this.each(function () {
-	        	var jsFormControls = $.data(this, 'jsFormControls'); 
-	            if (jsFormControls) {
-	            	if(method.indexOf("_") !== 0 && jsFormControls[method]) {
-	            		return jsFormControls[method].apply(jsFormControls, args);
-	            	} else {
-	          	      $.error( 'Method ' +  method + ' does not exist on jQuery.jsFormControls' );
-	          	      return false;
-	            	}
-	            }
-	        });
-	    }   
-    };
-    
-    /**
-     * global jsForm function for intialisation
-     */
-    $.jsFormControls = function ( name, initFunc ) {
-    	// initFunc is a function -> initialize
-    	if($.isFunction(initFunc)) {
-	    	// call init if already initialized
-	    	var jsForms = JSFORM_MAP[name];
-	    	if(jsForms) {
-	    		$.each(jsForms, function(){
-	    			initFunc(this, $(this.element));
-	    		});
-	    	}
-	    	
-	    	// remember for future initializations
-	    	JSFORM_INIT_FUNCTIONS[name] = initFunc;
-    	} else {
-	    	// call init if already initialized
-	    	var jsForms = JSFORM_MAP[name];
-	    	if(jsForms) {
-	    		var method = initFunc;
-	    		var args = Array.prototype.slice.call( arguments, 2 );
-	    		$.each(portlets, function(){
-	    			this[method].apply(this, args);
-	    		});
-	    	}
-    	}
-    };
-    
-    $.jsFormControls.Format = {
+		if ( typeof method === 'object' || ! method ) {
+			return this.each(function () {
+				if (!$(this).data('jsFormControls')) {
+					$(this).data('jsFormControls', new JsFormControls( this, method ));
+				}
+			});
+		} else {
+			var args = Array.prototype.slice.call( arguments, 1 );
+			
+			// only one - return directly
+			if(this.length == 1) {
+				var jsFormControls = $(this).data('jsFormControls'); 
+				if (jsFormControls) {
+					if(method.indexOf("_") !== 0 && jsFormControls[method]) {
+						var ret =  jsFormControls[method].apply(jsFormControls, args);
+						return ret;
+					}
+
+					$.error( 'Method ' +  method + ' does not exist on jQuery.jsFormControls' );
+					return false;
+				}
+			}
+			
+			return this.each(function () {
+				var jsFormControls = $.data(this, 'jsFormControls'); 
+				if (jsFormControls) {
+					if(method.indexOf("_") !== 0 && jsFormControls[method]) {
+						return jsFormControls[method].apply(jsFormControls, args);
+					} else {
+						$.error( 'Method ' +  method + ' does not exist on jQuery.jsFormControls' );
+						return false;
+					}
+				}
+			});
+		}   
+	};
+	
+	/**
+	 * global jsForm function for intialisation
+	 */
+	$.jsFormControls = function ( name, initFunc ) {
+		var jsForms;
+		// initFunc is a function -> initialize
+		if($.isFunction(initFunc)) {
+			// call init if already initialized
+			jsForms = JSFORM_MAP[name];
+			if(jsForms) {
+				$.each(jsForms, function(){
+					initFunc(this, $(this.element));
+				});
+			}
+			
+			// remember for future initializations
+			JSFORM_INIT_FUNCTIONS[name] = initFunc;
+		} else {
+			// call init if already initialized
+			jsForms = JSFORM_MAP[name];
+			if(jsForms) {
+				var method = initFunc;
+				var args = Array.prototype.slice.call( arguments, 2 );
+				$.each(portlets, function(){
+					this[method].apply(this, args);
+				});
+			}
+		}
+	};
+	
+	$.jsFormControls.Format = {
 			/**
 			 * format a string based on teh classes in a dom element
 			 */
@@ -371,239 +370,238 @@
 				return cdata;
 			},
 			
-    		/**
-    		 * format boolean into an ui-icon 
-    		 * @param value true or false
-    		 * @returns the ui-icon span
-    		 */
-    		checkBox: function(row, cell, value, columnDef, dataContext) {
-    			// cleanup parameters (direct call vs. slickgrid)
-    			if(typeof value === "undefined") {
-    				value = row;
-    				row = null;
-    			}
-    			
-    			if(value) {
-    				return '<span class="ui-icon ui-icon-check">&nbsp;</span>';
-    			} else {
-    				return '<span class="ui-icon ui-icon-close">&nbsp;</span>';
-    			}
-    			
-    			return value;
-    		}, 
-    		
+			/**
+			 * format boolean into an ui-icon 
+			 * @param value true or false
+			 * @returns the ui-icon span
+			 */
+			checkBox: function(row, cell, value, columnDef, dataContext) {
+				// cleanup parameters (direct call vs. slickgrid)
+				if(typeof value === "undefined") {
+					value = row;
+					row = null;
+				}
+				
+				if(value) {
+					return '<span class="ui-icon ui-icon-check">&nbsp;</span>';
+				} else {
+					return '<span class="ui-icon ui-icon-close">&nbsp;</span>';
+				}
+				
+				return value;
+			}, 
+			
 
-    		/**
-    		 * @private
-    		 */
-    		_getNumber: function(num) {
-    			if (!num) {
-    				return null;
-    			}
-    			
-    			// either we have , (for komma) or a . and at least 3 following numbers (not a rounden komma)
-    			if(num.indexOf(",") !== -1 || (num.length - num.indexOf('.') > 3))
-    			{
-    				num = num.replace(/\./g, "").replace(",", ".");
-    			}
-    			return Number(num);
-    		},
-
-
-    		/**
-    		 * @private
-    		 */
-    		_pad: function(val) {
-    			var o = (val < 10) ? "0" : "";
-    			o += val;
-    			return o;
-    		},
+			/**
+			 * @private
+			 */
+			_getNumber: function(num) {
+				if (!num) {
+					return null;
+				}
+				
+				// either we have , (for komma) or a . and at least 3 following numbers (not a rounden komma)
+				if(num.indexOf(",") !== -1 || (num.length - num.indexOf('.') > 3))
+				{
+					num = num.replace(/\./g, "").replace(",", ".");
+				}
+				return Number(num);
+			},
 
 
-    		/**
-    		 * @private
-    		 */
-    		decimal: function(num) {
-    			if (num === "" || !num) {
-    				return num;
-    			}
-    			
-    			var comma = 0;
-    			if (Math.abs(num - Math.floor(num)) > 0.001) {
-    				comma = 2;
-    			}
-    			// convert to a nice number for display
-    			var n = num, 
-    				c = isNaN(c = Math.abs(comma)) ? 2 : comma, 
-    				d = ',', // decimal d == undefined ? "," : d, 
-    				t = '.', // thousand: t == undefined ? "." : t, 
-    				i = parseInt(n = Math.abs( +n || 0).toFixed(c), 10) + "", 
-    				j = (j = i.length) > 3 ? j % 3 : 0;
-    			
-    		   return (num<0 ? "-" : "") + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
-    		},
+			/**
+			 * @private
+			 */
+			_pad: function(val) {
+				var o = (val < 10) ? "0" : "";
+				o += val;
+				return o;
+			},
 
 
-    		/**
-    		 * @private
-    		 */
-    		currency: function(row, cell, cellvalue, columnDef, dataContext) {
-    			// cleanup parameters (direct call vs. slickgrid)
-    			if(!cellvalue || !dataContext) {
-    				cellvalue = row;
-    			}
-    			
-    		   return $.jsFormControls.Format.decimal(cellvalue);
-    		},
+			/**
+			 * @private
+			 */
+			decimal: function(num) {
+				if (num === "" || !num) {
+					return num;
+				}
+				
+				var comma = 0;
+				if (Math.abs(num - Math.floor(num)) > 0.001) {
+					comma = 2;
+				}
+				// convert to a nice number for display
+				var n = num, 
+					c = isNaN(c = Math.abs(comma)) ? 2 : comma, 
+					d = ',', // decimal d == undefined ? "," : d, 
+					t = '.', // thousand: t == undefined ? "." : t, 
+					i = parseInt(n = Math.abs( +n || 0).toFixed(c), 10) + "", 
+					j = (j = i.length) > 3 ? j % 3 : 0;
+				return (num<0 ? "-" : "") + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+			},
 
-    		/**
-    		 * @private
-    		 */
-    		dateTime: function(cellvalue, options, rowObject) {
-    			return (this.date(cellvalue) + " " + this.time(cellvalue));
-    		},
 
-    		/**
-    		 * @private
-    		 */
-    		date: function(row, cell, cellvalue, columnDef, dataContext) {
-    			// cleanup parameters (direct call vs. slickgrid)
-    			if(!cellvalue) {
-    				cellvalue = row;
-    				row = null;
-    			}
+			/**
+			 * @private
+			 */
+			currency: function(row, cell, cellvalue, columnDef, dataContext) {
+				// cleanup parameters (direct call vs. slickgrid)
+				if(!cellvalue || !dataContext) {
+					cellvalue = row;
+				}
+				
+				return $.jsFormControls.Format.decimal(cellvalue);
+			},
 
-    			if(!cellvalue) {
-    				if(cell) {
-    					return "&#160;";
-    				}
-    				return "";
-    			}
-    			
-    			var d = new Date();
-    			d.setTime(cellvalue);								
-    			var year = d.getYear();
-    			if(year < 1900) {
-    				year += 1900;
-    			}
-    				
-    			return this._pad(d.getDate()) + "." + this._pad((d.getMonth()+1)) + "." + this._pad(year);
-    		},
+			/**
+			 * @private
+			 */
+			dateTime: function(cellvalue, options, rowObject) {
+				return (this.date(cellvalue) + " " + this.time(cellvalue));
+			},
 
-    		/**
-    		 * @private
-    		 */
-    		time: function(row, cell, value, columnDef, dataContext) {
-    			// cleanup parameters (direct call vs. slickgrid)
-    			if(!value) {
-    				value = row;
-    				row = null;
-    			}
+			/**
+			 * @private
+			 */
+			date: function(row, cell, cellvalue, columnDef, dataContext) {
+				// cleanup parameters (direct call vs. slickgrid)
+				if(!cellvalue) {
+					cellvalue = row;
+					row = null;
+				}
 
-    			if(!value) {
-    				if(cell) {
-    					return "&#160;";
-    				}
-    				return "";
-    			}
-    			
-    			var d = new Date();
-    			d.setTime(value);								
-    			return this._pad(d.getHours()) + ":" + this._pad(d.getMinutes()); //  + ":" + pad(d.getSeconds()); don't need seconds
-    		},
+				if(!cellvalue) {
+					if(cell) {
+						return "&#160;";
+					}
+					return "";
+				}
+				
+				var d = new Date();
+				d.setTime(cellvalue);
+				var year = d.getYear();
+				if(year < 1900) {
+					year += 1900;
+				}
+					
+				return this._pad(d.getDate()) + "." + this._pad((d.getMonth()+1)) + "." + this._pad(year);
+			},
 
-    		/**
-    		 * 
-    		 * @param value a string value to format
-    		 * @param allowms true to allow komma (i.e. 00.00)
-    		 * @return something in the form of 00:00.00
-    		 * @private
-    		 */
-    		timespan: function(row, cell, value, columnDef, dataContext, allowcomma) {
-    			// cleanup parameters (direct call vs. slickgrid)
-    			if(!value) {
-    				value = row;
-    				allowcomma = cell;
-    				row = null;
-    				cell = null;
-    			}
+			/**
+			 * @private
+			 */
+			time: function(row, cell, value, columnDef, dataContext) {
+				// cleanup parameters (direct call vs. slickgrid)
+				if(!value) {
+					value = row;
+					row = null;
+				}
 
-    			var tokens = value.split(":");
-    			// check each token
-    			for(var i=0; i<tokens.length; i++) {
-    				var nt = Number(tokens[i]);
-    				if(!nt || nt === 'NaN') {
-    					nt = 0;
-    				}
-    				tokens[i] = this._pad(nt);
-    			}
-    			
-    			if(tokens.length <= 0) {
-    				return "0:00";
-    			}
+				if(!value) {
+					if(cell) {
+						return "&#160;";
+					}
+					return "";
+				}
+				
+				var d = new Date();
+				d.setTime(value);								
+				return this._pad(d.getHours()) + ":" + this._pad(d.getMinutes()); //  + ":" + pad(d.getSeconds()); don't need seconds
+			},
 
-    			if(tokens.length == 1) {
-    				return "0:" + this._pad(allowkomma ? tokens[0] : Math.floor(tokens[0]));
-    			}
-    			
-    			if(tokens.length == 2) {
-    				return allowkomma ? tokens[0] : Math.floor(tokens[0]) + ":" + this._pad(allowkomma ? tokens[1] : Math.floor(tokens[1]));
-    			}
-    			
-    			return allowkomma ? tokens[0] : Math.floor(tokens[0]) + ":" + this._pad(allowkomma ? tokens[1] : Math.floor(tokens[1])) + ":" + pad(allowkomma ? tokens[2] : Math.floor(tokens[2]));
-    		},
-    		
-    		/**
-    		 * Formats a time to "human"
-    		 * @param value the time in milliseconds
-    		 * @returns the time for display in human readable
-    		 */
-    		humanTime: function(row, cell, value, columnDef, dataContext) {
-    			// cleanup parameters (direct call vs. slickgrid)
-    			if(!value) {
-    				value = row;
-    				row = null;
-    			}
-    			
-    			
-    			if (isNaN(value)) {
-    				if(!value || value.length === 0) {
-    					return "-";
-    				}
-    				return value;
-    			}
-    			
-    			var h = Math.floor(value/3600000);
-    			value -= h * 3600000;
-    			var m = Math.floor(value/60000);
-    			value -= m * 60000;
-    			var s = Math.floor(value/1000);
-    			value -= s * 1000;
-    			
-    			var out = "";
-    			if (h > 0) {
-    				out += h + "h ";
-    				// ignore seconds and milliseconds if we have hours
-    				s = 0;
-    				value = 0;
-    			}
-    			if (m > 0) {
-    				out += m + "m ";
-    				// ignore milliseconds
-    				value = 0;
-    			}
-    			if (s > 0) {
-    				out += s + "s ";
-    				value = 0;
-    			}
-    			
-    			if (value > 0) {
-    				out += value + "ms";
-    			}
-    			// trim output
-    			return out.trim();
-    		}
-    };
+			/**
+			 * 
+			 * @param value a string value to format
+			 * @param allowms true to allow komma (i.e. 00.00)
+			 * @return something in the form of 00:00.00
+			 * @private
+			 */
+			timespan: function(row, cell, value, columnDef, dataContext, allowcomma) {
+				// cleanup parameters (direct call vs. slickgrid)
+				if(!value) {
+					value = row;
+					allowcomma = cell;
+					row = null;
+					cell = null;
+				}
+
+				var tokens = value.split(":");
+				// check each token
+				for(var i=0; i<tokens.length; i++) {
+					var nt = Number(tokens[i]);
+					if(!nt || nt === 'NaN') {
+						nt = 0;
+					}
+					tokens[i] = this._pad(nt);
+				}
+				
+				if(tokens.length <= 0) {
+					return "0:00";
+				}
+
+				if(tokens.length == 1) {
+					return "0:" + this._pad(allowkomma ? tokens[0] : Math.floor(tokens[0]));
+				}
+				
+				if(tokens.length == 2) {
+					return allowkomma ? tokens[0] : Math.floor(tokens[0]) + ":" + this._pad(allowkomma ? tokens[1] : Math.floor(tokens[1]));
+				}
+				
+				return allowkomma ? tokens[0] : Math.floor(tokens[0]) + ":" + this._pad(allowkomma ? tokens[1] : Math.floor(tokens[1])) + ":" + pad(allowkomma ? tokens[2] : Math.floor(tokens[2]));
+			},
+			
+			/**
+			 * Formats a time to "human"
+			 * @param value the time in milliseconds
+			 * @returns the time for display in human readable
+			 */
+			humanTime: function(row, cell, value, columnDef, dataContext) {
+				// cleanup parameters (direct call vs. slickgrid)
+				if(!value) {
+					value = row;
+					row = null;
+				}
+				
+				
+				if (isNaN(value)) {
+					if(!value || value.length === 0) {
+						return "-";
+					}
+					return value;
+				}
+				
+				var h = Math.floor(value/3600000);
+				value -= h * 3600000;
+				var m = Math.floor(value/60000);
+				value -= m * 60000;
+				var s = Math.floor(value/1000);
+				value -= s * 1000;
+				
+				var out = "";
+				if (h > 0) {
+					out += h + "h ";
+					// ignore seconds and milliseconds if we have hours
+					s = 0;
+					value = 0;
+				}
+				if (m > 0) {
+					out += m + "m ";
+					// ignore milliseconds
+					value = 0;
+				}
+				if (s > 0) {
+					out += s + "s ";
+					value = 0;
+				}
+				
+				if (value > 0) {
+					out += value + "ms";
+				}
+				// trim output
+				return out.trim();
+			}
+	};
 
 })( jQuery, window );
 
@@ -612,14 +610,14 @@
  * @returns the trimmed string
  */
 String.prototype.trim = function() {
-    return this.replace(/^\s+|\s+$/g, "");
+	return this.replace(/^\s+|\s+$/g, "");
 };
 
 /* check start of a string */
 String.prototype.startsWith = function(str) {
-	if((this == null) || (this.length <= 0))
+	if((this === null) || (this.length <= 0))
 		return false;
-	if((str == null) || (str == "null") || (str.length <= 0))
+	if((str === null) || (str == "null") || (str.length <= 0))
 		return false;
 	if(this.substr(0, str.length) == str)
 		return true;
@@ -628,9 +626,9 @@ String.prototype.startsWith = function(str) {
 
 /* check start of a string */
 String.prototype.startsWithIgnoreCase = function(str) {
-	if((this == null) || (this.length <= 0))
+	if((this === null) || (this.length <= 0))
 		return false;
-	if((str == null) || (str == "null") || (str.length <= 0))
+	if((str === null) || (str == "null") || (str.length <= 0))
 		return false;
 	if(this.substr(0, str.length).toLowerCase() == str.toLowerCase())
 		return true;
@@ -639,9 +637,9 @@ String.prototype.startsWithIgnoreCase = function(str) {
 
 /* check end of a string */
 String.prototype.endsWith = function(str) {
-	if((this == null) || (this.length <= 0))
+	if((this === null) || (this.length <= 0))
 		return false;
-	if((str == null) || (str == "null") || (str.length <= 0) || (str.length > this.length))
+	if((str === null) || (str == "null") || (str.length <= 0) || (str.length > this.length))
 		return false;
 	if(this.substr(this.length - str.length) == str)
 		return true;

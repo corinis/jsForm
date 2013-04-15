@@ -1,0 +1,33 @@
+{
+  "name": "jquery.jsForm",
+  "title": "jQuery JSON Form",
+  "description": "Form handling using jquery and json",
+  "version": "1.0.rc.1",
+  "homepage": "https://github.com/corinis/jsForm",
+  "author": {
+    "name": "Niko Berger",
+    "url": "http://www.gargan.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/corinis/jsForm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/corinis/jsForm/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT, GPL, LGPL",
+      "url": "https://github.com/jquery/jquery/blob/master/MIT-LICENSE.txt"
+    }
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "grunt-compare-size": "~0.4.0",
+    "grunt-contrib-watch": "0.3.1",
+    "grunt-contrib-jshint": "0.3.0",
+    "grunt-contrib-uglify": "0.1.2",
+    "grunt": "~0.4.1"
+  },
+  "keywords": []
+}
