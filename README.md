@@ -17,6 +17,13 @@ The main features of this library are:
 * Compatible with jquery ui 
 * fully unit tested using qunit
 
+# Download
+
+Current Version: 1.0 Release Candidate 1
+
+* [Minified](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm.min-1.0.rc.1.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
+* [Source](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.0.rc.1.js)
+
 # Documentation
 
 can be found in the github wiki:
