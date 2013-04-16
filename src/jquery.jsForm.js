@@ -418,7 +418,7 @@
 	 */
 	JsForm.prototype._initList = function(container) {
 		// avoid double initialisation
-		if(container.data("template") !== null) {
+		if(container.data("template")) {
 			return;
 		}
 		
