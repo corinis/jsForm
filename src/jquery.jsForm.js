@@ -311,7 +311,7 @@
 						// get the result
 						blobInput.data("blob", e.target.result);
 					};
-					})(f);
+					})(this);
 
 					// Read in the image file as a data URL.
 					reader.readAsDataURL(this);
