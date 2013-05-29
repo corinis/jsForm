@@ -363,7 +363,7 @@
 					return $.jsFormControls.Format.date(cdata);
 				} else if($(ele).hasClass("currency")) {
 					return $.jsFormControls.Format.currency(cdata);
-				} else if($(ele).hasClass("number")) {
+				} else if($(ele).hasClass("decimal")) {
 					return $.jsFormControls.Format.decimal(cdata);
 				}
 				
