@@ -1,0 +1,104 @@
+<html>
+<head>
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css"/>
+<link rel="stylesheet" href="lib/jquery.tagit.css"/>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="src/jquery.jsForm.js"></script>
+<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+<script src="lib/tag-it.js"></script>
+<script>
+$(function(){
+	// some json data
+	var jsonData = {
+		name: "TestName",	// standard inputs
+		description: "long Description\nMultiline",	// textarea
+		active: true,	// checkbox
+		tags: [{name: "test", id: 1},{name: "jsform", id: 2}],
+		state: "VISIBLE"	// selects (enums)
+	};
+	
+	// sample lsit of tags - should come from a json call
+	var tags = [
+	            {"name": "test", "id": 1},
+	            {"name": "jsform", "id": 2},
+	            {"name": "world", "id": 3},
+	            {"name": "austria", "id": 4},
+	            {"name": "vienna", "id": 5},
+	            {"name": "hello", "id": 6}
+		];
+
+	// initialize the form, prefix is optional and defaults to data
+	$("#details").jsForm({
+		data:jsonData
+	});
+
+	$("#show").click(function() {
+		// show the json data
+		alert(JSON.stringify($("#details").jsForm("get"), null, " "));
+	});
+	
+	var format = $(".tagit").attr("data-format");
+	if(format) {
+		format = format.split(",");
+	}
+	
+	$(".tagit").val("");
+	
+	$(".tagit").tagit({
+		autocomplete: {
+			delay: 0,
+			minLength: 0,
+			source: function(request, response) {
+				
+				var data = {};
+				data.data = $.grep(tags, function(n, i) {
+					return n.name.indexOf(request.term) !== -1;
+				});
+				
+				// get the response
+				var responseData = [];
+				$.each(data.data, function() {
+					var optionDisplay = "";
+					for(var j = 0; j < format.length; j++) {
+						if(format[j] === "*") {
+							optionDisplay += this;
+						} else if(format[j].indexOf("'") === -1) {
+							optionDisplay += this[format[j]];
+						} else {
+							optionDisplay += format[j].replace(/'/g, "");
+						}
+						
+					}
+					responseData.push({label: optionDisplay, data: this});
+				});
+				response(responseData);
+			}
+		}
+	});
+
+	// update the pojo with the tags
+	$(".tagit").change(function(){
+		$(this).data().pojo = $(".tagit").tagit("assignedObjects");
+	});
+
+	// add the values
+	$.each($(".tagit").data().pojo, function() {
+		$(".tagit").tagit("createTag", {label: this.name,data: this});
+	});
+	
+});
+</script>
+</head>
+<body>
+<h1>Autocomplete form with tag-it control</h1>
+<div id="details">
+	Name: <input name="data.name"/><br/>
+	<input type="checkbox" name="data.active"/> active<br/>
+	<textarea name="data.description"></textarea><br/>
+	<br/>
+	<input name="data.tags" class="tagit object" data-format="id,': ',name"/>
+</div>
+<button id="show">Show Object</button>
+</body>
+</html>

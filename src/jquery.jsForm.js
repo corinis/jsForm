@@ -538,6 +538,7 @@
 				return;
 			}
 			
+			// validate the field
 			$(this).trigger("validate", true);
 			
 			// cut away the prefix
@@ -715,8 +716,11 @@
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
 					cdata = that._renderObject(cdata, $(this).attr("data-display"));
+				} else if($.isArray(cdata)) {
+					$(this).data().pojo = cdata;
+					$(this).addClass("POJO");
+					cdata = "[ARRAY]";
 				}
-				
 
 				if($(this).attr("type") === "checkbox") {
 					$(this).prop("checked", (cdata === true || cdata === "true"));
