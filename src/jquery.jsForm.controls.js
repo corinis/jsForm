@@ -45,7 +45,12 @@
 		Handlebars.registerHelper("datetime", function(data){
 			if(!data)
 				return "";
-			return $.jsFormControls.Format.datetime(data);
+			return $.jsFormControls.Format.dateTime(data);
+		});
+		Handlebars.registerHelper("dateTime", function(data){
+			if(!data)
+				return "";
+			return $.jsFormControls.Format.dateTime(data);
 		});
 		Handlebars.registerHelper("timespan", function(data){
 			if(!data)
@@ -109,12 +114,12 @@
 		// show datepicker for all inputs
 		location.find("input.date").each(function(){
 			var format = $(this).attr("data-format");
-			if(!format) {
-				format = "dd.mm.yy";
-			}
 			// only if jquery ui is available
 			if($(this).datepicker) {
-				$(this).datepicker({dateFormat: format});
+				if(format)
+					$(this).datepicker({dateFormat: format});
+				else
+					$(this).datepicker();
 			}
 		});
 			
@@ -359,11 +364,13 @@
 			format: function(ele, cdata) {
 				if($(ele).hasClass("dateTime")) {
 					return $.jsFormControls.Format.dateTime(cdata);
+				} if($(ele).hasClass("datetime")) {
+					return $.jsFormControls.Format.dateTime(cdata);
 				} else if($(ele).hasClass("date")) {
 					return $.jsFormControls.Format.date(cdata);
 				} else if($(ele).hasClass("currency")) {
 					return $.jsFormControls.Format.currency(cdata);
-				} else if($(ele).hasClass("decimal")) {
+				} else if($(ele).hasClass("number")) {
 					return $.jsFormControls.Format.decimal(cdata);
 				}
 				
@@ -400,6 +407,9 @@
 					return null;
 				}
 				
+				if($.format) 
+					return $.format.number(num); 
+
 				// either we have , (for komma) or a . and at least 3 following numbers (not a rounden komma)
 				if(num.indexOf(",") !== -1 || (num.length - num.indexOf('.') > 3))
 				{
@@ -423,10 +433,13 @@
 			 * @private
 			 */
 			decimal: function(num) {
-				if (num === "" || !num) {
+				if (num === "" || !num || isNaN(num)) {
 					return num;
 				}
 				
+				if($.format) 
+					return $.format.number(num, $(document).data().i18n.number.format); 
+					
 				var comma = 0;
 				if (Math.abs(num - Math.floor(num)) > 0.001) {
 					comma = 2;
@@ -447,8 +460,16 @@
 			 */
 			currency: function(row, cell, cellvalue, columnDef, dataContext) {
 				// cleanup parameters (direct call vs. slickgrid)
-				if(!cellvalue || !dataContext) {
+				if(!cellvalue || isNaN(cellvalue)) {
 					cellvalue = row;
+					row = null;
+				}
+
+				if(!cellvalue) {
+					if(cell) {
+						return "&#160;";
+					}
+					return "";
 				}
 				
 				return $.jsFormControls.Format.decimal(cellvalue);
@@ -457,7 +478,20 @@
 			/**
 			 * @private
 			 */
-			dateTime: function(cellvalue, options, rowObject) {
+			dateTime: function(row, cell, cellvalue, columnDef, dataContext) {
+				// cleanup parameters (direct call vs. slickgrid)
+				if(!cellvalue || isNaN(cellvalue)) {
+					cellvalue = row;
+					row = null;
+				}
+
+				if(!cellvalue) {
+					if(cell) {
+						return "&#160;";
+					}
+					return "";
+				}
+				
 				return (this.date(cellvalue) + " " + this.time(cellvalue));
 			},
 
@@ -465,8 +499,9 @@
 			 * @private
 			 */
 			date: function(row, cell, cellvalue, columnDef, dataContext) {
+				
 				// cleanup parameters (direct call vs. slickgrid)
-				if(!cellvalue) {
+				if(!cellvalue || isNaN(cellvalue)) {
 					cellvalue = row;
 					row = null;
 				}
@@ -484,8 +519,11 @@
 				if(year < 1900) {
 					year += 1900;
 				}
-					
-				return this._pad(d.getDate()) + "." + this._pad((d.getMonth()+1)) + "." + this._pad(year);
+				
+				if($.format)
+					return $.format.date(d, $(document).data().i18n.date.shortDateFormat);
+				else
+					return this._pad(d.getDate()) + "." + this._pad((d.getMonth()+1)) + "." + this._pad(year);
 			},
 
 			/**
@@ -506,8 +544,11 @@
 				}
 				
 				var d = new Date();
-				d.setTime(value);								
-				return this._pad(d.getHours()) + ":" + this._pad(d.getMinutes()); //  + ":" + pad(d.getSeconds()); don't need seconds
+				d.setTime(value);
+				if($.format)
+					return $.format.date(d, $(document).data().i18n.date.timeFormat);
+				else
+					return this._pad(d.getHours()) + ":" + this._pad(d.getMinutes()); //  + ":" + pad(d.getSeconds()); don't need seconds
 			},
 
 			/**
