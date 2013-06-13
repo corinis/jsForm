@@ -68,8 +68,12 @@
 			if($.jsFormControls) {
 				$(this.element).jsFormControls();
 			} else {
-				if(typeof console !== "undefined") {
-					console.log("jquery.JsForm.controls not available!");
+				try {
+					if(typeof console !== "undefined") {
+						console.log("jquery.JsForm.controls not available!");
+					}
+				} catch(ex) {
+					// ignore
 				}
 			}
 		}
@@ -100,6 +104,7 @@
 		// all collections
 		var collectionMap = {},
 			that = this;
+		$(form).data().collections = collectionMap; 
 			
 		$(".collection", form).each(function() {
 			var colName = $(this).attr("data-field");
@@ -150,8 +155,8 @@
 				return;
 			}
 			
-			// remember the collections
-			$(this).data("collections", collectionMap[$(this).attr("data-field")]);
+			// add the collection
+			$(this).data().collections = collectionMap[fieldName];
 			
 			$(this).click(function(){
 				// search for a collection with that name
@@ -174,6 +179,10 @@
 						
 						// its possible to have "sub" collections
 						that._initCollection(line, fieldName.substring(fieldName.indexOf('.')+1));
+						
+						// trigger a callback after the data has been rendered)
+						$(this).trigger("postAddCollection", [line, $(line).data().pojo]);
+
 						
 					}
 				});
@@ -311,7 +320,7 @@
 						// get the result
 						blobInput.data("blob", e.target.result);
 					};
-					})(this);
+					})(f);
 
 					// Read in the image file as a data URL.
 					reader.readAsDataURL(this);
@@ -425,11 +434,6 @@
 		// get all children
 		var tmpl = container.children().detach();
 		
-		// enable controls on the template
-		if($.jsFormControls) {
-			$(tmpl).jsFormControls();
-		} 
-		
 		// remove an id if there is one
 		tmpl.removeAttr("id");
 		container.data("template", tmpl);
@@ -538,7 +542,6 @@
 				return;
 			}
 			
-			// validate the field
 			$(this).trigger("validate", true);
 			
 			// cut away the prefix
@@ -560,7 +563,7 @@
 			} else if($(this).hasClass("blob")) { // file upload blob
 				val = $(this).data("blob");
 			} else
-			// set empty numbers to null
+			// set empty numbers or dates to null
 			if(val === "" && ($(this).hasClass("number") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
 				val = null;
 			}
@@ -716,11 +719,8 @@
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
 					cdata = that._renderObject(cdata, $(this).attr("data-display"));
-				} else if($.isArray(cdata)) {
-					$(this).data().pojo = cdata;
-					$(this).addClass("POJO");
-					cdata = "[ARRAY]";
 				}
+				
 
 				if($(this).attr("type") === "checkbox") {
 					$(this).prop("checked", (cdata === true || cdata === "true"));
@@ -1160,6 +1160,12 @@
 	 */
 	JsForm.prototype._addCollectionControls = function(line) {
 		var that = this;
+
+		// enable controls on the line
+		if($.jsFormControls) {
+			$(line).jsFormControls();
+		} 
+
 		$(".delete", line).click(function(){
 			var ele = $(this).closest(".POJO");
 			// trigger a callback
@@ -1304,7 +1310,10 @@
 			return null;
 		}
 		
-		// either we have , (for komma) or a . and at least 3 following numbers (not a rounden komma)
+		if($.format) 
+			return $.format.number(num); 
+
+		// either we have , (for komma) or a . and at least 3 following numbers (not a round komma)
 		if(num.indexOf(",") != -1 || (num.length - num.indexOf('.') > 3))
 		{
 			num = num.replace(/\./g, "").replace(",", ".");
