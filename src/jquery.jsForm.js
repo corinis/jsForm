@@ -610,11 +610,20 @@
 					d0[parts[1]] = val;
 				} else if (parts.length === 3) {
 					d1 = d0[parts[1]];
+					if(d1 === undefined) {
+						d1 = {};
+						d0[parts[1]] = d1;
+					}
 					d1[parts[2]] = val;
 				} else if (parts.length === 4)
 				{
 					d1 = d0[parts[1]];
 					d2 = d1[parts[2]];
+					if(d2 === undefined) {
+						d2 = {};
+						d1[parts[2]] = d2;
+					}
+					d1[parts[2]] = val;
 					d2[parts[3]] = val;
 				}
 				// more should not be necessary	
