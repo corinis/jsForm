@@ -2,7 +2,7 @@
   "name": "jquery.jsForm",
   "title": "jQuery JSON Form",
   "description": "Form handling using jquery and json",
-  "version": "1.0.rc.2",
+  "version": "1.0.3",
   "homepage": "https://github.com/corinis/jsForm",
   "author": {
     "name": "Niko Berger",
