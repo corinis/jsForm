@@ -110,12 +110,12 @@
 			var colName = $(this).attr("data-field");
 			// skip collections without a data-field mapping
 			if (!colName || colName.indexOf(prefix + ".") !== 0) {
-				return;
+				return;	
 			}
 
 			var container = $(this);
 			
-			// remember the collection
+			// remember the collection 
 			var cols = collectionMap[colName];
 			if(cols) {
 				cols.push(container);
@@ -876,8 +876,15 @@
 				return;
 			}
 			
+			var colParent = that._getParent(pojo, fieldname, true);
+			
+			// get only the last part
+			if(fieldname.indexOf('.') !== -1) {
+				fieldname = fieldname.substring(fieldname.lastIndexOf('.') + 1);
+			}
+			
 			// clear the collection
-			pojo[fieldname] = [];
+			colParent[fieldname] = [];
 			
 			// go through all direct childs - each one is an element
 			$(this).children().each(function(){
@@ -896,7 +903,7 @@
 					if($(".invalid", this).length > 0) {
 						invalid = true;
 					}
-					pojo[fieldname].push(ele);
+					colParent[fieldname].push(ele);
 				} else {
 					$(".invalid", this).removeClass("invalid");
 				}
@@ -1062,14 +1069,16 @@
 			// data for the collection filling
 			var colData = null;
 			
-			var fieldLookup = fieldname.split(".");
-			// fieldname: last entry 
-			fieldname = fieldLookup.pop();
-			colData = data[fieldname];
+			var cname = fieldname;
+			// remove the prefix
+			if (prefix) {
+				cname = cname.substring(prefix.length + 1);
+			}
+			colData = that._get(data, cname)
 
 			if(colData) {
 				// fill the collection
-				that._fillList(container, colData, fieldname);
+				that._fillList(container, colData, cname);
 			}
 		});
 	};
@@ -1094,6 +1103,12 @@
 		if(!$.isArray(data)) {
 			return;
 		}
+		
+		// cut away any prefixes - only the fieldname is used
+		if(prefix.indexOf('.') !== -1) {
+			prefix = prefix.substring(prefix.lastIndexOf('.')+1);
+		}
+		
 		
 		// check if we need to sort the array
 		if($(container).hasClass("sort")) {
@@ -1271,9 +1286,12 @@
 
 	/**
 	 * Retrieve a value from a given object by using dot-notation
+	 * @param obj the object to start with
+	 * @param the child to get (dot notation)
+	 * @param create set to true and non-existant levels will be created (always returns non-null)
 	 * @private
 	 */
-	JsForm.prototype._get = function(obj, expr) {
+	JsForm.prototype._get = function(obj, expr, create) {
 		var ret, p, prm = "", i;
 		if(typeof expr === "function") {
 			return expr(obj); 
@@ -1293,6 +1311,10 @@
 					ret = obj;
 					while(ret && i--) {
 						p = prm.shift();
+						// create the levels
+						if(create && !ret[p]) {
+							ret[p] = {};
+						}
 						ret = ret[p];
 					}
 				}
@@ -1306,6 +1328,23 @@
 			return ret.trim();
 		}
 		return ret;
+	};
+	
+		
+	/**
+	 * get the "parent" object of a given dot-notation. this will not return the actual 
+	 * element given in the dot notation but itws parent (i.e.: when using a.b.c -> it will return b)
+	 * @param obj the object to start with
+	 * @param the child to get (dot notation)
+	 * @param create set to true and non-existant levels will be created (always returns non-null)
+	 * @private
+	 */
+	JsForm.prototype._getParent = function(obj, expr, create) {
+		if(expr.indexOf('.') === -1)
+			return obj;
+		
+		expr = expr.substring(0, expr.lastIndexOf('.'));
+		return this._get(obj, expr, create);
 	};
 
 	/**
