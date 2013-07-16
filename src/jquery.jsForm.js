@@ -316,13 +316,11 @@
 				$.each(files, function() {
 					var reader = new FileReader();
 
-					// closure to capture the file information
-					reader.onload = (function(theFile) {
-					return function(e) {
+					// capture the file information
+					reader.onload = function(e) {
 						// get the result
 						blobInput.data("blob", e.target.result);
 					};
-					})(f);
 
 					// Read in the image file as a data URL.
 					reader.readAsDataURL(this);
