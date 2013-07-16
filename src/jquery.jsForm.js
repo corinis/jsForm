@@ -312,21 +312,23 @@
 				blobInput.data("name", fileName);
 				
 				var files = evt.target.files; // FileList object
-				// Loop through the FileList and render image files as thumbnails.
-				$.each(files, function() {
-					var reader = new FileReader();
-
-					// capture the file information
-					reader.onload = function(e) {
-						// get the result
-						blobInput.data("blob", e.target.result);
-					};
-
-					// Read in the image file as a data URL.
-					reader.readAsDataURL(this);
-
-					$(this).trigger("fileChange");
-				});
+				// Loop through the FileList (and render image files as thumbnails.(skip for ie < 9)
+				if(files && files.length) {
+					$.each(files, function() {
+						var reader = new FileReader();
+	
+						// closure to capture the file information
+						reader.onload = function(e) {
+							// get the result
+							blobInput.data("blob", e.target.result);
+						};
+	
+						// Read in the image file as a data URL.
+						reader.readAsDataURL(this);
+	
+						$(this).trigger("fileChange");
+					});
+				} 
 			});
 			
 			
