@@ -158,7 +158,9 @@
 			// add the collection
 			$(this).data().collections = collectionMap[fieldName];
 			
-			$(this).click(function(){
+			$(this).click(function(ev){
+				ev.preventDefault();
+				
 				// search for a collection with that name
 				$.each($(this).data("collections"), function() {
 					var tmpl = $(this).data("template");
