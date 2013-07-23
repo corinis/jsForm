@@ -1,0 +1,29 @@
+{
+    "name": "jsForm",
+    "title": "jQuery JSON Form",
+    "description": "jQuery plugin connecting a html form with a javascript object for manipulation",
+    "keywords": [
+        "form",
+        "json",
+        "data"
+    ],
+    "version": "1.0.3",
+    "author": {
+        "name": "Niko Berger"
+    },
+    "maintainers": [{
+        "name": "Niko Berger",
+        "email": "niko.berger@corinis.com",
+        "url": "http://www.corinis.com"
+    }],
+    "licenses": [{
+        "type": "MIT",
+        "url": "https://github.com/corinis/jsForm/MIT-LICENSE.txt"
+    }],
+    "bugs": "https://github.com/corinis/jsForm/issues",
+    "homepage": "https://github.com/corinis/jsForm/",
+    "docs": "https://github.com/corinis/jsForm/",
+    "dependencies": {
+        "jquery": ">=1.7"
+    }
+}
