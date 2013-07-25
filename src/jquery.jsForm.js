@@ -551,7 +551,8 @@
 			
 			// skip empty
 			if(name.length < 1) {
-				return;
+				pojo = $(this).val();
+				return false;
 			}
 			
 			var val = $(this).val();
@@ -631,6 +632,8 @@
 				// more should not be necessary	
 			}
 		});
+		
+		return pojo;
 	};
 
 	
@@ -895,7 +898,7 @@
 				}
 				
 				var ele = {};
-				that._createPojoFromInput($(this), fieldname, ele);
+				ele = that._createPojoFromInput($(this), fieldname, ele);
 				
 				// also collect sub-collections
 				that._getCollection($(this), fieldname, ele, ignoreInvalid);
@@ -1289,7 +1292,7 @@
 	/**
 	 * Retrieve a value from a given object by using dot-notation
 	 * @param obj the object to start with
-	 * @param the child to get (dot notation)
+	 * @param the child to get (dot notation) 
 	 * @param create set to true and non-existant levels will be created (always returns non-null)
 	 * @private
 	 */
@@ -1301,6 +1304,10 @@
 		if (!obj) {
 			return "";
 		}
+		// reference the object itself
+		if(expr === "")
+			return obj;
+			
 		ret = obj[expr];
 		if(!ret) {
 			try {
