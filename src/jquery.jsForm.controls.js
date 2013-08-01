@@ -57,6 +57,11 @@
 				return "";
 			return $.jsFormControls.Format.humanTime(data);
 		});
+		Handlebars.registerHelper("byte", function(data){
+			if(!data)
+				return "";
+			return $.jsFormControls.Format.byte(data);
+		});
 	}
 	
 	function JsFormControls(element) {
@@ -370,6 +375,8 @@
 					return $.jsFormControls.Format.date(cdata);
 				} else if($(ele).hasClass("currency")) {
 					return $.jsFormControls.Format.currency(cdata);
+				} else if($(ele).hasClass("byte")) {
+					return $.jsFormControls.Format.byte(cdata);
 				} else if($(ele).hasClass("number")) {
 					return $.jsFormControls.Format.decimal(cdata);
 				}
@@ -428,6 +435,18 @@
 				return o;
 			},
 
+
+			byte: function(bytes) {
+				if (bytes === "" || !bytes || isNaN(bytes)) {
+					return bytes;
+				}
+				
+				var unit = 1024;
+			    if (bytes < unit) return bytes + " B";
+			    var exp = Math.floor(Math.log(bytes) / Math.log(unit));
+			    var pre = "KMGTPE".charAt(exp-1) + "B";
+			    return Math.round(bytes*10 / Math.pow(unit, exp))/10 + pre;
+			}
 
 			/**
 			 * @private
