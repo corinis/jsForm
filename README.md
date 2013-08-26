@@ -21,10 +21,10 @@ The main features of this library are:
 
 # Download
 
-Current Version: 1.0.3
+Current Version: 1.0.5
 
-* [Minified](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.0.3.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
-* [Source](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.0.3.js)
+* [Minified](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.0.5.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
+* [Source](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.0.5.js)
 
 # Documentation
 
