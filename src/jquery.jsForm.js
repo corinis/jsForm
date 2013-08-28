@@ -1615,7 +1615,6 @@
 	 *  <li>&lt;img class="field" src="prefix.fieldname"/&gt;
 	 * </ul>
 	 * @param data {object} the data
-	 * @private
 	 */
 	JsForm.prototype.fill = function(pojo) {
 		// clear first
@@ -1626,6 +1625,15 @@
 		this._fill(this.element, this.options.data, this.options.prefix);
 	};
 
+	/**
+	 * reset a form with the last data, overwriting any changes.
+	 */
+	JsForm.prototype.reset = function() {
+		// clear first
+		this.clear();
+		// fill everything
+		this._fill(this.element, this.options.data, this.options.prefix);
+	};
 
 	/**
 	 * Clear all fields in a form
