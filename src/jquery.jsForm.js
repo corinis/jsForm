@@ -110,12 +110,12 @@
 			var colName = $(this).attr("data-field");
 			// skip collections without a data-field mapping
 			if (!colName || colName.indexOf(prefix + ".") !== 0) {
-				return;	
+				return;
 			}
 
 			var container = $(this);
 			
-			// remember the collection 
+			// remember the collection
 			var cols = collectionMap[colName];
 			if(cols) {
 				cols.push(container);
@@ -587,8 +587,11 @@
 					val = 0;
 				}
 			}
-			if($(this).attr("type") === "checkbox" || $(this).attr("type") === "CHECKBOX") {
+			else if($(this).attr("type") === "checkbox" || $(this).attr("type") === "CHECKBOX") {
 				val = $(this).is(':checked');
+			}
+			else if($(this).hasClass("bool")) {
+				val = ($(this).val() === "true");
 			}
 
 			// check if we have a . - if so split
@@ -775,6 +778,8 @@
 					// actually set the value and trigger the change
 					$(this).val(value.id).change();
 					return;
+				} else if($(this).hasClass("bool")) {
+					value = value ? "true" : "false";
 				}
 				
 				$(this).children("option[value='"+value+"']").attr("selected", true);
@@ -1050,8 +1055,6 @@
 		// fill base 
 		this._fillData(form, data, prefix);
 		this._fillCollection(form, data, prefix);
-		
-		// mark fields
 	};
 
 	/**
