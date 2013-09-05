@@ -562,6 +562,9 @@
 					val = null;
 				}
 			} else if($(this).hasClass("object") || $(this).hasClass("POJO")) {
+				if($("option:selected", this).data() && $("option:selected", this).data().pojo) {
+					val = $("option:selected", this).data().pojo;
+				}
 				val = $(this).data("pojo");
 			} else if($(this).hasClass("blob")) { // file upload blob
 				val = $(this).data("blob");
@@ -569,7 +572,7 @@
 			// set empty numbers or dates to null
 			if(val === "" && ($(this).hasClass("number") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
 				val = null;
-			}
+			} 
 			
 			// check for percentage: this is input / 100
 			if ($(this).hasClass("percent")) {
@@ -770,13 +773,17 @@
 				}
 				// remove "old" selected options
 				$(this).children("option").removeAttr("selected");
+				var pk = $(this).attr("data-key");
+				if(!pk) {
+					pk = "id";
+				}
 				
 				var value = that._get(data, cname);
 				// try selecting based on the id 
-				if (value.id) {
-					$(this).children("option[value='"+value.id+"']").attr("selected", true);
+				if (value[pk]) {
+					$(this).children("option[value='"+value[pk]+"']").attr("selected", true);
 					// actually set the value and trigger the change
-					$(this).val(value.id).change();
+					$(this).val(value[pk]).change();
 					return;
 				} else if($(this).hasClass("bool")) {
 					value = value ? "true" : "false";
