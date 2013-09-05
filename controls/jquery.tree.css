@@ -1,0 +1,60 @@
+/* tree */
+.tree li, .tree ul {
+  display: block;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tree .control span{
+	cursor:pointer;
+}
+
+.tree span {
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+.tree li {
+  line-height: 18px;
+  margin-left: 18px;
+  min-height: 18px;
+  min-width: 18px;
+  margin-top: -6px;
+  white-space: nowrap;
+  overflow:visible;
+}
+
+.tree > ul > li {
+  margin-left: 0;
+}
+.tree ins {
+  display: inline-block;
+  height: 18px;
+  margin-bottom: -4px;
+  padding: 0;
+  text-decoration: none;
+  width: 16px;
+  position:relative;
+  cursor: pointer;
+}
+
+.tree li.open > ul {
+  display: block;
+}
+
+.tree li a {
+	color: black;
+	height: 16px;
+	line-height: 16px;
+	margin: 0;
+	text-decoration: none;
+	white-space: nowrap;
+	padding: 0 2px;
+}
+
+.tree a > ins {
+  height: 16px;
+  width: 16px;
+  left:0px;
+}

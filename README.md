@@ -34,6 +34,14 @@ can be found in the github wiki:
 * [API Documentation](https://github.com/corinis/jsForm/wiki/JsForm-Documentation)
 * [Form Controls and Validation](https://github.com/corinis/jsForm/wiki/Controls)
 
+# Custom UI Controls
+
+Additionally to the base form, I created some custom controls. There might be much more powerful versions out there,
+but the aim here is to have simple to use controls that are compatible with the json-approach of jsForm and also 
+compatible to jquery-ui. 
+* [Tree](https://github.com/corinis/jsForm/wiki/Tree)
+ - [jquery.tree.js](https://raw.github.com/corinis/jsForm/master/controls/jquery.tree.js)
+ - [jquery.tree.css](https://raw.github.com/corinis/jsForm/master/controls/jquery.tree.css)
 
 # Quickstart
 
