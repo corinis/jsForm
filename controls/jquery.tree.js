@@ -26,19 +26,25 @@
 			 */
 			autoIcon: false,
 			/**
-			 * levels to open (true=all, false=none, number: level)
+			 * open all levels
 			 */
 			open: false,
 			
 			/**
-			 * field 
+			 * used as name
 			 */
 			name: "name",
+			/**
+			 * field used for title
+			 */
 			title: null,
+			/**
+			 * field to recurse into
+			 */
 			children: "children",
 			
 			/**
-			 * style
+			 * style when a node is active (null: disables activation)
 			 */
 			active: "ui-state-active",
 			hover: "ui-state-hover",
@@ -52,7 +58,16 @@
 			/**
 			 * callback function when a node is selected
 			 */
-			select: null
+			select: null,
+			/**
+			 * callback function when a node is double clicked
+			 */
+			dblclick: null,
+			
+			/**
+			 * callback function when a node is drag/dropped. if null drag/dropping is disabled
+			 */
+			drop: null
 		}, options);
 		
 		this.element = element;
@@ -98,13 +113,25 @@
 			}
 
 			$("span", node).hover(function(){$(this).addClass(config.hover);}, function(){$(this).removeClass(config.hover);}).click(function(){
-				$this.find("." + config.active).removeClass(config.active);
-				$(this).addClass(config.active);
+				if(config.active) {
+					$this.find("." + config.active).removeClass(config.active);
+					$(this).addClass(config.active);
+				}
 				// trigger selection
 				if(config.select)
 					config.select(this);
 				$this.data().selected = this;
 				$this.trigger("select", this);
+			}).dblclick(function(){
+				if(config.active) {
+					$this.find("." + config.active).removeClass(config.active);
+					$(this).addClass(config.active);
+				}
+				// trigger selection
+				if(config.dblclick)
+					config.dblclick(this);
+				$this.data().selected = this;
+				$this.trigger("dblclick", this);
 			});
 			node.data().node = this;
 			root.append(node);
@@ -117,12 +144,44 @@
 	 * @private 
 	 */
 	Tree.prototype._repaint = function() {
+		this._clear();
 		
 		if(this.options.data) {
 			this._paint($(this.element), this.options.data);
 		}
 			
 		this._enable(this.element, this.options.data);
+		
+		if(this.options.drop) {
+			this._enableSorting();
+		}
+	};
+	
+	Tree.prototype._enableSorting = function() {
+		var $this = $(this.element),config = this.options;
+		
+		// now add dragndrop capability
+		$("li", $this).draggable({
+			opacity: 0.5,
+			revert:true
+		});
+		
+		// and drop them
+		$("li span", $this).droppable({
+			tolerance: "pointer",
+			hoverClass: "ui-state-hover",
+			drop: function(event, ui){
+				var dropped = ui.draggable;
+				var me = $(this).parent();
+				// reload after move
+				var meObj = me.data().node;
+
+				// make the change in the pojos
+				var dropObj = dropped.data().node;
+				
+				config.drop(dropObj, meObj);
+			}
+		});
 	};
 		
 		
