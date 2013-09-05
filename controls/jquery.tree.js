@@ -56,6 +56,16 @@
 			data: null,
 			
 			/**
+			 * true to execute the loaddata automatically
+			 */
+			load: true,
+			
+			/**
+			 * callback function for data fetching
+			 */
+			loadData: null,
+			
+			/**
 			 * callback function when a node is selected
 			 */
 			select: null,
@@ -72,6 +82,10 @@
 		
 		this.element = element;
 
+		if(this.options.load && this.options.loadData) {
+			this.options.loadData();
+		}
+		
 		this._init();
 	}
 
@@ -119,7 +133,7 @@
 				}
 				// trigger selection
 				if(config.select)
-					config.select(this);
+					config.select($(this).parent().data().node);
 				$this.data().selected = this;
 				$this.trigger("select", this);
 			}).dblclick(function(){
@@ -129,9 +143,9 @@
 				}
 				// trigger selection
 				if(config.dblclick)
-					config.dblclick(this);
-				$this.data().selected = this;
-				$this.trigger("dblclick", this);
+					config.dblclick($(this).parent().data().node);
+				$this.data().selected = $(this).parent().data().node;
+				$this.trigger("dblclick", $(this).parent().data().node);
 			});
 			node.data().node = this;
 			root.append(node);
@@ -257,13 +271,7 @@
 
 	
 	/**
-	 * fill the form with data.
-	 * <ul>
-	 *  <li>&lt;span class="field"&gt;prefix.fieldname&lt;/span&gt;
-	 *  <li>&lt;input name="prefix.fieldname"/&gt;
-	 *  <li>&lt;a class="field" href="prefix.fieldname"&gt;linktest&lt;/a&gt;
-	 *  <li>&lt;img class="field" src="prefix.fieldname"/&gt;
-	 * </ul>
+	 * repaint the tree with given data
 	 * @param data {object} the data
 	 */
 	Tree.prototype.fill = function(pojo) {
@@ -283,6 +291,18 @@
 		this._clear(this.element);
 	};
 
+	/**
+	 * call the loadData callback or use the current dat aobject to repaint the whole tree
+	 */
+	Tree.prototype.reload = function(){
+		if(this.options.loadData)
+			this.options.loadData();
+		else {
+			this.clear();
+			this._repaint(this.element, this.options.data);
+		}
+	};
+	
 	/**
 	 * destroy the jsform  and its resources.
 	 * @private
