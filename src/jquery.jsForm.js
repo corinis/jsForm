@@ -557,15 +557,13 @@
 			
 			var val = $(this).val();
 			
-			if($(this).hasClass("emptynull")) { // nullable fields do not send empty string
-				if(val === "" || val.trim() === "") {
-					val = null;
-				}
+			if($(this).hasClass("emptynull") && (val === "" || val.trim() === "")) { // nullable fields do not send empty string
+				val = null;
 			} else if($(this).hasClass("object") || $(this).hasClass("POJO")) {
 				if($("option:selected", this).data() && $("option:selected", this).data().pojo) {
 					val = $("option:selected", this).data().pojo;
-				}
-				val = $(this).data("pojo");
+				} else
+					val = $(this).data("pojo");
 			} else if($(this).hasClass("blob")) { // file upload blob
 				val = $(this).data("blob");
 			} else

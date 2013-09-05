@@ -29,9 +29,16 @@
 			 * open all levels
 			 */
 			open: false,
-			
 			/**
-			 * used as name
+			 * remember which part of the tree was open in a cookie (non-null = name of the cookie)
+			 */
+			remember: null,
+			/**
+			 * field used for id (only required for remembering which node was "open")
+			 */
+			id: null,
+			/**
+			 * field used as name
 			 */
 			name: "name",
 			/**
@@ -266,7 +273,8 @@
 	 * @param form the form 
 	 * @param prefix the optional prefix used to identify fields for this form
 	 */
-	Tree.prototype._clear = function(form, prefix) {
+	Tree.prototype._clear = function() {
+		$(this.element).html("");
 	};
 
 	
@@ -288,7 +296,7 @@
 	 */
 	Tree.prototype.clear = function() {
 		// clear first
-		this._clear(this.element);
+		this._clear();
 	};
 
 	/**
