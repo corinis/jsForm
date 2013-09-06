@@ -40,7 +40,11 @@
 			 * set to false to only validate visible fields. 
 			 * This is discouraged especially when you have tabs or similar elements in your form.
 			 */
-			validateHidden: true
+			validateHidden: true,
+			/**
+			 * skip empty values when getting an object
+			 */
+			skipEmpty: false
 		}, options);
 
 		// read prefix from dom
@@ -549,13 +553,18 @@
 			// cut away the prefix
 			name = name.substring((prefix+".").length);
 			
-			// skip empty
+			// skip empty names
 			if(name.length < 1) {
 				pojo = $(this).val();
 				return false;
 			}
 			
 			var val = $(this).val();
+			
+			// ignore empty values when skipEmpty is set
+			if(that.options.skipEmpty && (val === "" || val.trim() === "")) {
+				return;
+			}
 			
 			if($(this).hasClass("emptynull") && (val === "" || val.trim() === "")) { // nullable fields do not send empty string
 				val = null;
