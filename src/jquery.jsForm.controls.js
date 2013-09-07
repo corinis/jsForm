@@ -442,11 +442,11 @@
 				}
 				
 				var unit = 1024;
-			    if (bytes < unit) return bytes + " B";
-			    var exp = Math.floor(Math.log(bytes) / Math.log(unit));
-			    var pre = "KMGTPE".charAt(exp-1) + "B";
-			    return Math.round(bytes*10 / Math.pow(unit, exp))/10 + pre;
-			}
+				if (bytes < unit) return bytes + " B";
+				var exp = Math.floor(Math.log(bytes) / Math.log(unit));
+				var pre = "KMGTPE".charAt(exp-1) + "B";
+				return Math.round(bytes*10 / Math.pow(unit, exp))/10 + pre;
+			},
 
 			/**
 			 * @private
