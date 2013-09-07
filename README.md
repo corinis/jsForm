@@ -9,7 +9,7 @@ The main features of this library are:
 
 * Full standard html with data available in a js object
 * Update an existing js object with changes done within a form
-* Provide basic functions for formatting (i.e. date/time, money) using html markup
+* Provide basic functions for formatting (i.e. date/time, money, byte) using html markup
 * Provide form validation functionality
 * handle collections (arrays) with subobjects
 * provides helper methods to handle array manipulation (add new entry/remove an entry) using only html markup
@@ -21,7 +21,7 @@ The main features of this library are:
 
 # Download
 
-Current Version: 1.0.5
+Current Version: 1.0.6
 
 * [Minified](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.0.6.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
 * [Source](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.0.6.js)
