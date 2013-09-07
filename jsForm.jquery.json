@@ -1,7 +1,7 @@
 {
     "name": "jsForm",
     "title": "jQuery JSON Form",
-    "description": "jQuery plugin connecting a html form with a javascript object for manipulation",
+    "description": "jQuery plugin connecting a html form with a javascript object for manipulation. This plugin allows to quickly fill a form based on json object (i.e. retrieved via ajax, modify the json object within the form and then serialize it back to a json object to send back to the server.",
     "keywords": [
         "form",
         "json",
