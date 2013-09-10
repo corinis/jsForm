@@ -562,11 +562,11 @@
 			var val = $(this).val();
 			
 			// ignore empty values when skipEmpty is set
-			if(that.options.skipEmpty && (val === "" || val.trim() === "")) {
+			if(that.options.skipEmpty && (!val || val === "" || val.trim() === "")) {
 				return;
 			}
 			
-			if($(this).hasClass("emptynull") && (val === "" || val.trim() === "")) { // nullable fields do not send empty string
+			if($(this).hasClass("emptynull") && (!val || val === "" || val.trim() === "")) { // nullable fields do not send empty string
 				val = null;
 			} else if($(this).hasClass("object") || $(this).hasClass("POJO")) {
 				if($("option:selected", this).data() && $("option:selected", this).data().pojo) {
