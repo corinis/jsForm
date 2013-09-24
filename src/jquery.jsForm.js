@@ -102,7 +102,21 @@
 	};
 	
 	/**
+	 * simple debug helper
+	 * @param msg the message to pring
+	 * @private
+	 */
+	JsForm.prototype._debug = function(msg) {
+		if(typeof console !== "undefined") {
+			console.log("JsForm: " + msg);
+		}
+	};
+	
+	/**
 	 * initialize collections
+	 * @param form the base dom element
+	 * @param prefix the prefix to check for
+	 * @private
 	 */
 	JsForm.prototype._initCollection = function(form, prefix) {
 		// all collections
@@ -530,8 +544,11 @@
 			$.extend(true, pojo, startObj);
 		}
 		
-		$(start).find("input,select,textarea").each(function(){
-			var name = $(this).attr("name");
+		$(start).find("input,select,textarea,.jsobject").each(function(){
+			var name = $(this).attr("data-name");
+			if(!name) {
+				name = $(this).attr("name");
+			}
 			
 			// empty name - ignore
 			if (!name) {
@@ -560,19 +577,25 @@
 			}
 			
 			var val = $(this).val();
+
+			// jsobject use the pojo data
+			if($(this).hasClass("jsobject")) {
+				val = $(this).data("pojo");
+			}
 			
 			// ignore empty values when skipEmpty is set
 			if(that.options.skipEmpty && (!val || val === "" || val.trim() === "")) {
 				return;
 			}
 			
-			if($(this).hasClass("emptynull") && (!val || val === "" || val.trim() === "")) { // nullable fields do not send empty string
+			if($(this).hasClass("emptynull") && (!val || val === ""  || val === "null" || val.trim() === "")) { // nullable fields do not send empty string
 				val = null;
 			} else if($(this).hasClass("object") || $(this).hasClass("POJO")) {
 				if($("option:selected", this).data() && $("option:selected", this).data().pojo) {
 					val = $("option:selected", this).data().pojo;
-				} else
+				} else {
 					val = $(this).data("pojo");
+				}
 			} else if($(this).hasClass("blob")) { // file upload blob
 				val = $(this).data("blob");
 			} else
@@ -849,6 +872,9 @@
 			form.find(".invalid").filter(":visible").each(function(){
 				invalid = true;
 				$(this).focus();
+				if(!ignoreInvalid) {
+					that._debug("Found invalid field: " + $(this).attr("name"));
+				}
 				return false;
 			});
 		} else {
