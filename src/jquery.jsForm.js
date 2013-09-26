@@ -789,7 +789,7 @@
 				}
 			}
 		});
-		
+
 		$("select", $parent).each(function() {
 			var name = $(this).attr("name");
 			if(!name) {
@@ -810,7 +810,7 @@
 				
 				var value = that._get(data, cname);
 				// try selecting based on the id 
-				if (value[pk]) {
+				if (value[pk] || !isNaN(value[pk])) {
 					$(this).children("option[value='"+value[pk]+"']").attr("selected", true);
 					// actually set the value and trigger the change
 					$(this).val(value[pk]).change();
@@ -1660,8 +1660,6 @@
 	 * @param data {object} the data
 	 */
 	JsForm.prototype.fill = function(pojo) {
-		// clear first
-		this.clear();
 		// set the new data
 		this.options.data = pojo;
 		// fill everything
