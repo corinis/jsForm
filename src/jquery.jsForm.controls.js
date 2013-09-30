@@ -130,8 +130,25 @@
 			
 		
 		// input validation (number)
-		var numberRegexp =  new RegExp("^[0-9]+$");
+		var numberRegexp =  new RegExp("^[0-9.,-]+$");
 		location.find("input.number").keyup(function(){
+			var val = $(this).val();
+			if(val.length > 0) {
+				if($(this).hasClass("autoclean")) {
+					$(this).val(val.replace(/[^0-9.,-]/g, ""));
+				}
+				else {
+					if(numberRegexp.test($(this).val())) {
+						$(this).addClass("valid").removeClass("invalid");
+					} else {
+						$(this).removeClass("valid").addClass("invalid");
+					}
+				}
+			}
+		}).keyup();
+
+		var numberRegexp =  new RegExp("^[0-9]+$");
+		location.find("input.integer").keyup(function(){
 			var val = $(this).val();
 			if(val.length > 0) {
 				if($(this).hasClass("autoclean")) {
@@ -146,7 +163,7 @@
 				}
 			}
 		}).keyup();
-		
+
 		// regular expression
 		location.find("input.regexp").each(function(){
 			if($(this).hasClass("autoclean")) {

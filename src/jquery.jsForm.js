@@ -600,7 +600,7 @@
 				val = $(this).data("blob");
 			} else
 			// set empty numbers or dates to null
-			if(val === "" && ($(this).hasClass("number") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
+			if(val === "" && ($(this).hasClass("number") || $(this).hasClass("integer") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
 				val = null;
 			} 
 			
@@ -614,7 +614,7 @@
 				}
 			}
 
-			if ($(this).hasClass("number") || $(this).hasClass("currency")) {
+			if ($(this).hasClass("number") || $(this).hasClass("integer") || $(this).hasClass("currency")) {
 				val = that._getNumber(val);
 				if(isNaN(val)) {
 					val = 0;
@@ -1064,7 +1064,7 @@
 		//var prefix = this.options.prefix;
 		
 		// validation
-		$(".required,.regexp,.date,.mandatory,.number,.validate", this.element).change();
+		$(".required,.regexp,.date,.mandatory,.number,.validate,.integer", this.element).change();
 		
 		// check for invalid fields
 		if($(".invalid", this.element).length > 0) {
