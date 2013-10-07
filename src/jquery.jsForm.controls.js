@@ -473,8 +473,21 @@
 					return num;
 				}
 				
-				if($.format) 
-					return $.format.number(num, $(document).data().i18n.number.format); 
+				// default number format
+				var numberformat = {
+					format: "#,##0.###",
+				    groupingSeparator: ",",
+				    decimalSeparator: "."
+				};
+				
+				if(typeof i18n !== "undefined")
+					numberformat = i18n.number;
+				if(typeof $(document).data().i18n !== "undefined")
+					numberformat = $(document).data().i18n.number;
+
+				if($.format && numberformat) {
+					return $.format.number(num, numberformat);
+				}
 					
 				var comma = 0;
 				if (Math.abs(num - Math.floor(num)) > 0.001) {
@@ -483,8 +496,8 @@
 				// convert to a nice number for display
 				var n = num, 
 					c = isNaN(c = Math.abs(comma)) ? 2 : comma, 
-					d = ',', // decimal d == undefined ? "," : d, 
-					t = '.', // thousand: t == undefined ? "." : t, 
+					d = numberformat.decimalSeparator, // decimal d == undefined ? "," : d, 
+					t = numberformat.groupingSeparator, // thousand: t == undefined ? "." : t, 
 					i = parseInt(n = Math.abs( +n || 0).toFixed(c), 10) + "", 
 					j = (j = i.length) > 3 ? j % 3 : 0;
 				return (num<0 ? "-" : "") + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
@@ -556,8 +569,16 @@
 					year += 1900;
 				}
 				
+				// default number format
+				var dateformat = null;
+				
+				if(typeof i18n !== "undefined")
+					dateformat = i18n.date;
+				if(typeof $(document).data().i18n !== "undefined")
+					dateformat = $(document).data().i18n.date;
+
 				if($.format)
-					return $.format.date(d, $(document).data().i18n.date.shortDateFormat);
+					return $.format.date(d, dateformat.shortDateFormat);
 				else
 					return this._pad(d.getDate()) + "." + this._pad((d.getMonth()+1)) + "." + this._pad(year);
 			},

@@ -6,10 +6,66 @@ test("data formatting", function(){
 	equal($.jsFormControls.Format.humanTime(4320), "4s", "seconds");
 	equal($.jsFormControls.Format.humanTime(184200), "3m 4s", "minutest and seconds");
 	equal($.jsFormControls.Format.humanTime(5*3600000 + 32*60000 + 3580), "5h 32m", "hours and minutes");
-	equal($.jsFormControls.Format.decimal(51234.1234), "51.234,12", "decimal");
-	equal($.jsFormControls.Format.decimal(4.1234), "4,12", "decimal");
+	equal($.jsFormControls.Format.decimal(51234.1234), "51,234.12", "decimal");
+	equal($.jsFormControls.Format.decimal(4.1234), "4.12", "decimal");
 });
 
+test("internationalization", function(){
+	// default: english
+   equal($.jsFormControls.Format.decimal(1123456.54), "1,123,456.54", "decimal");
+   //$.jsFormControls.Format.dateTime(cdata)
+   //$.jsFormControls.Format.date(cdata)
+   equal($.jsFormControls.Format.currency(1123456.54), "1,123,456.54", "currency"); 
+	
+	 // set english locale
+	   $(document).data("i18n", {
+	     date: {
+	       "format": "M/d/yy h:mm a",
+	       "monthsFull":["January","February","March","April","May","June","July","August","September","October","November","December"],
+	       "monthsShort": ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+	       "daysFull": ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+	       "daysShort": ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+	       "timeFormat": "h:mm a",
+	       "longDateFormat": "EEEE, MMMM d, yyyy",
+	       "shortDateFormat": "M/d/yy"
+	     },
+	     number: {
+	       "format": "#,##0.###",
+	       "groupingSeparator": ",",
+	       "decimalSeparator": "."
+	     }
+	   });
+	   
+		  
+	   equal($.jsFormControls.Format.decimal(1123456.54), "1,123,456.54", "decimal");
+	   //$.jsFormControls.Format.dateTime(cdata)
+	   //$.jsFormControls.Format.date(cdata)
+	   equal($.jsFormControls.Format.currency(1123456.54), "1,123,456.54", "currency"); 
+
+	   // set german locale
+	   $(document).data("i18n", {
+	     date: {
+	       "format": "dd.MM.yy HH:mm",
+	       "monthsFull":["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"],
+	       "monthsShort": ["Jan","Feb","Mrz","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"],
+	       "daysFull": ["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"],
+	       "daysShort": ["So","Mo","Di","Mi","Do","Fr","Sa"],
+	       "timeFormat": "HH:mm",
+	       "longDateFormat": "EEEE, d. MMMM yyyy",
+	       "shortDateFormat": "dd.MM.yy"
+	     },
+	     number: {
+	       "format": "#.##0,###",
+	       "groupingSeparator": ".",
+	       "decimalSeparator": ","
+	     }
+	   });
+	   equal($.jsFormControls.Format.decimal(1123456.54), "1.123.456,54", "decimal");
+	   //$.jsFormControls.Format.dateTime(cdata)
+	   //$.jsFormControls.Format.date(cdata)
+	   equal($.jsFormControls.Format.currency(1123456.54), "1.123.456,54", "currency"); 
+
+});
 
 test("slickgrid parameter formatting", function(){
 	equal($.jsFormControls.Format.humanTime(10, 10, 320), "320ms", "human time");
