@@ -147,7 +147,7 @@
 			}
 		}).keyup();
 
-		var numberRegexp =  new RegExp("^[0-9]+$");
+		var integerRegexp = new RegExp("^[0-9]+$");
 		location.find("input.integer").keyup(function(){
 			var val = $(this).val();
 			if(val.length > 0) {
@@ -155,7 +155,7 @@
 					$(this).val(val.replace(/[^0-9]/g, ""));
 				}
 				else {
-					if(numberRegexp.test($(this).val())) {
+					if(integerRegexp.test($(this).val())) {
 						$(this).addClass("valid").removeClass("invalid");
 					} else {
 						$(this).removeClass("valid").addClass("invalid");
@@ -476,8 +476,8 @@
 				// default number format
 				var numberformat = {
 					format: "#,##0.###",
-				    groupingSeparator: ",",
-				    decimalSeparator: "."
+					groupingSeparator: ",",
+					decimalSeparator: "."
 				};
 				
 				if(typeof i18n !== "undefined")
