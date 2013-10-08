@@ -3,7 +3,7 @@ jquery.jsForm
 
 jQuery based form library to handle data in js objects
 
-It allows you to handle data within a javascript object (like from a JSON request) with plain html.
+It allows you to handle data within a javascript object (like from a JSON request) with plain html forms.
 
 The main features of this library are:
 
@@ -15,24 +15,30 @@ The main features of this library are:
 * provides helper methods to handle array manipulation (add new entry/remove an entry) using only html markup
 * Can be used in connection with an autocomplete function to add new array objects
 * Compatible with jquery ui 
-* fully unit tested using qunit
+* fully unit tested using [qunit](http://www.gargan.org/jsform/test/test.jquery.jsForm.html)
 * jslint clean
 * Minified+Gzipped: 6kb
 
+# Live Demos
+
+* [Simple Form](http://www.gargan.org/jsform/sample.html)
+* [Multi level arrays and sorting](http://www.gargan.org/jsform/sortable-sample.html)
+* [Multi level arrays and sorting with dragn'drop](http://www.gargan.org/jsform/sortable-editable-sample.html)
+
 # Download
 
-Current Version: 1.0.7
+Current Version: 1.0.8
 
-* [Minified](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.0.7.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
-* [Source](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.0.7.js)
+* [Minified](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.0.8.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
+* [Source](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.0.8.js)
 
 # Documentation
 
 can be found in the github wiki:
 
-* [Dom Layout](https://github.com/corinis/jsForm/wiki/JsForm-Dom-Layout)
-* [API Documentation](https://github.com/corinis/jsForm/wiki/JsForm-Documentation)
-* [Form Controls and Validation](https://github.com/corinis/jsForm/wiki/Controls)
+* [Dom Layout](https://github.com/corinis/jsForm/wiki/JsForm-Dom-Layout) tells you how you can/should structure your html
+* [API Documentation](https://github.com/corinis/jsForm/wiki/JsForm-Documentation) for the javascript options 
+* [Form Controls and Validation](https://github.com/corinis/jsForm/wiki/Controls) additional formatting/validating controls
 
 # Custom UI Controls
 

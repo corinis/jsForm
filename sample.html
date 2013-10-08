@@ -11,6 +11,7 @@ $(function(){
 		links: [{href:'http://www.gargan.org',description:'Gargan.org'},{href:'http://www.github.com',description:'GitHub'}],	// lists
 		active: true,	// checkbox
 		state: "VISIBLE",	// selects (enums)
+		age: 45, // number 
 		quips: ["Don't left school interfere with your education!", "Can you repeat the question? I was thinking about cookies.", "In my house I'm the boss, my wife is just the decision maker."]
 	};
 
@@ -31,6 +32,7 @@ $(function(){
 <div id="details">
 	Name: <input name="data.name"/><br/>
 	<input type="checkbox" name="data.active"/> active<br/>
+	Age: <input name="data.age" class="number"/><br/>
 	<textarea name="data.description"></textarea><br/>
 	<select name="data.state">
 		<option value="VISIBLE">visible</option>
