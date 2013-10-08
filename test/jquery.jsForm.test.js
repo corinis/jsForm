@@ -143,7 +143,7 @@ test("collection test", function(){
 	// html code for basic form 
 	var basicForm = $('<div>\n'+
   	'<input name="data.input">\n'+
-  	'<div class="collection" data-field="data.groups">\n'+
+  	'<div class="collection group" data-field="data.groups">\n'+
   	'<div class="entry">'+
   	'<span class="field">groups.id</span>\n'+
   	'  <input name="groups.name"/>\n'+
@@ -151,6 +151,8 @@ test("collection test", function(){
   	'</div>'+
   	'</div>\n'+
   	'<span class="add" data-field="data.groups">N</span>\n'+
+  	'<div class="collection string" data-field="data.simpleString"><div><input name="simpleString."/></div></div>\n'+
+  	'<div class="collection number" data-field="data.simpleNumber"><div><input class="number" name="simpleNumber."/></div></div>\n'+
   	'</div>');
 	
 	$("body").append(basicForm);
@@ -162,7 +164,9 @@ test("collection test", function(){
 			   { name: "group1", id: 1 }, 
 			   { name: "group2", id: 2 },
 			   { name: "group3", id: 3 }
-			]
+			],
+			simpleString: ["test", "test2", "test3"],
+			simpleNumber: [1, 2, 3],
 		};
 	
 	// default init: prefix = data
@@ -171,12 +175,17 @@ test("collection test", function(){
 	});
 	
 	equal($("input[name='data.input']", basicForm).val(), "inputTest", "simple input");
-	equal($("div.collection", basicForm).children().size(), 3, "3 repeats");
+	equal($("div.collection.group", basicForm).children().size(), 3, "3 repeats");
+	equal($("div.collection.number", basicForm).children().size(), 3, "3 repeats");
+	equal($("div.collection.string", basicForm).children().size(), 3, "3 repeats");
 
+	
 	equal(basicForm.jsForm("equals", original), true, "form has not changed");
 
 	// update a field
-	$("div.collection div", basicForm).eq(1).find("input").val("TEST2");
+	$("div.collection.group div", basicForm).eq(1).find("input").val("TEST2");
+	$("div.collection.string div", basicForm).eq(1).find("input").val("HELLO WORLD");
+	$("div.collection.number div", basicForm).eq(1).find("input").val("1000");
 	
 	equal(basicForm.jsForm("equals", original), false, "form has different data");
 
@@ -184,26 +193,28 @@ test("collection test", function(){
 	var pojo = basicForm.jsForm("get");
 	
 	equal(pojo.groups[1].name, "TEST2", "test change in collection");
+	equal(pojo.simpleString[1], "HELLO WORLD", "test change in collection");
+	equal(pojo.simpleNumber[1] === 1000, true, "test change in collection");
 	
 	// add a new entry using "simple controls"
 	$("span.add", basicForm).click();
-	equal($("div.collection", basicForm).children().size(), 4, "4 repeats");
+	equal($("div.collection.group", basicForm).children().size(), 4, "4 repeats");
 	
 	pojo = basicForm.jsForm("get");
 	equal(pojo.groups.length, 3, "no data yet - 3 entries");
 	
 	// enter some data
-	$("div.collection div", basicForm).eq(3).find("input").val("newTest");
+	$("div.collection.group div", basicForm).eq(3).find("input").val("newTest");
 	
 	pojo = basicForm.jsForm("get");
 	equal(pojo.groups.length, 4, "with data - 4 entries");
 	
 	// remove 
-	$("div.collection div", basicForm).eq(1).find("span.delete").click();
-	equal($("div.collection", basicForm).children().size(), 3, "3 repeats");
-	equal($("div.collection div", basicForm).eq(1).find("input").val(), "group3", "check if correct field is removed");
+	$("div.collection.group div", basicForm).eq(1).find("span.delete").click();
+	equal($("div.collection.group", basicForm).children().size(), 3, "3 repeats");
+	equal($("div.collection.group div", basicForm).eq(1).find("input").val(), "group3", "check if correct field is removed");
 	pojo = basicForm.jsForm("get");
-	equal(pojo.groups.length, 3, "remove entry")
+	equal(pojo.groups.length, 3, "remove entry");
 	
 	basicForm.remove();
 });

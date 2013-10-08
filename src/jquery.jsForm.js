@@ -570,11 +570,6 @@
 			// cut away the prefix
 			name = name.substring((prefix+".").length);
 			
-			// skip empty names
-			if(name.length < 1) {
-				pojo = $(this).val();
-				return false;
-			}
 			
 			var val = $(this).val();
 
@@ -625,6 +620,12 @@
 			}
 			else if($(this).hasClass("bool")) {
 				val = ($(this).val() === "true");
+			}
+
+			// handle simple collection
+			if(name.length < 1) {
+				pojo = val;
+				return false;
 			}
 
 			// check if we have a . - if so split
