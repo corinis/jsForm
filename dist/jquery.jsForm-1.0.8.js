@@ -40,7 +40,11 @@
 			 * set to false to only validate visible fields. 
 			 * This is discouraged especially when you have tabs or similar elements in your form.
 			 */
-			validateHidden: true
+			validateHidden: true,
+			/**
+			 * skip empty values when getting an object
+			 */
+			skipEmpty: false
 		}, options);
 
 		// read prefix from dom
@@ -98,7 +102,21 @@
 	};
 	
 	/**
+	 * simple debug helper
+	 * @param msg the message to pring
+	 * @private
+	 */
+	JsForm.prototype._debug = function(msg) {
+		if(typeof console !== "undefined") {
+			console.log("JsForm: " + msg);
+		}
+	};
+	
+	/**
 	 * initialize collections
+	 * @param form the base dom element
+	 * @param prefix the prefix to check for
+	 * @private
 	 */
 	JsForm.prototype._initCollection = function(form, prefix) {
 		// all collections
@@ -110,12 +128,12 @@
 			var colName = $(this).attr("data-field");
 			// skip collections without a data-field mapping
 			if (!colName || colName.indexOf(prefix + ".") !== 0) {
-				return;	
+				return;
 			}
 
 			var container = $(this);
 			
-			// remember the collection 
+			// remember the collection
 			var cols = collectionMap[colName];
 			if(cols) {
 				cols.push(container);
@@ -526,8 +544,11 @@
 			$.extend(true, pojo, startObj);
 		}
 		
-		$(start).find("input,select,textarea").each(function(){
-			var name = $(this).attr("name");
+		$(start).find("input,select,textarea,.jsobject").each(function(){
+			var name = $(this).attr("data-name");
+			if(!name) {
+				name = $(this).attr("name");
+			}
 			
 			// empty name - ignore
 			if (!name) {
@@ -549,27 +570,34 @@
 			// cut away the prefix
 			name = name.substring((prefix+".").length);
 			
-			// skip empty
-			if(name.length < 1) {
-				pojo = $(this).val();
-				return false;
-			}
 			
 			var val = $(this).val();
-			
-			if($(this).hasClass("emptynull")) { // nullable fields do not send empty string
-				if(val === "" || val.trim() === "") {
-					val = null;
-				}
-			} else if($(this).hasClass("object") || $(this).hasClass("POJO")) {
+
+			// jsobject use the pojo data
+			if($(this).hasClass("jsobject")) {
 				val = $(this).data("pojo");
+			}
+			
+			// ignore empty values when skipEmpty is set
+			if(that.options.skipEmpty && (!val || val === "" || val.trim() === "")) {
+				return;
+			}
+			
+			if($(this).hasClass("emptynull") && (!val || val === ""  || val === "null" || val.trim() === "")) { // nullable fields do not send empty string
+				val = null;
+			} else if($(this).hasClass("object") || $(this).hasClass("POJO")) {
+				if($("option:selected", this).data() && $("option:selected", this).data().pojo) {
+					val = $("option:selected", this).data().pojo;
+				} else {
+					val = $(this).data("pojo");
+				}
 			} else if($(this).hasClass("blob")) { // file upload blob
 				val = $(this).data("blob");
 			} else
 			// set empty numbers or dates to null
-			if(val === "" && ($(this).hasClass("number") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
+			if(val === "" && ($(this).hasClass("number") || $(this).hasClass("integer") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
 				val = null;
-			}
+			} 
 			
 			// check for percentage: this is input / 100
 			if ($(this).hasClass("percent")) {
@@ -581,14 +609,23 @@
 				}
 			}
 
-			if ($(this).hasClass("number") || $(this).hasClass("currency")) {
+			if ($(this).hasClass("number") || $(this).hasClass("integer") || $(this).hasClass("currency")) {
 				val = that._getNumber(val);
 				if(isNaN(val)) {
 					val = 0;
 				}
 			}
-			if($(this).attr("type") === "checkbox" || $(this).attr("type") === "CHECKBOX") {
+			else if($(this).attr("type") === "checkbox" || $(this).attr("type") === "CHECKBOX") {
 				val = $(this).is(':checked');
+			}
+			else if($(this).hasClass("bool")) {
+				val = ($(this).val() === "true");
+			}
+
+			// handle simple collection
+			if(name.length < 1) {
+				pojo = val;
+				return false;
 			}
 
 			// check if we have a . - if so split
@@ -753,7 +790,7 @@
 				}
 			}
 		});
-		
+
 		$("select", $parent).each(function() {
 			var name = $(this).attr("name");
 			if(!name) {
@@ -767,14 +804,20 @@
 				}
 				// remove "old" selected options
 				$(this).children("option").removeAttr("selected");
+				var pk = $(this).attr("data-key");
+				if(!pk) {
+					pk = "id";
+				}
 				
 				var value = that._get(data, cname);
 				// try selecting based on the id 
-				if (value.id) {
-					$(this).children("option[value='"+value.id+"']").attr("selected", true);
+				if (value[pk] || !isNaN(value[pk])) {
+					$(this).children("option[value='"+value[pk]+"']").attr("selected", true);
 					// actually set the value and trigger the change
-					$(this).val(value.id).change();
+					$(this).val(value[pk]).change();
 					return;
+				} else if($(this).hasClass("bool")) {
+					value = value ? "true" : "false";
 				}
 				
 				$(this).children("option[value='"+value+"']").attr("selected", true);
@@ -830,6 +873,9 @@
 			form.find(".invalid").filter(":visible").each(function(){
 				invalid = true;
 				$(this).focus();
+				if(!ignoreInvalid) {
+					that._debug("Found invalid field: " + $(this).attr("name"));
+				}
 				return false;
 			});
 		} else {
@@ -1019,7 +1065,7 @@
 		//var prefix = this.options.prefix;
 		
 		// validation
-		$(".required,.regexp,.date,.mandatory,.number,.validate", this.element).change();
+		$(".required,.regexp,.date,.mandatory,.number,.validate,.integer", this.element).change();
 		
 		// check for invalid fields
 		if($(".invalid", this.element).length > 0) {
@@ -1050,8 +1096,6 @@
 		// fill base 
 		this._fillData(form, data, prefix);
 		this._fillCollection(form, data, prefix);
-		
-		// mark fields
 	};
 
 	/**
@@ -1615,17 +1659,23 @@
 	 *  <li>&lt;img class="field" src="prefix.fieldname"/&gt;
 	 * </ul>
 	 * @param data {object} the data
-	 * @private
 	 */
 	JsForm.prototype.fill = function(pojo) {
-		// clear first
-		this.clear();
 		// set the new data
 		this.options.data = pojo;
 		// fill everything
 		this._fill(this.element, this.options.data, this.options.prefix);
 	};
 
+	/**
+	 * reset a form with the last data, overwriting any changes.
+	 */
+	JsForm.prototype.reset = function() {
+		// clear first
+		this.clear();
+		// fill everything
+		this._fill(this.element, this.options.data, this.options.prefix);
+	};
 
 	/**
 	 * Clear all fields in a form
@@ -1779,6 +1829,11 @@
 				return "";
 			return $.jsFormControls.Format.humanTime(data);
 		});
+		Handlebars.registerHelper("byte", function(data){
+			if(!data)
+				return "";
+			return $.jsFormControls.Format.byte(data);
+		});
 	}
 	
 	function JsFormControls(element) {
@@ -1847,12 +1902,12 @@
 			
 		
 		// input validation (number)
-		var numberRegexp =  new RegExp("^[0-9]+$");
+		var numberRegexp =  new RegExp("^[0-9.,-]+$");
 		location.find("input.number").keyup(function(){
 			var val = $(this).val();
 			if(val.length > 0) {
 				if($(this).hasClass("autoclean")) {
-					$(this).val(val.replace(/[^0-9]/g, ""));
+					$(this).val(val.replace(/[^0-9.,-]/g, ""));
 				}
 				else {
 					if(numberRegexp.test($(this).val())) {
@@ -1863,7 +1918,24 @@
 				}
 			}
 		}).keyup();
-		
+
+		var integerRegexp = new RegExp("^[0-9]+$");
+		location.find("input.integer").keyup(function(){
+			var val = $(this).val();
+			if(val.length > 0) {
+				if($(this).hasClass("autoclean")) {
+					$(this).val(val.replace(/[^0-9]/g, ""));
+				}
+				else {
+					if(integerRegexp.test($(this).val())) {
+						$(this).addClass("valid").removeClass("invalid");
+					} else {
+						$(this).removeClass("valid").addClass("invalid");
+					}
+				}
+			}
+		}).keyup();
+
 		// regular expression
 		location.find("input.regexp").each(function(){
 			if($(this).hasClass("autoclean")) {
@@ -2092,6 +2164,8 @@
 					return $.jsFormControls.Format.date(cdata);
 				} else if($(ele).hasClass("currency")) {
 					return $.jsFormControls.Format.currency(cdata);
+				} else if($(ele).hasClass("byte")) {
+					return $.jsFormControls.Format.byte(cdata);
 				} else if($(ele).hasClass("number")) {
 					return $.jsFormControls.Format.decimal(cdata);
 				}
@@ -2151,6 +2225,18 @@
 			},
 
 
+			byte: function(bytes) {
+				if (bytes === "" || !bytes || isNaN(bytes)) {
+					return bytes;
+				}
+				
+				var unit = 1024;
+				if (bytes < unit) return bytes + " B";
+				var exp = Math.floor(Math.log(bytes) / Math.log(unit));
+				var pre = "KMGTPE".charAt(exp-1) + "B";
+				return Math.round(bytes*10 / Math.pow(unit, exp))/10 + pre;
+			},
+
 			/**
 			 * @private
 			 */
@@ -2159,8 +2245,21 @@
 					return num;
 				}
 				
-				if($.format) 
-					return $.format.number(num, $(document).data().i18n.number.format); 
+				// default number format
+				var numberformat = {
+					format: "#,##0.###",
+					groupingSeparator: ",",
+					decimalSeparator: "."
+				};
+				
+				if(typeof i18n !== "undefined")
+					numberformat = i18n.number;
+				if(typeof $(document).data().i18n !== "undefined")
+					numberformat = $(document).data().i18n.number;
+
+				if($.format && numberformat) {
+					return $.format.number(num, numberformat);
+				}
 					
 				var comma = 0;
 				if (Math.abs(num - Math.floor(num)) > 0.001) {
@@ -2169,8 +2268,8 @@
 				// convert to a nice number for display
 				var n = num, 
 					c = isNaN(c = Math.abs(comma)) ? 2 : comma, 
-					d = ',', // decimal d == undefined ? "," : d, 
-					t = '.', // thousand: t == undefined ? "." : t, 
+					d = numberformat.decimalSeparator, // decimal d == undefined ? "," : d, 
+					t = numberformat.groupingSeparator, // thousand: t == undefined ? "." : t, 
 					i = parseInt(n = Math.abs( +n || 0).toFixed(c), 10) + "", 
 					j = (j = i.length) > 3 ? j % 3 : 0;
 				return (num<0 ? "-" : "") + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
@@ -2242,8 +2341,16 @@
 					year += 1900;
 				}
 				
+				// default number format
+				var dateformat = null;
+				
+				if(typeof i18n !== "undefined")
+					dateformat = i18n.date;
+				if(typeof $(document).data().i18n !== "undefined")
+					dateformat = $(document).data().i18n.date;
+
 				if($.format)
-					return $.format.date(d, $(document).data().i18n.date.shortDateFormat);
+					return $.format.date(d, dateformat.shortDateFormat);
 				else
 					return this._pad(d.getDate()) + "." + this._pad((d.getMonth()+1)) + "." + this._pad(year);
 			},
