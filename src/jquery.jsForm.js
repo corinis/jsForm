@@ -99,6 +99,8 @@
 		
 		// collection lists with buttons
 		that._initCollection(form, prefix);
+		// init conditionals
+		that._initConditional(form, prefix, this.options);
 	};
 	
 	/**
@@ -110,6 +112,95 @@
 		if(typeof console !== "undefined") {
 			console.log("JsForm: " + msg);
 		}
+	};
+
+	/**
+	 * initialize conditionals.
+	 * basic rule is:
+	 * any dom element that has a conditional and either
+	 * a data-show or data-hide attribute or a data-eval attribute 
+	 *  
+	 * @param form the base dom element
+	 * @param prefix the prefix to check for
+	 * @private
+	 */
+	JsForm.prototype._initConditional = function(form, prefix, options) {
+		var that = this;
+		var showEvaluator = function(ele, data, fields) {
+			// if any field has a value -> show
+			var show = false;
+			$.each(fields, function(){
+				var value = that._getValueWithArrays(data, this);
+				if(!value || value === "" || value === 0 || value === -1)
+					return;
+				show = true;
+				// skip processing
+				return false;
+			});
+			if(show)
+				ele.show();
+			else
+				ele.hide();
+		}, hideEvaluator = function(ele, data, fields) {
+			// if any field has a value -> hide
+			var show = false;
+			$.each(fields, function(){
+				var value = that._getValueWithArrays(data, this);
+				if(!value || value === "" || value === 0 || value === -1)
+					return;
+				show = true;
+				// skip processing
+				return false;
+			});
+			if(show)
+				ele.hide();
+			else
+				ele.show();
+		};
+		
+		// remember the conditionals for faster dom access
+		this.conditionals = $(form).find(".conditional"); 
+		
+		this.conditionals.each(function(){
+			$(this).data().conditionalEval = [];
+			var fields = $(this).attr("data-show");
+			if(fields && fields.length > 0) {
+				$(this).data().conditionalEval.push({
+					func: showEvaluator,
+					field: fields.split(" ") 
+				});
+			}
+			fields = $(this).attr("data-hide");
+			if(fields && fields.length > 0) {
+				$(this).data().conditionalEval.push({
+					func: hideEvaluator,
+					field: fields.split(" ") 
+				});
+			}
+			fields = $(this).attr("data-eval");
+			if(fields && fields.length > 0) {
+				// custom evaluator
+				if(options.conditionals[fields])
+					$(this).data().conditionalEval.push({
+						func: options.conditionals[fields],
+					});
+			}
+		});
+	};
+	
+	/**
+	 * evaluate conditionals on the form
+	 * @param form the form to search for conditionals
+	 * @param data the data
+	 */
+	JsForm.prototype._evaluateConditionals = function(form, data) {
+		this.conditionals.each(function(){
+			var ele = $(this);
+			// go throguh all evaluation functions
+			$.each(ele.data().conditionalEval, function() {
+				this.func(ele, data, this.field);
+			});
+		});
 	};
 	
 	/**
@@ -1092,6 +1183,8 @@
 		// fill base 
 		this._fillData(form, options.data, options.prefix);
 		this._fillCollection(form, options.data, options.prefix);
+		// (re-)evaluate all conditionals
+		this._evaluateConditionals(this.element, options.data);
 	};
 
 	/**
@@ -1385,10 +1478,10 @@
      * @param obj
      * @param path a dot notation path to search for.  Use format parent[1].child
      */
-    JsForm.prototype.parseDotNotationWithArrays = function(obj, path) {
+    JsForm.prototype._getValueWithArrays = function(obj, path) {
         path = path.split('.');
         var arrayPattern = /(.*)\[(\d+)\]/;
-        for (var i = 0; i < path.length; i++) {
+        for (var i = 1; i < path.length; i++) {
             var match = arrayPattern.exec(path[i]);
             try {
                 if (match) {
@@ -1397,7 +1490,7 @@
                     obj = obj[path[i]];
                 }
             } catch(e) {
-                console.log(e);
+                console.log(path + " " + e);
             }
         }
 
@@ -1685,6 +1778,20 @@
 		this.options.data = pojo;
 		// fill everything
 		this._fill(this.element, this.options);
+	};
+
+	/**
+	 * re-evaluate the conditionals in the form based on the given data.
+	 * if no data is given, the form is serialized
+	 * @param data {object} the data
+	 */
+	JsForm.prototype.applyConditions = function(pojo) {
+		// set the new data
+		if(!pojo)
+			pojo = this.get(true);
+		
+		// evaluate everything
+		this._evaluateConditionals(this.element, pojo);
 	};
 
 	/**
