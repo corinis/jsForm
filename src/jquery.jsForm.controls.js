@@ -385,14 +385,22 @@
 			 */
 			format: function(ele, cdata) {
 				if($(ele).hasClass("dateTime")) {
+					if(isNaN(cdata))
+						return cdata;
 					return $.jsFormControls.Format.dateTime(cdata);
 				} if($(ele).hasClass("datetime")) {
+					if(isNaN(cdata))
+						return cdata;
 					return $.jsFormControls.Format.dateTime(cdata);
 				} else if($(ele).hasClass("date")) {
+					if(isNaN(cdata))
+						return cdata;
 					return $.jsFormControls.Format.date(cdata);
 				} else if($(ele).hasClass("currency")) {
 					return $.jsFormControls.Format.currency(cdata);
 				} else if($(ele).hasClass("byte")) {
+					if(isNaN(cdata))
+						return cdata;
 					return $.jsFormControls.Format.byte(cdata);
 				} else if($(ele).hasClass("number")) {
 					return $.jsFormControls.Format.decimal(cdata);

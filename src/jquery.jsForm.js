@@ -83,7 +83,7 @@
 		}
 
 		// fill/init with the first data
-		this._fill(this.element, this.options.data, this.options.prefix);
+		this._fill(this.element, this.options);
 	};
 	
 	
@@ -1078,24 +1078,20 @@
 	/**
 	 * fill a form based on a pojo. 
 	 * @param form the form
-	 * @param data the data object used to fill the form 
+	 * @param options the options used to fill
 	 * @param prefix the optional prefix used to identify fields for this form
 	 * @private
 	 */
-	JsForm.prototype._fill = function(form, data, prefix) {
-		// get the prefix from the form if not given
-		if(!prefix) {
-			prefix = this.config.prefix;
-		}
+	JsForm.prototype._fill = function(form, options) {
 		
-		this._clear(form, prefix);
+		this._clear(form, options.prefix);
 
 		$(form).addClass("POJO");
-		$(form).data("pojo", data);
+		$(form).data("pojo", options.data);
 
 		// fill base 
-		this._fillData(form, data, prefix);
-		this._fillCollection(form, data, prefix);
+		this._fillData(form, options.data, options.prefix);
+		this._fillCollection(form, options.data, options.prefix);
 	};
 
 	/**
@@ -1336,7 +1332,7 @@
 	/**
 	 * Retrieve a value from a given object by using dot-notation
 	 * @param obj the object to start with
-	 * @param the child to get (dot notation) 
+	 * @param expr the child to get (dot notation) 
 	 * @param create set to true and non-existant levels will be created (always returns non-null)
 	 * @private
 	 */
@@ -1382,7 +1378,31 @@
 		}
 		return ret;
 	};
-	
+
+    /**
+     * Parse a dot notation that includes arrays
+     * http://stackoverflow.com/questions/13355278/javascript-how-to-convert-json-dot-string-into-object-reference
+     * @param obj
+     * @param path a dot notation path to search for.  Use format parent[1].child
+     */
+    JsForm.prototype.parseDotNotationWithArrays = function(obj, path) {
+        path = path.split('.');
+        var arrayPattern = /(.*)\[(\d+)\]/;
+        for (var i = 0; i < path.length; i++) {
+            var match = arrayPattern.exec(path[i]);
+            try {
+                if (match) {
+                    obj = obj[match[1]][parseInt(match[2], 10)];
+                } else {
+                    obj = obj[path[i]];
+                }
+            } catch(e) {
+                console.log(e);
+            }
+        }
+
+        return obj;
+    }; 
 		
 	/**
 	 * get the "parent" object of a given dot-notation. this will not return the actual 
@@ -1664,7 +1684,7 @@
 		// set the new data
 		this.options.data = pojo;
 		// fill everything
-		this._fill(this.element, this.options.data, this.options.prefix);
+		this._fill(this.element, this.options);
 	};
 
 	/**
@@ -1674,7 +1694,7 @@
 		// clear first
 		this.clear();
 		// fill everything
-		this._fill(this.element, this.options.data, this.options.prefix);
+		this._fill(this.element, this.options);
 	};
 
 	/**
