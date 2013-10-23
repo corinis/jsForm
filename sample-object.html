@@ -21,6 +21,21 @@ $(function(){
     	// fill will be triggered after the content has been inserted - this way we can override that
         $(this).val(JSON.stringify($(this).data("pojo")));
     });
+    
+    // update the pojo with the "json" content
+    $("textarea.object[name='objects.']").keyup(function(){
+    	try {
+    		$(this).data().pojo = JSON.parse($(this).val());
+    		// json is fine
+    		$(this).css("border", "2px solid green");
+    		$(this).attr("title", "JSON ok");
+    	} catch (ex) {
+    		// error in json (add a title field with the error)
+    		$(this).css("border", "2px solid red");
+    		$(this).attr("title", ex);
+    	}
+    });
+    
     // initialize the form, prefix is optional and defaults to data
     $("#details").jsForm({
         data:jsonData
