@@ -483,7 +483,7 @@
 						$(collectionList).each(function() {
 							$(this).children().each(function(count, ele){
 								if(cur.id === $(ele).data("pojo").id) {
-									option.attr("selected", "selected");
+									option.prop("selected", "selected");
 								}
 							});
 						});
@@ -901,7 +901,7 @@
 					cname = cname.substring(prefix.length + 1);
 				}
 				// remove "old" selected options
-				$(this).children("option").removeAttr("selected");
+				$(this).children("option").removeProp("selected");
 				var pk = $(this).attr("data-key");
 				if(!pk) {
 					pk = "id";
@@ -910,7 +910,7 @@
 				var value = that._get(data, cname);
 				// try selecting based on the id 
 				if (value[pk] || !isNaN(value[pk])) {
-					$(this).children("option[value='"+value[pk]+"']").attr("selected", true);
+					$(this).children("option[value='"+value[pk]+"']").prop("selected", "selected");
 					// actually set the value and trigger the change
 					$(this).val(value[pk]).change();
 					return;
@@ -918,7 +918,7 @@
 					value = value ? "true" : "false";
 				}
 				
-				$(this).children("option[value='"+value+"']").attr("selected", true);
+				$(this).children("option[value='"+value+"']").prop("selected", "selected");
 				$(this).val(value).change();
 				$(this).trigger("fill");
 			}
