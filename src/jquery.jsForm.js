@@ -857,11 +857,21 @@
 				// check for percentage: this is value * 100
 				if ($(this).hasClass("percent") && !isNaN(cdata)) {
 					cdata = 100 * Number(cdata);
+				} else if ($(this).hasClass("object")) {
+					$(this).data().pojo = cdata;
+					$(this).addClass("POJO");
+					if($(this).attr("data-display")) {
+						cdata = that._renderObject(cdata, $(this).attr("data-display"));
+					} else {
+						// format the object as json
+						cdata = JSON.stringify(cdata, null, " ");
+					}
+					$(this).trigger("fill");
 				} else if($.isPlainObject(cdata)) {
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
 					cdata = that._renderObject(cdata, $(this).attr("data-display"));
-				}
+				} 
 				
 
 				if($(this).attr("type") === "checkbox") {
@@ -878,6 +888,7 @@
 
 					$(this).val(cdata);
 					$(this).change();
+					$(this).trigger("fill");
 				}
 			}
 		});
