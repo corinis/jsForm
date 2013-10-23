@@ -835,7 +835,7 @@
 			}
 		});
 		
-		$("input", $parent).each(function() {
+		$("input, textarea", $parent).each(function() {
 			var name = $(this).attr("name");
 			if(!name) {
 				return;
@@ -862,11 +862,7 @@
 					$(this).addClass("POJO");
 					if($(this).attr("data-display")) {
 						cdata = that._renderObject(cdata, $(this).attr("data-display"));
-					} else {
-						// format the object as json
-						cdata = JSON.stringify(cdata, null, " ");
-					}
-					$(this).trigger("fill");
+					} 
 				} else if($.isPlainObject(cdata)) {
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
@@ -876,7 +872,6 @@
 
 				if($(this).attr("type") === "checkbox") {
 					$(this).prop("checked", (cdata === true || cdata === "true"));
-					$(this).change();
 				} else {
 					if(!cdata) {
 						cdata = "";
@@ -887,9 +882,10 @@
 						cdata = $.jsFormControls.Format.format(this, cdata);
 
 					$(this).val(cdata);
-					$(this).change();
-					$(this).trigger("fill");
 				}
+				
+				$(this).change();
+				$(this).trigger("fill");
 			}
 		});
 
@@ -924,23 +920,8 @@
 				
 				$(this).children("option[value='"+value+"']").attr("selected", true);
 				$(this).val(value).change();
-			}		
-		});
-		
-		$("textarea", $parent).each(function() {
-			var name = $(this).attr("name");
-			if(!name) {
-				return;
+				$(this).trigger("fill");
 			}
-			
-			if(!prefix || name.indexOf(prefix + ".") >= 0) {
-				var cname = name;
-				if (prefix) {
-					cname = cname.substring(prefix.length + 1);
-				}
-				$(this).val(that._get(data,cname));
-				$(this).change();
-			}		
 		});
 	};
 	

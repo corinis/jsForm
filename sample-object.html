@@ -1,0 +1,51 @@
+<html>
+<head>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="src/jquery.jsForm.js"></script>
+<script>
+$(function(){
+    // some json data
+    var jsonData = {
+    "objects": [
+        {
+            "id": 1,
+            "enable": true,
+            "find": {
+                "name": "asdf"
+            }
+        }
+    ]
+};
+
+    $("textarea.object[name='objects.']").on("fill", function(){
+    	// fill will be triggered after the content has been inserted - this way we can override that
+        $(this).val(JSON.stringify($(this).data("pojo")));
+    });
+    // initialize the form, prefix is optional and defaults to data
+    $("#details").jsForm({
+        data:jsonData
+    });
+
+    $("#show").click(function() {
+        // show the json data
+        alert(JSON.stringify($("#details").jsForm("get"), null, " "));
+    });
+});
+
+</script>
+</head>
+<body>
+
+<h1>Simple Form Test - working with objects</h1>
+<div id="details">
+   <ul class="collection" data-field="data.objects">
+        <li>
+            <label for="objects.id">id:</label>
+            <input name="objects.id" title=''/> <br />
+            <textarea class="object" data-display="find" name="objects." ></textarea>
+        </li>
+    </ul>
+</div>
+<button id="show">Show Object</button>
+</body>
+</html>
