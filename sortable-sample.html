@@ -56,7 +56,7 @@ $(function(){
 	<fieldset>
 		<legend>Group: <span class="field">groups.name</span></legend>
 		<ul class="collection sort reorder" data-field="groups.tasks" data-sort="priority">
-			<li><input name="tasks.name"/></li>
+			<li><span class="field">tasks.$idx</span><input name="tasks.name"/></li>
 		</ul>
 		<button class="sortUp">up</button> <button class="sortDown">down</button> 
 	</fieldset>

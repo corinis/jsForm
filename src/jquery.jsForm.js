@@ -286,7 +286,7 @@
 						$(this).trigger("addCollection", [line, $(line).data().pojo]);
 
 						// fill the line with data
-						that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1));
+						that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), false);
 						
 						// its possible to have "sub" collections
 						that._initCollection(line, fieldName.substring(fieldName.indexOf('.')+1));
@@ -776,9 +776,10 @@
 	* @param parent the root of the subtree
 	* @param data the data
 	* @param prefix the prefix used to find fields
+	* @param idx the index - this is only used for collections
 	* @private
 	*/
-	JsForm.prototype._fillData = function (parent, data, prefix) {
+	JsForm.prototype._fillData = function (parent, data, prefix, idx) {
 		var that = this;
 		var $parent = $(parent);
 		
@@ -807,7 +808,7 @@
 				if (prefix) {
 					cname = cname.substring(prefix.length + 1);
 				}
-				var cdata = that._get(data, cname);
+				var cdata = that._get(data, cname, false, idx);
 
 				if(!cdata) {
 					cdata = "";
@@ -852,7 +853,7 @@
 					cname = cname.substring(prefix.length + 1);
 				}
 				
-				var cdata = that._get(data, cname);
+				var cdata = that._get(data, cname, false, idx);
 				
 				// check for percentage: this is value * 100
 				if ($(this).hasClass("percent") && !isNaN(cdata)) {
@@ -907,7 +908,7 @@
 					pk = "id";
 				}
 				
-				var value = that._get(data, cname);
+				var value = that._get(data, cname, false, idx);
 				// try selecting based on the id 
 				if (value[pk] || !isNaN(value[pk])) {
 					$(this).children("option[value='"+value[pk]+"']").prop("selected", "selected");
@@ -1284,9 +1285,9 @@
 			var cur = data[i];
 			var line = tmpl.clone(true);
 			// save current line
-			line.data("pojo", cur);
+			line.data().pojo = cur;
 			line.addClass("POJO");
-
+			
 			if(lineFunc) {
 				if(lineFunc(line, cur) === false) {
 					continue;
@@ -1296,7 +1297,8 @@
 			that._addCollectionControls(line);
 			
 			if(prefix) {
-				that._fillData(line, cur, prefix);
+				// fill data - including the index
+				that._fillData(line, cur, prefix, i+1);
 				// enable collection controls
 				that._initCollection(line, prefix);
 				// fill with data
@@ -1419,9 +1421,10 @@
 	 * @param obj the object to start with
 	 * @param expr the child to get (dot notation) 
 	 * @param create set to true and non-existant levels will be created (always returns non-null)
+	 * @param idx only filles when filling collection - can be access using $idx
 	 * @private
 	 */
-	JsForm.prototype._get = function(obj, expr, create) {
+	JsForm.prototype._get = function(obj, expr, create, idx) {
 		var ret, p, prm = "", i;
 		if(typeof expr === "function") {
 			return expr(obj); 
@@ -1432,6 +1435,10 @@
 		// reference the object itself
 		if(expr === "")
 			return obj;
+		
+		// reference to the index
+		if(expr === "$idx")
+			return idx;
 			
 		ret = obj[expr];
 		if(!ret) {
