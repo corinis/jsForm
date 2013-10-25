@@ -57,7 +57,7 @@ $(function(){
 		<legend>Group</legend>
 		Name <input name="groups.name"/>
 		<ul class="collection sort sortable" data-field="groups.tasks" data-sort="priority" data-sortable='{"placeholder":"ui-state-highlight"}'>
-			<li><input name="tasks.name"/><span class="ui-icon ui-icon-trash delete" style="float:left"></span></li>
+			<li><span class="field">tasks.$idx</span><input name="tasks.name"/><span class="ui-icon ui-icon-trash delete" style="float:left"></span></li>
 		</ul>
 		<span class="ui-icon ui-icon-plusthick add" data-field="groups.tasks"></span>
 		<button class="sortUp">up</button> <button class="sortDown">down</button> 

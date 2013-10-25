@@ -284,10 +284,13 @@
 						
 						// trigger a callback
 						$(this).trigger("addCollection", [line, $(line).data().pojo]);
+						
+						// the new entry has as index the count of all "lines"
+						var idx = $(this).children(".POJO").length;
 
 						// fill the line with data
-						that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), false);
-						
+						that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
+
 						// its possible to have "sub" collections
 						that._initCollection(line, fieldName.substring(fieldName.indexOf('.')+1));
 						
@@ -352,8 +355,11 @@
 						// trigger a callback
 						$(this).trigger("addCollection", [line, $(line).data().pojo]);
 
+						// the new entry has as index the count of all "lines"
+						var idx = $(this).children(".POJO").length;
+						
 						// fill the "information"
-						that._fillData(line, pojo, fieldName.substring(fieldName.indexOf('.')+1));
+						that._fillData(line, pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
 						
 						$(this).append(line);
 					}
