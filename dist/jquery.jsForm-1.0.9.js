@@ -83,7 +83,7 @@
 		}
 
 		// fill/init with the first data
-		this._fill(this.element, this.options.data, this.options.prefix);
+		this._fill(this.element, this.options);
 	};
 	
 	
@@ -99,6 +99,8 @@
 		
 		// collection lists with buttons
 		that._initCollection(form, prefix);
+		// init conditionals
+		that._initConditional(form, prefix, this.options);
 	};
 	
 	/**
@@ -110,6 +112,95 @@
 		if(typeof console !== "undefined") {
 			console.log("JsForm: " + msg);
 		}
+	};
+
+	/**
+	 * initialize conditionals.
+	 * basic rule is:
+	 * any dom element that has a conditional and either
+	 * a data-show or data-hide attribute or a data-eval attribute 
+	 *  
+	 * @param form the base dom element
+	 * @param prefix the prefix to check for
+	 * @private
+	 */
+	JsForm.prototype._initConditional = function(form, prefix, options) {
+		var that = this;
+		var showEvaluator = function(ele, data, fields) {
+			// if any field has a value -> show
+			var show = false;
+			$.each(fields, function(){
+				var value = that._getValueWithArrays(data, this);
+				if(!value || value === "" || value === 0 || value === -1)
+					return;
+				show = true;
+				// skip processing
+				return false;
+			});
+			if(show)
+				ele.show();
+			else
+				ele.hide();
+		}, hideEvaluator = function(ele, data, fields) {
+			// if any field has a value -> hide
+			var show = false;
+			$.each(fields, function(){
+				var value = that._getValueWithArrays(data, this);
+				if(!value || value === "" || value === 0 || value === -1)
+					return;
+				show = true;
+				// skip processing
+				return false;
+			});
+			if(show)
+				ele.hide();
+			else
+				ele.show();
+		};
+		
+		// remember the conditionals for faster dom access
+		this.conditionals = $(form).find(".conditional"); 
+		
+		this.conditionals.each(function(){
+			$(this).data().conditionalEval = [];
+			var fields = $(this).attr("data-show");
+			if(fields && fields.length > 0) {
+				$(this).data().conditionalEval.push({
+					func: showEvaluator,
+					field: fields.split(" ") 
+				});
+			}
+			fields = $(this).attr("data-hide");
+			if(fields && fields.length > 0) {
+				$(this).data().conditionalEval.push({
+					func: hideEvaluator,
+					field: fields.split(" ") 
+				});
+			}
+			fields = $(this).attr("data-eval");
+			if(fields && fields.length > 0) {
+				// custom evaluator
+				if(options.conditionals[fields])
+					$(this).data().conditionalEval.push({
+						func: options.conditionals[fields]
+					});
+			}
+		});
+	};
+	
+	/**
+	 * evaluate conditionals on the form
+	 * @param form the form to search for conditionals
+	 * @param data the data
+	 */
+	JsForm.prototype._evaluateConditionals = function(form, data) {
+		this.conditionals.each(function(){
+			var ele = $(this);
+			// go throguh all evaluation functions
+			$.each(ele.data().conditionalEval, function() {
+				this.func(ele, data, this.field);
+			});
+		});
 	};
 	
 	/**
@@ -193,10 +284,13 @@
 						
 						// trigger a callback
 						$(this).trigger("addCollection", [line, $(line).data().pojo]);
+						
+						// the new entry has as index the count of all "lines"
+						var idx = $(this).children(".POJO").length;
 
 						// fill the line with data
-						that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1));
-						
+						that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
+
 						// its possible to have "sub" collections
 						that._initCollection(line, fieldName.substring(fieldName.indexOf('.')+1));
 						
@@ -261,8 +355,11 @@
 						// trigger a callback
 						$(this).trigger("addCollection", [line, $(line).data().pojo]);
 
+						// the new entry has as index the count of all "lines"
+						var idx = $(this).children(".POJO").length;
+						
 						// fill the "information"
-						that._fillData(line, pojo, fieldName.substring(fieldName.indexOf('.')+1));
+						that._fillData(line, pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
 						
 						$(this).append(line);
 					}
@@ -392,7 +489,7 @@
 						$(collectionList).each(function() {
 							$(this).children().each(function(count, ele){
 								if(cur.id === $(ele).data("pojo").id) {
-									option.attr("selected", "selected");
+									option.prop("selected", "selected");
 								}
 							});
 						});
@@ -685,9 +782,10 @@
 	* @param parent the root of the subtree
 	* @param data the data
 	* @param prefix the prefix used to find fields
+	* @param idx the index - this is only used for collections
 	* @private
 	*/
-	JsForm.prototype._fillData = function (parent, data, prefix) {
+	JsForm.prototype._fillData = function (parent, data, prefix, idx) {
 		var that = this;
 		var $parent = $(parent);
 		
@@ -716,7 +814,7 @@
 				if (prefix) {
 					cname = cname.substring(prefix.length + 1);
 				}
-				var cdata = that._get(data, cname);
+				var cdata = that._get(data, cname, false, idx);
 
 				if(!cdata) {
 					cdata = "";
@@ -744,7 +842,7 @@
 			}
 		});
 		
-		$("input", $parent).each(function() {
+		$("input, textarea", $parent).each(function() {
 			var name = $(this).attr("name");
 			if(!name) {
 				return;
@@ -761,21 +859,26 @@
 					cname = cname.substring(prefix.length + 1);
 				}
 				
-				var cdata = that._get(data, cname);
+				var cdata = that._get(data, cname, false, idx);
 				
 				// check for percentage: this is value * 100
 				if ($(this).hasClass("percent") && !isNaN(cdata)) {
 					cdata = 100 * Number(cdata);
+				} else if ($(this).hasClass("object")) {
+					$(this).data().pojo = cdata;
+					$(this).addClass("POJO");
+					if($(this).attr("data-display")) {
+						cdata = that._renderObject(cdata, $(this).attr("data-display"));
+					} 
 				} else if($.isPlainObject(cdata)) {
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
 					cdata = that._renderObject(cdata, $(this).attr("data-display"));
-				}
+				} 
 				
 
 				if($(this).attr("type") === "checkbox") {
 					$(this).prop("checked", (cdata === true || cdata === "true"));
-					$(this).change();
 				} else {
 					if(!cdata) {
 						cdata = "";
@@ -786,8 +889,10 @@
 						cdata = $.jsFormControls.Format.format(this, cdata);
 
 					$(this).val(cdata);
-					$(this).change();
 				}
+				
+				$(this).change();
+				$(this).trigger("fill");
 			}
 		});
 
@@ -803,16 +908,16 @@
 					cname = cname.substring(prefix.length + 1);
 				}
 				// remove "old" selected options
-				$(this).children("option").removeAttr("selected");
+				$(this).children("option").removeProp("selected");
 				var pk = $(this).attr("data-key");
 				if(!pk) {
 					pk = "id";
 				}
 				
-				var value = that._get(data, cname);
+				var value = that._get(data, cname, false, idx);
 				// try selecting based on the id 
 				if (value[pk] || !isNaN(value[pk])) {
-					$(this).children("option[value='"+value[pk]+"']").attr("selected", true);
+					$(this).children("option[value='"+value[pk]+"']").prop("selected", "selected");
 					// actually set the value and trigger the change
 					$(this).val(value[pk]).change();
 					return;
@@ -820,25 +925,10 @@
 					value = value ? "true" : "false";
 				}
 				
-				$(this).children("option[value='"+value+"']").attr("selected", true);
+				$(this).children("option[value='"+value+"']").prop("selected", "selected");
 				$(this).val(value).change();
-			}		
-		});
-		
-		$("textarea", $parent).each(function() {
-			var name = $(this).attr("name");
-			if(!name) {
-				return;
+				$(this).trigger("fill");
 			}
-			
-			if(!prefix || name.indexOf(prefix + ".") >= 0) {
-				var cname = name;
-				if (prefix) {
-					cname = cname.substring(prefix.length + 1);
-				}
-				$(this).val(that._get(data,cname));
-				$(this).change();
-			}		
 		});
 	};
 	
@@ -1078,24 +1168,22 @@
 	/**
 	 * fill a form based on a pojo. 
 	 * @param form the form
-	 * @param data the data object used to fill the form 
+	 * @param options the options used to fill
 	 * @param prefix the optional prefix used to identify fields for this form
 	 * @private
 	 */
-	JsForm.prototype._fill = function(form, data, prefix) {
-		// get the prefix from the form if not given
-		if(!prefix) {
-			prefix = this.config.prefix;
-		}
+	JsForm.prototype._fill = function(form, options) {
 		
-		this._clear(form, prefix);
+		this._clear(form, options.prefix);
 
 		$(form).addClass("POJO");
-		$(form).data("pojo", data);
+		$(form).data("pojo", options.data);
 
 		// fill base 
-		this._fillData(form, data, prefix);
-		this._fillCollection(form, data, prefix);
+		this._fillData(form, options.data, options.prefix);
+		this._fillCollection(form, options.data, options.prefix);
+		// (re-)evaluate all conditionals
+		this._evaluateConditionals(this.element, options.data);
 	};
 
 	/**
@@ -1203,9 +1291,9 @@
 			var cur = data[i];
 			var line = tmpl.clone(true);
 			// save current line
-			line.data("pojo", cur);
+			line.data().pojo = cur;
 			line.addClass("POJO");
-
+			
 			if(lineFunc) {
 				if(lineFunc(line, cur) === false) {
 					continue;
@@ -1215,7 +1303,8 @@
 			that._addCollectionControls(line);
 			
 			if(prefix) {
-				that._fillData(line, cur, prefix);
+				// fill data - including the index
+				that._fillData(line, cur, prefix, i+1);
 				// enable collection controls
 				that._initCollection(line, prefix);
 				// fill with data
@@ -1336,11 +1425,12 @@
 	/**
 	 * Retrieve a value from a given object by using dot-notation
 	 * @param obj the object to start with
-	 * @param the child to get (dot notation) 
+	 * @param expr the child to get (dot notation) 
 	 * @param create set to true and non-existant levels will be created (always returns non-null)
+	 * @param idx only filles when filling collection - can be access using $idx
 	 * @private
 	 */
-	JsForm.prototype._get = function(obj, expr, create) {
+	JsForm.prototype._get = function(obj, expr, create, idx) {
 		var ret, p, prm = "", i;
 		if(typeof expr === "function") {
 			return expr(obj); 
@@ -1351,6 +1441,10 @@
 		// reference the object itself
 		if(expr === "")
 			return obj;
+		
+		// reference to the index
+		if(expr === "$idx")
+			return idx;
 			
 		ret = obj[expr];
 		if(!ret) {
@@ -1382,7 +1476,31 @@
 		}
 		return ret;
 	};
-	
+
+    /**
+     * Parse a dot notation that includes arrays
+     * http://stackoverflow.com/questions/13355278/javascript-how-to-convert-json-dot-string-into-object-reference
+     * @param obj
+     * @param path a dot notation path to search for.  Use format parent[1].child
+     */
+    JsForm.prototype._getValueWithArrays = function(obj, path) {
+        path = path.split('.');
+        var arrayPattern = /(.*)\[(\d+)\]/;
+        for (var i = 1; i < path.length; i++) {
+            var match = arrayPattern.exec(path[i]);
+            try {
+                if (match) {
+                    obj = obj[match[1]][parseInt(match[2], 10)];
+                } else {
+                    obj = obj[path[i]];
+                }
+            } catch(e) {
+                console.log(path + " " + e);
+            }
+        }
+
+        return obj;
+    }; 
 		
 	/**
 	 * get the "parent" object of a given dot-notation. this will not return the actual 
@@ -1664,7 +1782,21 @@
 		// set the new data
 		this.options.data = pojo;
 		// fill everything
-		this._fill(this.element, this.options.data, this.options.prefix);
+		this._fill(this.element, this.options);
+	};
+
+	/**
+	 * re-evaluate the conditionals in the form based on the given data.
+	 * if no data is given, the form is serialized
+	 * @param data {object} the data
+	 */
+	JsForm.prototype.applyConditions = function(pojo) {
+		// set the new data
+		if(!pojo)
+			pojo = this.get(true);
+		
+		// evaluate everything
+		this._evaluateConditionals(this.element, pojo);
 	};
 
 	/**
@@ -1674,7 +1806,7 @@
 		// clear first
 		this.clear();
 		// fill everything
-		this._fill(this.element, this.options.data, this.options.prefix);
+		this._fill(this.element, this.options);
 	};
 
 	/**
@@ -2157,14 +2289,22 @@
 			 */
 			format: function(ele, cdata) {
 				if($(ele).hasClass("dateTime")) {
+					if(isNaN(cdata))
+						return cdata;
 					return $.jsFormControls.Format.dateTime(cdata);
 				} if($(ele).hasClass("datetime")) {
+					if(isNaN(cdata))
+						return cdata;
 					return $.jsFormControls.Format.dateTime(cdata);
 				} else if($(ele).hasClass("date")) {
+					if(isNaN(cdata))
+						return cdata;
 					return $.jsFormControls.Format.date(cdata);
 				} else if($(ele).hasClass("currency")) {
 					return $.jsFormControls.Format.currency(cdata);
 				} else if($(ele).hasClass("byte")) {
+					if(isNaN(cdata))
+						return cdata;
 					return $.jsFormControls.Format.byte(cdata);
 				} else if($(ele).hasClass("number")) {
 					return $.jsFormControls.Format.decimal(cdata);

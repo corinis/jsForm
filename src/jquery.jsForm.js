@@ -182,7 +182,7 @@
 				// custom evaluator
 				if(options.conditionals[fields])
 					$(this).data().conditionalEval.push({
-						func: options.conditionals[fields],
+						func: options.conditionals[fields]
 					});
 			}
 		});

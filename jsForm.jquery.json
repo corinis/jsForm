@@ -1,13 +1,13 @@
 {
     "name": "jsForm",
     "title": "jQuery JSON Form",
-    "description": "jQuery plugin connecting a html form with a javascript object for manipulation. This plugin allows to quickly fill a form based on json object (i.e. retrieved via ajax, modify the json object within the form and then serialize it back to a json object to send back to the server.",
+    "description": "jQuery based form library that allows you to handle data within a javascript object (like from a JSON request) with plain html forms.\nYou can modify all fields/properties by simply creating a html form with the correct naming schema (MVVM Pattern).\n\nThe main features of this library are:\n    Full standard html with data available in a js object\n    Update an existing js object with changes done within a form\n    Provide basic functions for formatting (i.e. date/time, money) using html markup\n    Provide form validation functionality\n    handle collections (arrays) with subobjects\n provides helper methods to handle array manipulation (add new entry/remove an entry) using only html markup\n Can be used in connection with an autocomplete function to add new array objects",
     "keywords": [
         "form",
         "json",
         "data"
     ],
-    "version": "1.0.8",
+    "version": "1.0.9",
     "author": {
         "name": "Niko Berger"
     },

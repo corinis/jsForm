@@ -1,20 +1,21 @@
 jquery.jsForm
 =============
 
-jQuery based form library to handle data in js objects
+jQuery based form library that allows you to handle data within a javascript object (like from a JSON request) with plain html forms.
 
-It allows you to handle data within a javascript object (like from a JSON request) with plain html forms.
+This is an implementation of the concept behind [MVVM](http://en.wikipedia.org/wiki/Model_View_ViewModel) similar to other libraries like (knockout.js)[http://knockoutjs.com/] or (AngularJs)[http://angularjs.org/].
 
 The main features of this library are:
 
-* Full standard html with data available in a js object
-* Update an existing js object with changes done within a form
+* Use html markup to fill your forms/page with almost any js object dynamically 
+* Update an existing js object with changes done within a form (=manipulate data without extra code)
 * Provide basic functions for formatting (i.e. date/time, money, byte) using html markup
 * Provide form validation functionality
 * handle collections (arrays) with subobjects
 * provides helper methods to handle array manipulation (add new entry/remove an entry) using only html markup
 * Can be used in connection with an autocomplete function to add new array objects
 * Compatible with jquery ui 
+* addon library for form controls and layouting (comes bundled in the minified version)
 * fully unit tested using [qunit](http://www.gargan.org/jsform/test/test.jquery.jsForm.html)
 * jslint clean
 * Minified+Gzipped: 6kb
@@ -105,3 +106,5 @@ $(function(){
 </body>
 </html>
 ```
+
+
