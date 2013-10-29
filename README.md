@@ -3,7 +3,9 @@ jquery.jsForm
 
 jQuery based form library that allows you to handle data within a javascript object (like from a JSON request) with plain html forms.
 
-This is an implementation of the concept behind [MVVM](http://en.wikipedia.org/wiki/Model_View_ViewModel) similar to other libraries like (knockout.js)[http://knockoutjs.com/] or (AngularJs)[http://angularjs.org/].
+This is a library allowing a binding between html and a javascript object as described in [MVVM](http://en.wikipedia.org/wiki/Model_View_ViewModel) similar to other libraries like (knockout.js)[http://knockoutjs.com/] or (AngularJs)[http://angularjs.org/]. 
+JsForm only takes care of the rendering of data in a html. The controller can be written in standard jQuery. This keeps the library clean and simple.
+
 
 The main features of this library are:
 
@@ -20,11 +22,7 @@ The main features of this library are:
 * jslint clean
 * Minified+Gzipped: 6kb
 
-# Live Demos
-
-* [Simple Form](http://www.gargan.org/jsform/sample.html)
-* [Multi level arrays and sorting](http://www.gargan.org/jsform/sortable-sample.html)
-* [Multi level arrays and sorting with dragn'drop](http://www.gargan.org/jsform/sortable-editable-sample.html)
+You can also check out some [Demos](http://www.gargan.org/jsform/index.jsp).
 
 # Download
 
