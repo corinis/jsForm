@@ -1495,7 +1495,7 @@
                     obj = obj[path[i]];
                 }
             } catch(e) {
-                console.log(path + " " + e);
+                this._debug(path + " " + e);
             }
         }
 
@@ -1529,14 +1529,17 @@
 			return null;
 		}
 		
-		if($.format) 
-			return $.format.number(num); 
-
-		// either we have , (for komma) or a . and at least 3 following numbers (not a round komma)
-		if(num.indexOf(",") != -1 || (num.length - num.indexOf('.') > 3))
+		// check if we have jsForm controls (internationalization)
+		if($.jsFormControls)
+			return $.jsFormControls.Format._getNumber(num);
+		
+		// remove thousand seperator...
+		if(num.indexOf(",") != -1)
 		{
-			num = num.replace(/\./g, "").replace(",", ".");
+			num = num.replace(",", "", "g");
 		}
+		
+		
 		return Number(num);
 	};
 

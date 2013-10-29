@@ -146,6 +146,22 @@
 				}
 			}
 		}).keyup();
+		
+		// currency formatting (add decimal)
+		location.find("input.currency").change(function(){
+			var val = $(this).val();
+			if(val.length > 0) {
+				$(this).val($.jsFormControls.Format.currency($.jsFormControls.Format._getNumber(val)));
+			}			
+		});
+
+		// decimal formatting (add decimal)
+		location.find("input.decimal").change(function(){
+			var val = $(this).val();
+			if(val.length > 0) {
+				$(this).val($.jsFormControls.Format.decimal($.jsFormControls.Format._getNumber(val)));
+			}			
+		});
 
 		var integerRegexp = new RegExp("^[0-9]+$");
 		location.find("input.integer").keyup(function(){
@@ -432,6 +448,7 @@
 			
 
 			/**
+			 * take a string and convert it into a number
 			 * @private
 			 */
 			_getNumber: function(num) {
@@ -439,14 +456,26 @@
 					return null;
 				}
 				
-				if($.format) 
-					return $.format.number(num); 
+				// default number format
+				var numberformat = {
+					format: "#,##0.###",
+					groupingSeparator: ",",
+					decimalSeparator: "."
+				};
 
-				// either we have , (for komma) or a . and at least 3 following numbers (not a rounden komma)
-				if(num.indexOf(",") !== -1 || (num.length - num.indexOf('.') > 3))
-				{
-					num = num.replace(/\./g, "").replace(",", ".");
+				if(typeof i18n !== "undefined")
+					numberformat = i18n.number;
+				else if($(document).data().i18n && $(document).data().i18n.number)
+					numberformat = $(document).data().i18n.number;
+
+				// get rid of the grouping seperator (if any exist)
+				if(num.indexOf(numberformat.groupingSeparator) !== -1)
+					num = num.replace(numberformat.groupingSeparator, "", "g");
+				// now convert the decimal seperator into a "real" decimal
+				if(numberformat.decimalSeparator !== '.' && num.indexOf(numberformat.decimalSeparator) !== -1) {
+					num = num.replace(numberformat.decimalSeparator, ".", "g");
 				}
+				
 				return Number(num);
 			},
 
@@ -487,16 +516,12 @@
 					groupingSeparator: ",",
 					decimalSeparator: "."
 				};
-				
+
 				if(typeof i18n !== "undefined")
 					numberformat = i18n.number;
-				if(typeof $(document).data().i18n !== "undefined")
+				else if($(document).data().i18n && $(document).data().i18n.number)
 					numberformat = $(document).data().i18n.number;
 
-				if($.format && numberformat) {
-					return $.format.number(num, numberformat);
-				}
-					
 				var comma = 0;
 				if (Math.abs(num - Math.floor(num)) > 0.001) {
 					comma = 2;
@@ -582,7 +607,7 @@
 				
 				if(typeof i18n !== "undefined")
 					dateformat = i18n.date;
-				if(typeof $(document).data().i18n !== "undefined")
+				else if($(document).data().i18n && $(document).data().i18n.date)
 					dateformat = $(document).data().i18n.date;
 
 				if($.format)
