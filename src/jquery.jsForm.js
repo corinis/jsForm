@@ -670,55 +670,54 @@
 			
 			var val = $(this).val();
 
-			// jsobject use the pojo data
+			// jsobject use the pojo data directly - ignore the rest
 			if($(this).hasClass("jsobject")) {
 				val = $(this).data("pojo");
 			}
-			
-			// ignore empty values when skipEmpty is set
-			if(that.options.skipEmpty && (!val || val === "" || val.trim() === "")) {
-				return;
-			}
-			
-			if($(this).hasClass("emptynull") && (!val || val === ""  || val === "null" || val.trim() === "")) { // nullable fields do not send empty string
-				val = null;
-			} else if($(this).hasClass("object") || $(this).hasClass("POJO")) {
-				if($("option:selected", this).data() && $("option:selected", this).data().pojo) {
-					val = $("option:selected", this).data().pojo;
-				} else {
-					val = $(this).data("pojo");
+			else {
+				// ignore empty values when skipEmpty is set
+				if(that.options.skipEmpty && (!val || val === "" || val.trim() === "")) {
+					return;
 				}
-			} else if($(this).hasClass("blob")) { // file upload blob
-				val = $(this).data("blob");
-			} else
-			// set empty numbers or dates to null
-			if(val === "" && ($(this).hasClass("number") || $(this).hasClass("integer") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
-				val = null;
-			} 
-			
-			// check for percentage: this is input / 100
-			if ($(this).hasClass("percent")) {
-				val = that._getNumber(val);
-				if(isNaN(val)) {
-					val = 0;
-				} else {
-					val /= 100;
+				
+				if($(this).hasClass("emptynull") && (!val || val === ""  || val === "null" || val.trim() === "")) { // nullable fields do not send empty string
+					val = null;
+				} else if($(this).hasClass("object") || $(this).hasClass("POJO")) {
+					if($("option:selected", this).data() && $("option:selected", this).data().pojo) {
+						val = $("option:selected", this).data().pojo;
+					} else {
+						val = $(this).data("pojo");
+					}
+				} else if($(this).hasClass("blob")) { // file upload blob
+					val = $(this).data("blob");
+				} else
+				// set empty numbers or dates to null
+				if(val === "" && ($(this).hasClass("number") || $(this).hasClass("integer") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
+					val = null;
+				} 
+				
+				// check for percentage: this is input / 100
+				if ($(this).hasClass("percent")) {
+					val = that._getNumber(val);
+					if(isNaN(val)) {
+						val = 0;
+					} else {
+						val /= 100;
+					}
+				}
+				else if ($(this).hasClass("number") || $(this).hasClass("integer")) {
+					val = that._getNumber(val);
+					if(isNaN(val)) {
+						val = 0;
+					}
+				}
+				else if($(this).attr("type") === "checkbox" || $(this).attr("type") === "CHECKBOX") {
+					val = $(this).is(':checked');
+				}
+				else if($(this).hasClass("bool")) {
+					val = ($(this).val() === "true");
 				}
 			}
-
-			if ($(this).hasClass("number") || $(this).hasClass("integer") || $(this).hasClass("currency")) {
-				val = that._getNumber(val);
-				if(isNaN(val)) {
-					val = 0;
-				}
-			}
-			else if($(this).attr("type") === "checkbox" || $(this).attr("type") === "CHECKBOX") {
-				val = $(this).is(':checked');
-			}
-			else if($(this).hasClass("bool")) {
-				val = ($(this).val() === "true");
-			}
-
 			// handle simple collection
 			if(name.length < 1) {
 				pojo = val;
@@ -870,6 +869,9 @@
 					if($(this).attr("data-display")) {
 						cdata = that._renderObject(cdata, $(this).attr("data-display"));
 					} 
+				} else if ($(this).hasClass("jsobject")) {
+					$(this).data().pojo = cdata;
+					$(this).addClass("POJO");
 				} else if($.isPlainObject(cdata)) {
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
