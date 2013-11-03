@@ -155,6 +155,14 @@
 			}			
 		});
 
+		location.find("input.percent").change(function(){
+			var val = $(this).val();
+			if(val.length > 0) {
+				$(this).val($.jsFormControls.Format.decimal($.jsFormControls.Format._getNumber(val)));
+			}			
+		});
+
+
 		// decimal formatting (add decimal)
 		location.find("input.decimal").change(function(){
 			var val = $(this).val();
@@ -418,7 +426,9 @@
 					if(isNaN(cdata))
 						return cdata;
 					return $.jsFormControls.Format.byte(cdata);
-				} else if($(ele).hasClass("number")) {
+				} else if($(ele).hasClass("decimal")) {
+					return $.jsFormControls.Format.decimal(cdata);
+				} else if($(ele).hasClass("percent")) {
 					return $.jsFormControls.Format.decimal(cdata);
 				}
 				
@@ -489,7 +499,10 @@
 				return o;
 			},
 
-
+			asNumber: function(value) {
+				return $.jsFormControls.Format._getNumber(value);
+			},
+			
 			byte: function(bytes) {
 				if (bytes === "" || !bytes || isNaN(bytes)) {
 					return bytes;
