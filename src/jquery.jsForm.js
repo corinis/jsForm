@@ -736,7 +736,7 @@
 				var d0 = pojo[parts[0]];
 				var d1, d2;
 				
-				// multiple parts: make sure its an object
+				// multiple parts: make sure its an object TODO find a better way to handle multiple levels with auto-create
 				if (!d0 || !$.isPlainObject(d0)) {
 					pojo[parts[0]] = {};
 					d0 = pojo[parts[0]]; 
@@ -746,7 +746,7 @@
 					d0[parts[1]] = val;
 				} else if (parts.length === 3) {
 					d1 = d0[parts[1]];
-					if(d1 === undefined) {
+					if(d1 === undefined || d1 === null) {
 						d1 = {};
 						d0[parts[1]] = d1;
 					}
@@ -754,8 +754,12 @@
 				} else if (parts.length === 4)
 				{
 					d1 = d0[parts[1]];
+					if(d1 === null || d1 === undefined) {
+						d1 = {};
+						d0[parts[1]] = d1;
+					}
 					d2 = d1[parts[2]];
-					if(d2 === undefined) {
+					if(d2 === undefined || d1 === null) {
 						d2 = {};
 						d1[parts[2]] = d2;
 					}
