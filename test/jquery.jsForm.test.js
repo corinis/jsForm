@@ -218,3 +218,56 @@ test("collection test", function(){
 	
 	basicForm.remove();
 });
+
+
+test("collection in collection test", function(){
+	// html code for basic form 
+	var basicForm = $('<div>\n'+
+  	'<input name="data.input">\n'+
+  	'<div class="collection group" data-field="data.groups">\n'+
+  	' <div>\n'+
+  	'  <input name="groups.name"/>\n'+
+  	'  <div class="collection users" data-field="groups.users">\n'+
+  	'    <div class="entry">'+
+  	'      <input name="users.name"/>\n'+
+  	'      <span class="delete">X</span>\n'+
+  	'    </div>'+
+  	'  </div>'+
+  	' </div>'+
+  	'</div>\n'+
+  	'<span class="add" data-field="data.groups">N</span>\n'+
+  	'</div>');
+	
+	$("body").append(basicForm);
+	
+	var original = {
+			input: "inputTest",
+			groups: [
+			   { name: "group1", users: [{name: "user11"}, {name: "user12"}] }, 
+			   { name: "group2"},
+			   { name: "group3", users: [{name: "user31"}, {name: "user32"}] }
+			],
+		};
+	
+	// default init: prefix = data
+	basicForm.jsForm({
+		data: original
+	});
+	
+	equal($("div.collection.group", basicForm).children().size(), 3, "3 repeats");
+	equal($("div.collection.group", basicForm).children().eq(0).find(".collection.users").children(".entry").size(), 2, "2 repeats (child)");
+	
+	equal(basicForm.jsForm("equals", original), true, "form has not changed");
+
+	// update a field
+	$("div.collection.group", basicForm).children().eq(0).find(".collection.users").children().eq(0).find("input[name='users.name']").val("TESTUSER");
+	
+	equal(basicForm.jsForm("equals", original), false, "form has different data");
+
+	// get object back and test
+	var pojo = basicForm.jsForm("get");
+	
+	equal(pojo.groups[0].users[0].name, "TESTUSER", "test change in collection");
+	
+	basicForm.remove();
+});

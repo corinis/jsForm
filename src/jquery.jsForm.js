@@ -1717,7 +1717,6 @@
 	 * @return true if any change between formfields and the pojo is found
 	 */
 	JsForm.prototype.equals = function(pojo) {
-		var that = this;
 		var form = this.element;
 		var prefix = this.options.prefix;
 
@@ -1732,6 +1731,18 @@
 		if($(".invalid", form).length > 0) {
 			return false;
 		}
+		
+		if(!this._equalsCollection(form, prefix, pojo))
+			return false;
+		
+		// we want to know if its equals -> return not
+		return !differs;
+	};
+
+	JsForm.prototype._equalsCollection = function(form, prefix, pojo) {
+		var that = this;
+		var differs = false;
+		that._debug("checking: " + prefix);
 		
 		$(".collection", form).each(function() {
 			if(differs) {
@@ -1748,7 +1759,9 @@
 			if(fieldname.length < 1) {
 				return;
 			}
-			
+
+			that._debug("checking childs for: " + fieldname);
+
 			var childCounter = 0;
 			// go through all direct childs - each one is an element
 			$(this).children().each(function(){
@@ -1766,9 +1779,12 @@
 				if(that._pojoDifferFromInput($(this), fieldname, ele)) {
 					differs = true;
 				}
+				
+				if(!that._equalsCollection($(this), fieldname, ele))
+					differs = true;
 			});
 			
-			if(childCounter < pojo[fieldname].length) {
+			if(pojo[fieldname] && childCounter < pojo[fieldname].length) {
 				differs = true;
 			}
 		});
@@ -1776,7 +1792,7 @@
 		// we want to know if its equals -> return not
 		return !differs;
 	};
-	
+
 	/**
 	 * fill the form with data.
 	 * <ul>
