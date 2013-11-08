@@ -49,7 +49,10 @@
 			 * field to recurse into
 			 */
 			children: "children",
-			
+			/**
+			 * set to true to allow multiple elements to be selected
+			 */
+			multiple: false,
 			/**
 			 * style when a node is active (null: disables activation)
 			 */
@@ -112,7 +115,7 @@
 		
 		var that = this, config = this.options, $this = $(this.element);
 		
-		var root = $('<ul/>');
+		var root = $('<ul class="tree"/>');
 		basenode.append(root);
 		$.each(data, function(){
 			var name = null, title = null;
@@ -132,18 +135,37 @@
 			if(title !== null) {
 				node.attr("title", title);
 			}
+			
+			if(config.id) {
+				node.data().id = this[config.id];
+			} else if(this.id)
+				node.data().id = this.id;
 
 			$("span", node).hover(function(){$(this).addClass(config.hover);}, function(){$(this).removeClass(config.hover);}).click(function(){
 				if(config.active) {
-					$this.find("." + config.active).removeClass(config.active);
-					$(this).addClass(config.active);
+					// deactivate
+					if(!config.multiple) {
+						$this.find("." + config.active).removeClass(config.active);
+						$(this).addClass(config.active);
+					}
+					else {
+						if($(this).hasClass(config.active)) {
+							$(this).removeClass(config.active);
+						} else {
+							$(this).addClass(config.active);
+						}
+					}
 				}
+				
 				// trigger selection
-				if(config.select)
-					config.select($(this).parent().data().node);
-				$this.data().selected = this;
-				$this.trigger("select", this);
+				if($(this).hasClass(config.active)) {
+					if(config.select)
+						config.select($(this).parent().data().node);
+					$this.data().selected = this;
+					$this.trigger("select", this);
+				}
 			}).dblclick(function(){
+				// doubleclick: only one secelection
 				if(config.active) {
 					$this.find("." + config.active).removeClass(config.active);
 					$(this).addClass(config.active);
@@ -297,6 +319,52 @@
 	Tree.prototype.clear = function() {
 		// clear first
 		this._clear();
+	};
+	
+	/**
+	 * @return all currently selected fields 
+	 */
+	Tree.prototype.getAll = function() {
+		var config = this.options, $this = $(this.element);
+		
+		if(!config.active)
+			return $this.data().selected;
+		
+		var ret =  [];
+		$this.find("." + config.active).each(function(){
+			ret.push($(this).closest("li.tree-item").data().node);
+		});
+		return ret;
+	};
+	
+	Tree.prototype.select = function(fields) {
+		var config = this.options, $this = $(this.element);
+		
+		// only if we actually display the select
+		if(!config.active)
+			return;
+		
+		// deselect all
+		$this.find("." + config.active).removeClass(config.active);
+		
+		// skip if we dont select anything (=clear)
+		if(!fields)
+			return;
+		
+		$.each(fields, function(){
+			var id = this;
+			if(config.id) {
+				id = this[config.id];
+			} else if(this.id)
+				id = this.id;
+		
+			$("li.node").each(function(){
+				if($(this).data().id === id) {
+					$(this).children("span").addClass(config.active);
+					return false;
+				}
+			});
+		});
 	};
 
 	/**
