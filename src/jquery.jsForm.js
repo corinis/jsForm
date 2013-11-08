@@ -44,7 +44,12 @@
 			/**
 			 * skip empty values when getting an object
 			 */
-			skipEmpty: false
+			skipEmpty: false,
+			/**
+			 * an object with callback functions that act as pre-processors for data fields (class=object).
+			 * ie. { idFilter: function(data){return data.id} } 
+			 */
+			processors: null
 		}, options);
 
 		// read prefix from dom
@@ -687,6 +692,15 @@
 						val = $("option:selected", this).data().pojo;
 					} else {
 						val = $(this).data("pojo");
+					}
+					// object can also have a processor
+					if($.isFunction($(this).data().processor)) {
+						val = $(this).data().processor(val);
+					} else {
+						var processor = $(this).attr("data-processor");
+						if(processor && that.options.processors[processor]) {
+							val = that.config.processors[processor](val);
+						}
 					}
 				} else if($(this).hasClass("blob")) { // file upload blob
 					val = $(this).data("blob");
