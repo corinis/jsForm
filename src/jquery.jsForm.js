@@ -741,7 +741,21 @@
 			// check if we have a . - if so split
 			if (name.indexOf(".") === -1)
 			{
-				pojo[name] = val;
+				// this might actually be an array!
+				if($(this).hasClass("array")) {
+					var num = $(this).attr("data-array");
+					if(!num || isNaN(num)) {
+						num = 0;
+					} else
+						num = Number(num);
+					// create an array out of this
+					if(!pojo[name]) {
+						pojo[name] = [];
+					}
+					pojo[name][num] = val;
+				}
+				else
+					pojo[name] = val;
 			}
 			else
 			{
