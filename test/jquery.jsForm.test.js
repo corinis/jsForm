@@ -166,7 +166,7 @@ test("collection test", function(){
 			   { name: "group3", id: 3 }
 			],
 			simpleString: ["test", "test2", "test3"],
-			simpleNumber: [1, 2, 3],
+			simpleNumber: [1, 2, 3]
 		};
 	
 	// default init: prefix = data
@@ -246,7 +246,7 @@ test("collection in collection test", function(){
 			   { name: "group1", users: [{name: "user11"}, {name: "user12"}] }, 
 			   { name: "group2"},
 			   { name: "group3", users: [{name: "user31"}, {name: "user32"}] }
-			],
+			]
 		};
 	
 	// default init: prefix = data
@@ -268,6 +268,47 @@ test("collection in collection test", function(){
 	var pojo = basicForm.jsForm("get");
 	
 	equal(pojo.groups[0].users[0].name, "TESTUSER", "test change in collection");
+	
+	basicForm.remove();
+});
+
+test("simple arrays", function(){
+	// html code for basic form 
+	var basicForm = $('<div>\n'+
+  	'<input type="checkbox" class="array" name="data.checks" value="a">\n'+
+  	'<input type="checkbox" class="array" name="data.checks" value="b">\n'+
+  	'<input type="checkbox" class="array" name="data.checks" value="c">\n'+
+  	'<input type="checkbox" class="array" name="data.checks" value="d">\n'+
+  	'</div>');
+	
+	$("body").append(basicForm);
+	
+	var original = {
+		checks: ["a", "c"]
+	};
+	
+	// default init: prefix = data
+	basicForm.jsForm({
+		data: original
+	});
+	
+	equal($("input.array[value='a']", basicForm).is(":checked"), true, "a checked");
+	equal($("input.array[value='b']", basicForm).is(":checked"), false, "b not checked");
+	equal($("input.array[value='c']", basicForm).is(":checked"), true, "c checked");
+	equal($("input.array[value='d']", basicForm).is(":checked"), false, "d not checked");
+
+	equal(basicForm.jsForm("equals", original), true, "form has not changed");
+
+	// update a field
+	$("input.array[value='a']", basicForm).prop("checked", false);
+	$("input.array[value='b']", basicForm).prop("checked", true);
+	
+	equal(basicForm.jsForm("equals", original), false, "form has different data");
+
+	// get object back and test
+	var pojo = basicForm.jsForm("get");
+	
+	equal(pojo.checks, ["b", "c"], "b and c checked");
 	
 	basicForm.remove();
 });
