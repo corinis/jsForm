@@ -726,7 +726,12 @@
 					}
 				}
 				else if($(this).attr("type") === "checkbox" || $(this).attr("type") === "CHECKBOX") {
-					val = $(this).is(':checked');
+					// a checkbox as an array
+					if($(this).hasClass("array")) {
+						// the special case: array+checkbox is handled on the actual setting
+						val = $(this).val();
+					} else
+						val = $(this).is(':checked');
 				}
 				else if($(this).hasClass("bool")) {
 					val = ($(this).val() === "true");
@@ -743,16 +748,40 @@
 			{
 				// this might actually be an array!
 				if($(this).hasClass("array")) {
-					var num = $(this).attr("data-array");
-					if(!num || isNaN(num)) {
-						num = 0;
-					} else
-						num = Number(num);
 					// create an array out of this
 					if(!pojo[name]) {
 						pojo[name] = [];
 					}
-					pojo[name][num] = val;
+					
+					if($(this).attr("type") === "checkbox" || $(this).attr("type") === "CHECKBOX") {
+						// do we want the value of not
+						var use = $(this).is(":checked");
+						var pushVal = true;
+						$.each(pojo[name], function(data, index){
+							if(this == val) {
+								// dont need to push
+								pushVal = false;
+								// we dont use it - remove it
+								if(!use)
+									pojo[name].splice(index, 1);
+								return false;
+							}
+						});
+						if(pushVal && use)
+							pojo[name].push(val);
+					} else {
+						var num = $(this).attr("data-array");
+						if(!num || isNaN(num)) {
+							num = null;
+						} else
+							num = Number(num);
+	
+						// no num -> add the array
+						if(num === null)
+							pojo[name].push(val);
+						else
+							pojo[name][num] = val;
+					}
 				}
 				else
 					pojo[name] = val;
@@ -912,7 +941,22 @@
 				
 
 				if($(this).attr("type") === "checkbox") {
-					$(this).prop("checked", (cdata === true || cdata === "true"));
+					// array in checkbox
+					if($(this).hasClass("array")) {
+						// checkbox: set if any part of the array matches
+						var cbVal = $(this).val();
+						var found = false;
+						if(cdata) 
+							$.each(cdata, function(){
+								if(this == cbVal) {
+									found = true;
+									return false;
+								}
+							});
+						// select
+						$(this).prop("checked", found);
+					} else
+						$(this).prop("checked", (cdata === true || cdata === "true"));
 				} else {
 					if(!cdata) {
 						cdata = "";
@@ -921,8 +965,22 @@
 					// format the string
 					if($.jsFormControls)
 						cdata = $.jsFormControls.Format.format(this, cdata);
-
-					$(this).val(cdata);
+					
+					// array handling
+					if($(this).hasClass("array")) {
+						// fixed numbers
+						var num = $(this).attr("data-array");
+						if(!num || isNaN(num)) {
+							num = null;
+						} else
+							num = Number(num);
+						if(num != null && cdata && cdata.length > num) {
+							$(this).val(cdata[num]);
+						} else {
+							$(this).val("");
+						}
+					} else
+						$(this).val(cdata);
 				}
 				
 				$(this).change();
@@ -1690,7 +1748,24 @@
 				}
 			}
 			if($(this).attr("type") === "checkbox" || $(this).attr("type") === "CHECKBOX") {
-				val = $(this).is(':checked');
+				// arrays arehandled just didferent
+				if($(this).hasClass("array")) {
+					val = $(this).val();
+					var hasVal = false;
+					// search for the value
+					if(pojo[name])
+						$.each(pojo[name], function(){
+							if(this == val) {
+								hasVal = true;
+								return false;
+							}
+						});
+					if(hasVal !== $(this).is(':checked'))
+						differs = true;
+					// next...
+					return;
+				} else
+					val = $(this).is(':checked');
 			}
 					
 			// check if we have a . - if so split
@@ -1770,7 +1845,6 @@
 	JsForm.prototype._equalsCollection = function(form, prefix, pojo) {
 		var that = this;
 		var differs = false;
-		that._debug("checking: " + prefix);
 		
 		$(".collection", form).each(function() {
 			if(differs) {
@@ -1787,8 +1861,6 @@
 			if(fieldname.length < 1) {
 				return;
 			}
-
-			that._debug("checking childs for: " + fieldname);
 
 			var childCounter = 0;
 			// go through all direct childs - each one is an element
