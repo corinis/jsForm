@@ -494,7 +494,7 @@
 						$(collectionList).each(function() {
 							$(this).children().each(function(count, ele){
 								if(cur.id === $(ele).data("pojo").id) {
-									option.prop("selected", "selected");
+									option.prop("selected", true);
 								}
 							});
 						});
@@ -599,8 +599,8 @@
 			}
 			// special type select box: select the FIRST child
 			if($(this).is("select")) {
-				$('option[selected="selected"]', this).removeAttr('selected');
-				$('option:first', this).attr('selected', true);
+				$('option[selected="selected"]', this).prop('selected', false);
+				$('option:first', this).prop('selected', true);
 
 				$(this).val($("option:first", this).val()).change();
 			}
@@ -1000,7 +1000,7 @@
 					cname = cname.substring(prefix.length + 1);
 				}
 				// remove "old" selected options
-				$(this).children("option").removeProp("selected");
+				$(this).children("option:selected").prop("selected", false);
 				var pk = $(this).attr("data-key");
 				if(!pk) {
 					pk = "id";
@@ -1009,7 +1009,7 @@
 				var value = that._get(data, cname, false, idx);
 				// try selecting based on the id 
 				if (value[pk] || !isNaN(value[pk])) {
-					$(this).children("option[value='"+value[pk]+"']").prop("selected", "selected");
+					$(this).children("option[value='"+value[pk]+"']").prop("selected", true);
 					// actually set the value and trigger the change
 					$(this).val(value[pk]).change();
 					return;
@@ -1017,7 +1017,7 @@
 					value = value ? "true" : "false";
 				}
 				
-				$(this).children("option[value='"+value+"']").prop("selected", "selected");
+				$(this).children("option[value='"+value+"']").prop("selected", true);
 				$(this).val(value).change();
 				$(this).trigger("fill");
 			}
