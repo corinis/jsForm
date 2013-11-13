@@ -436,16 +436,34 @@
 			},
 			
 			/**
+			 * internal function that tries to identify where the value is.
+			 * This is necessary to support direct call, jqGrid and slickGrid
+			 * @param row
+			 * @param cell
+			 * @param value
+			 * @param columnDef
+			 * @param dataContext
+			 * @private
+			 */
+			_getValue: function(row, cell, value, columnDef, dataContext) {
+				// if value is undefined: this is probably a direct call
+				if(typeof cell === "undefined" && typeof value === "undefined") {
+					return row;
+				}
+				
+				// check for slickGrid: row/cell/value  
+				if(!isNaN(row) && typeof cell !== "undefined" && typeof value !== "undefined") {
+					return value;
+				}
+			},
+			
+			/**
 			 * format boolean into an ui-icon 
 			 * @param value true or false
 			 * @returns the ui-icon span
 			 */
 			checkBox: function(row, cell, value, columnDef, dataContext) {
-				// cleanup parameters (direct call vs. slickgrid)
-				if(typeof value === "undefined") {
-					value = row;
-					row = null;
-				}
+				value = $.jsFormControls.Format._getValue(row, cell, value, columnDef);
 				
 				if(value) {
 					return '<span class="ui-icon ui-icon-check">&nbsp;</span>';
@@ -553,34 +571,26 @@
 			/**
 			 * @private
 			 */
-			currency: function(row, cell, cellvalue, columnDef, dataContext) {
-				// cleanup parameters (direct call vs. slickgrid)
-				if(!cellvalue || isNaN(cellvalue)) {
-					cellvalue = row;
-					row = null;
-				}
-
-				if(!cellvalue) {
+			currency: function(row, cell, value, columnDef, dataContext) {
+				value = $.jsFormControls.Format._getValue(row, cell, value, columnDef);
+				
+				if(!value) {
 					if(cell) {
 						return "&#160;";
 					}
 					return "";
 				}
 				
-				return $.jsFormControls.Format.decimal(cellvalue);
+				return $.jsFormControls.Format.decimal(value);
 			},
 
 			/**
 			 * @private
 			 */
-			dateTime: function(row, cell, cellvalue, columnDef, dataContext) {
-				// cleanup parameters (direct call vs. slickgrid)
-				if(!cellvalue || isNaN(cellvalue)) {
-					cellvalue = row;
-					row = null;
-				}
+			dateTime: function(row, cell, value, columnDef, dataContext) {
+				value = $.jsFormControls.Format._getValue(row, cell, value, columnDef);
 
-				if(!cellvalue) {
+				if(!value) {
 					if(cell) {
 						return "&#160;";
 					}
@@ -593,15 +603,9 @@
 			/**
 			 * @private
 			 */
-			date: function(row, cell, cellvalue, columnDef, dataContext) {
-				
-				// cleanup parameters (direct call vs. slickgrid)
-				if(!cellvalue || isNaN(cellvalue)) {
-					cellvalue = row;
-					row = null;
-				}
-
-				if(!cellvalue) {
+			date: function(row, cell, value, columnDef, dataContext) {
+				value = $.jsFormControls.Format._getValue(row, cell, value, columnDef);
+				if(!value || value === "" || isNaN(value)) {
 					if(cell) {
 						return "&#160;";
 					}
@@ -609,7 +613,7 @@
 				}
 				
 				var d = new Date();
-				d.setTime(cellvalue);
+				d.setTime(value);
 				var year = d.getYear();
 				if(year < 1900) {
 					year += 1900;
@@ -633,13 +637,8 @@
 			 * @private
 			 */
 			time: function(row, cell, value, columnDef, dataContext) {
-				// cleanup parameters (direct call vs. slickgrid)
-				if(!value) {
-					value = row;
-					row = null;
-				}
-
-				if(!value) {
+				value = $.jsFormControls.Format._getValue(row, cell, value, columnDef);
+				if(!value || value === "" || isNaN(value)) {
 					if(cell) {
 						return "&#160;";
 					}
@@ -659,12 +658,6 @@
 					return $.format.date(d, timeFormat);
 				else
 					return this._pad(d.getHours()) + ":" + this._pad(d.getMinutes()); //  + ":" + pad(d.getSeconds()); don't need seconds
-
-				
-				if($.format)
-					return $.format.date(d, timeFormat);
-				else
-					return this._pad(d.getHours()) + ":" + this._pad(d.getMinutes()); //  + ":" + pad(d.getSeconds()); don't need seconds
 			},
 
 			/**
@@ -674,14 +667,8 @@
 			 * @return something in the form of 00:00.00
 			 * @private
 			 */
-			timespan: function(row, cell, value, columnDef, dataContext, allowcomma) {
-				// cleanup parameters (direct call vs. slickgrid)
-				if(!value) {
-					value = row;
-					allowcomma = cell;
-					row = null;
-					cell = null;
-				}
+			timespan: function(row, cell, value, columnDef, dataContext) {
+				value = $.jsFormControls.Format._getValue(row, cell, value, columnDef);
 
 				var tokens = value.split(":");
 				// check each token
@@ -714,11 +701,7 @@
 			 * @returns the time for display in human readable
 			 */
 			humanTime: function(row, cell, value, columnDef, dataContext) {
-				// cleanup parameters (direct call vs. slickgrid)
-				if(!value) {
-					value = row;
-					row = null;
-				}
+				value = $.jsFormControls.Format._getValue(row, cell, value, columnDef);
 				
 				
 				if (isNaN(value)) {
