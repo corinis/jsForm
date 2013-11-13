@@ -648,8 +648,21 @@
 				
 				var d = new Date();
 				d.setTime(value);
+				
+				var timeFormat = "HH:mm";
+				if(typeof i18n !== "undefined")
+					timeFormat = i18n.timeFormat;
+				else if($(document).data().i18n && $(document).data().i18n.timeFormat)
+					timeFormat = $(document).data().i18n.tiemFormat;
+
 				if($.format)
-					return $.format.date(d, $(document).data().i18n.date.timeFormat);
+					return $.format.date(d, timeFormat);
+				else
+					return this._pad(d.getHours()) + ":" + this._pad(d.getMinutes()); //  + ":" + pad(d.getSeconds()); don't need seconds
+
+				
+				if($.format)
+					return $.format.date(d, timeFormat);
 				else
 					return this._pad(d.getHours()) + ":" + this._pad(d.getMinutes()); //  + ":" + pad(d.getSeconds()); don't need seconds
 			},
