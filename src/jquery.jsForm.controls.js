@@ -597,7 +597,7 @@
 					return "";
 				}
 				
-				return (this.date(cellvalue) + " " + this.time(cellvalue));
+				return (this.date(value) + " " + this.time(value));
 			},
 
 			/**
