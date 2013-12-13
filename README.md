@@ -3,7 +3,7 @@ jquery.jsForm
 
 jQuery based form library that allows you to handle data within a javascript object (like from a JSON request) with plain html forms.
 
-This is a library allowing a binding between html and a javascript object as described in [MVVM](http://en.wikipedia.org/wiki/Model_View_ViewModel) similar to other libraries like (knockout.js)[http://knockoutjs.com/] or (AngularJs)[http://angularjs.org/]. 
+This is a library allowing a binding between html and a javascript object as described in [MVVM](http://en.wikipedia.org/wiki/Model_View_ViewModel) similar to other libraries like [knockout.js](http://knockoutjs.com/) or [AngularJs](http://angularjs.org/). 
 JsForm only takes care of the rendering of data in a html. The controller can be written in standard jQuery. This keeps the library clean and simple.
 
 
@@ -26,10 +26,10 @@ You can also check out some [Demos](http://www.gargan.org/jsform/index.jsp).
 
 # Download
 
-Current Version: 1.0.8
+Current Version: 1.1.1
 
-* [Minified](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.0.8.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
-* [Source](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.0.8.js)
+* [Minified](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.1.1.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
+* [Source](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.1.1.js)
 
 # Documentation
 
@@ -55,7 +55,7 @@ compatible to jquery-ui.
 ```html
 <html>
 <head>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script src="https://raw.github.com/corinis/jsForm/master/src/jquery.jsForm.js"></script>
 <script>
 $(function(){
