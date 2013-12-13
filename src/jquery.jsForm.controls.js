@@ -649,11 +649,14 @@
 				d.setTime(value);
 				
 				var timeFormat = "HH:mm";
-				if(typeof i18n !== "undefined")
-					timeFormat = i18n.timeFormat;
-				else if($(document).data().i18n && $(document).data().i18n.timeFormat)
-					timeFormat = $(document).data().i18n.tiemFormat;
-
+				if(typeof i18n !== "undefined") {
+					if(i18n.timeFormat)
+						timeFormat = i18n.timeFormat;
+					else if (i18n.date && i18n.date.timeFormat)
+						timeFormat = i18n.date.timeFormat;
+				} else if($(document).data().i18n && typeof $(document).data().i18n.timeFormat !== "undefined")
+					timeFormat = $(document).data().i18n.timeFormat;
+				
 				if($.format)
 					return $.format.date(d, timeFormat);
 				else
