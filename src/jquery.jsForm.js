@@ -99,6 +99,29 @@
 		this._fill(this.options);
 	};
 	
+	/**
+	 * Connect a dom element with an already existing form.
+	 * @param ele the new part of the form
+	 */
+	JsForm.prototype.connect = function(ele) {
+		// collection lists with buttons
+		this._initCollection(ele, this.options.prefix);
+		// init conditionals
+		this._initConditional(ele, this.options.prefix, this.options);
+		
+		// enable form controls
+		if(this.options.controls) {
+			if($.jsFormControls) {
+				// handle multiple form parts
+				$(ele).jsFormControls();
+			} 
+		}
+
+		this._fillDom(ele);
+		if(!this.options.connect)
+			this.options.connect = [];
+		this.options.connect.push(ele);
+	};
 	
 	/**
 	 * init the dom. This can be called multiple times.
@@ -1297,16 +1320,28 @@
 		$(this.element).data("pojo", this.options.data);
 
 		// handle multiple form parts
-		$.each(that._getForm(), function(){
-			that._clear(this, that.options.prefix);
-	
-			// fill base 
-			that._fillData(this, that.options.data, that.options.prefix);
-			that._fillCollection(this, that.options.data, that.options.prefix);
-			// (re-)evaluate all conditionals
-			that._evaluateConditionals(this, that.options.data);
+		$.each(this._getForm(), function(){
+			that._fillDom(this);
 		});
 	};
+	
+	/**
+	 * This is the actual worker function that fills a dom element
+	 * with data.
+	 * @param ele the element to fill
+	 * @private
+	 */
+	JsForm.prototype._fillDom = function(ele) {
+		var that = this;
+		that._clear(ele, that.options.prefix);
+		
+		// fill base 
+		that._fillData(ele, that.options.data, that.options.prefix);
+		that._fillCollection(ele, that.options.data, that.options.prefix);
+		// (re-)evaluate all conditionals
+		that._evaluateConditionals(ele, that.options.data);
+	};
+	
 
 	/**
 	 * @param container the container element

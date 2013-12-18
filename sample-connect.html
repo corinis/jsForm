@@ -18,8 +18,9 @@ $(function(){
 	// initialize the form, prefix is optional and defaults to data
 	$("#details").jsForm({
 		data:jsonData,
-		connect: [$("#additional")]
 	});
+	
+	$(details).jsForm("connect", $("#additional"));
 
 	$("#show").click(function() {
 		// show the json data
