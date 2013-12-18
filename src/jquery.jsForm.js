@@ -129,6 +129,13 @@
 	};
 	
 	/**
+	 * @return all nodes for this jsform (main + connected)
+	 */
+	JsForm.prototype.getNodes = function() {
+		return this._getForm();
+	};
+	
+	/**
 	 * init the dom. This can be called multiple times.
 	 * this will also enable "add", "insert" and "delete" for collections
 	 * @private 
@@ -750,14 +757,14 @@
 					} else {
 						var processor = $(this).attr("data-processor");
 						if(processor && that.options.processors[processor]) {
-							val = that.config.processors[processor](val);
+							val = that.options.processors[processor](val);
 						}
 					}
 				} else if($(this).hasClass("blob")) { // file upload blob
 					val = $(this).data("blob");
 				} else
 				// set empty numbers or dates to null
-				if(val === "" && ($(this).hasClass("number") || $(this).hasClass("integer") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
+				if(val === "" && ($(this).hasClass("number") || $(this).hasClass("percent") || $(this).hasClass("integer") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
 					val = null;
 				} 
 				
@@ -2017,7 +2024,7 @@
 	JsForm.prototype.clear = function() {
 		var that = this;
 		$.each(this._getForm(), function(){
-			that._clear(this, this.options.prefix);
+			that._clear(this, that.options.prefix);
 		});
 	};
 
