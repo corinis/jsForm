@@ -46,6 +46,11 @@
 			 */
 			skipEmpty: false,
 			/**
+			 * an object with callback functions that act as renderer for data fields (class=object).
+			 * ie. { infoRender: function(data){return data.id + ": " + data.name} } 
+			 */
+			renderer: null,
+			/**
 			 * an object with callback functions that act as pre-processors for data fields (class=object).
 			 * ie. { idFilter: function(data){return data.id} } 
 			 */
@@ -968,21 +973,21 @@
 				var cdata = that._get(data, cname, false, idx);
 				
 				// check for percentage: this is value * 100
-				if ($(this).hasClass("percent") && !isNaN(cdata)) {
-					cdata = 100 * Number(cdata);
-				} else if ($(this).hasClass("object")) {
+				if ($(this).hasClass("object")) {
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
-					if($(this).attr("data-display")) {
-						cdata = that._renderObject(cdata, $(this).attr("data-display"));
+					if($(this).attr("data-display") || $(this).attr("data-render")) {
+						cdata = that._renderObject(cdata, $(this).attr("data-display"), $(this).attr("data-render"));
 					} 
 				} else if ($(this).hasClass("jsobject")) {
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
+				} else if ($(this).hasClass("percent") && !isNaN(cdata)) {
+					cdata = 100 * Number(cdata);
 				} else if($.isPlainObject(cdata)) {
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
-					cdata = that._renderObject(cdata, $(this).attr("data-display"));
+					cdata = that._renderObject(cdata, $(this).attr("data-display"), $(this).attr("data-render"));
 				} 
 				
 
@@ -1563,9 +1568,16 @@
 	 * @param skin the string to render with (i.e. id, ":", test)
 	 * @private
 	 */
-	JsForm.prototype._renderObject = function(obj, skin) {
-		if(!skin || !obj)
+	JsForm.prototype._renderObject = function(obj, skin, renderer) {
+		if(!obj || (!skin && !renderer))
 			return "";
+		if(renderer) {
+			if(this.options.renderer && this.options.renderer[renderer])
+				return this.options.renderer[renderer](obj);
+			this._debug("Unable to find renderer: " + renderer);
+			return "";
+		}
+		
 		var that = this;
 		var ret = "";
 		$.each(skin.split(","), function(){
