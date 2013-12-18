@@ -49,7 +49,12 @@
 			 * an object with callback functions that act as pre-processors for data fields (class=object).
 			 * ie. { idFilter: function(data){return data.id} } 
 			 */
-			processors: null
+			processors: null,
+			/**
+			 * optional array of elements that should be connected with the form. This
+			 * allows the splitting of the form into different parts of the dom.
+			 */
+			connect: null
 		}, options);
 
 		// read prefix from dom
@@ -75,7 +80,10 @@
 		// enable form controls
 		if(this.options.controls) {
 			if($.jsFormControls) {
-				$(this.element).jsFormControls();
+				// handle multiple form parts
+				$.each(this._getForm(), function(){
+					$(this).jsFormControls();
+				});
 			} else {
 				try {
 					if(typeof console !== "undefined") {
@@ -88,7 +96,7 @@
 		}
 
 		// fill/init with the first data
-		this._fill(this.element, this.options);
+		this._fill(this.options);
 	};
 	
 	
@@ -98,14 +106,15 @@
 	 * @private 
 	 */
 	JsForm.prototype._domInit = function() {
-		var form = $(this.element);
 		var that = this;
-		var prefix = this.options.prefix;
 		
-		// collection lists with buttons
-		that._initCollection(form, prefix);
-		// init conditionals
-		that._initConditional(form, prefix, this.options);
+		// handle multiple form parts
+		$.each(this._getForm(), function(){
+			// collection lists with buttons
+			that._initCollection(this, that.options.prefix);
+			// init conditionals
+			that._initConditional(this, that.options.prefix, that.options);
+		});
 	};
 	
 	/**
@@ -561,6 +570,20 @@
 		container.data("template", tmpl);
 	};
 
+	/**
+	 * generate the array with all dome elements that are conencted with 
+	 * the form.
+	 * @private
+	 */
+	JsForm.prototype._getForm = function() {
+		var form = [$(this.element)];
+		if(this.options.connect)
+			$.each(this.options.connect, function(){
+				form.push($(this));
+			});
+		return form;
+	};
+	
 	/**
 	 * clear/reset a form. The prefix is normally predefined by init
 	 * @param form the form 
@@ -1035,7 +1058,6 @@
 	 * @return a new pojo
 	 */
 	JsForm.prototype.get = function(ignoreInvalid) {
-		var form = $(this.element);
 		var that = this;
 		var originalPojo = this.options.data;
 		var prefix = this.options.prefix;
@@ -1045,34 +1067,38 @@
 		if(originalPojo && $.isPlainObject(originalPojo)) {
 			pojo = originalPojo; 
 		}
-		
-		// fill the base
-		that._createPojoFromInput(form, prefix, pojo);
-		
+
 		// check for invalid fields
 		var invalid = false;
-		if(!this.options.validateHidden) {
-			form.find(".invalid").filter(":visible").each(function(){
-				invalid = true;
-				$(this).focus();
-				if(!ignoreInvalid) {
-					that._debug("Found invalid field: " + $(this).attr("name"));
-				}
-				return false;
-			});
-		} else {
-			form.find(".invalid").each(function(){
-				invalid = true;
-				$(this).focus();
-				return false;
-			});
-		}
 
-		// get the collection
-		if(this._getCollection(form, prefix, pojo, ignoreInvalid)) {
-			invalid = true;
-		}
+		// go through all form parts
+		$.each(this._getForm(), function(){
+			// fill the base
+			that._createPojoFromInput(this, prefix, pojo);
 		
+			if(!that.options.validateHidden) {
+				this.find(".invalid").filter(":visible").each(function(){
+					invalid = true;
+					$(this).focus();
+					if(!ignoreInvalid) {
+						that._debug("Found invalid field: " + $(this).attr("name"));
+					}
+					return false;
+				});
+			} else {
+				this.find(".invalid").each(function(){
+					invalid = true;
+					$(this).focus();
+					return false;
+				});
+			}
+	
+			// get the collection
+			if(that._getCollection(this, prefix, pojo, ignoreInvalid)) {
+				invalid = true;
+			}
+		});
+
 		if(!ignoreInvalid && invalid) {
 			return null;
 		}
@@ -1148,7 +1174,7 @@
 	
 	/**
 	 * Get the data object used as a base for get().
-	 * Note that modifying this directly migh result into unwanted results
+	 * Note that modifying this directly might result into unwanted results
 	 * when working with some functions that rely on this object.
 	 * 
 	 * @returns the original data object
@@ -1244,17 +1270,18 @@
 	 */
 	JsForm.prototype.validate = function() {
 		// get the prefix from the form if not given
-		//var prefix = this.options.prefix;
+		var valid = true;
 		
-		// validation
-		$(".required,.regexp,.date,.mandatory,.number,.validate,.integer", this.element).change();
+		$.each(this._getForm(), function(){
+			// validation
+			$(".required,.regexp,.date,.mandatory,.number,.validate,.integer", this).change();
+			// check for invalid fields
+			if($(".invalid", this).length > 0) {
+				valid = false;
+			}
+		});
 		
-		// check for invalid fields
-		if($(".invalid", this.element).length > 0) {
-			return false;
-		}
-		
-		return true;
+		return valid;
 	};
 	
 	/**
@@ -1264,18 +1291,21 @@
 	 * @param prefix the optional prefix used to identify fields for this form
 	 * @private
 	 */
-	JsForm.prototype._fill = function(form, options) {
-		
-		this._clear(form, options.prefix);
+	JsForm.prototype._fill = function() {
+		var that = this;
+		$(this.element).addClass("POJO");
+		$(this.element).data("pojo", this.options.data);
 
-		$(form).addClass("POJO");
-		$(form).data("pojo", options.data);
-
-		// fill base 
-		this._fillData(form, options.data, options.prefix);
-		this._fillCollection(form, options.data, options.prefix);
-		// (re-)evaluate all conditionals
-		this._evaluateConditionals(this.element, options.data);
+		// handle multiple form parts
+		$.each(that._getForm(), function(){
+			that._clear(this, that.options.prefix);
+	
+			// fill base 
+			that._fillData(this, that.options.data, that.options.prefix);
+			that._fillCollection(this, that.options.data, that.options.prefix);
+			// (re-)evaluate all conditionals
+			that._evaluateConditionals(this, that.options.data);
+		});
 	};
 
 	/**
@@ -1907,7 +1937,7 @@
 		// set the new data
 		this.options.data = pojo;
 		// fill everything
-		this._fill(this.element, this.options);
+		this._fill();
 	};
 
 	/**
@@ -1931,15 +1961,17 @@
 		// clear first
 		this.clear();
 		// fill everything
-		this._fill(this.element, this.options);
+		this._fill();
 	};
 
 	/**
 	 * Clear all fields in a form
 	 */
 	JsForm.prototype.clear = function() {
-		// clear first
-		this._clear(this.element, this.options.prefix);
+		var that = this;
+		$.each(this._getForm(), function(){
+			that._clear(this, this.options.prefix);
+		});
 	};
 
 	/**
