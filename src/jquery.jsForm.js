@@ -2012,10 +2012,8 @@
 	 * reset a form with the last data, overwriting any changes.
 	 */
 	JsForm.prototype.reset = function() {
-		// clear first
-		this.clear();
-		// fill everything
-		this._fill();
+		// fill with empty object
+		this.fill({});
 	};
 
 	/**
