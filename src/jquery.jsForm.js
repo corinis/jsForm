@@ -730,7 +730,6 @@
 			// cut away the prefix
 			name = name.substring((prefix+".").length);
 			
-			
 			var val = $(this).val();
 
 			// jsobject use the pojo data directly - ignore the rest
@@ -1090,7 +1089,7 @@
 	 *  <li>collection: existing collections are replaced if "class=collection" elements exist
 	 * </ul> 
 	 * @param ignoreInvalid return a pojo, even if fields do not pass client side validation
-	 * @return a new pojo
+	 * @return {Object} a new pojo
 	 */
 	JsForm.prototype.get = function(ignoreInvalid) {
 		var that = this;
@@ -1100,7 +1099,7 @@
 		// get the pojo
 		var pojo = {};
 		if(originalPojo && $.isPlainObject(originalPojo)) {
-			pojo = originalPojo; 
+			pojo = $.extend({}, originalPojo); 
 		}
 
 		// check for invalid fields
@@ -1225,7 +1224,8 @@
 	/**
 	 * uses form element and replaces them with "spans" that contain the actual content.
 	 * the original "inputs" are hidden 
-	 * @param enable {boolean} true: switch inputs with spans, false: switch spans back, undefined: toggle
+	 * @param form the form 
+	 * @param enable true: switch inputs with spans, false: switch spans back, undefined: toggle
 	 */
 	JsForm.prototype.preventEditing = function(prevent) {
 		var $this = $(this.element);
@@ -1774,127 +1774,85 @@
 		// a string
 		return (pojo === "" || pojo === " "); 
 	};
-
+	
 	/**
-	 * compare a pojo with a form. Takes special data definition classes into account:
-	 * <ul>
-	 *  <li>number|currency: the content will be transformed into a number (default string</li>
-	 *  <li>transient: will be ignored</li>
-	 *  <li>prefix.fieldname.value: will create the whole object subtree</li> 
-	 * </ul> 
-	 * @param start the element to start from (ie. the form or tr)
-	 * @param pojo the pojo to write everything to
-	 * @param prefix a prefix: only fields with the given prefix will be included in the pojo
-	 * @private
+	 * compares two objects. note: empty string or null is the same as not existant
+	 * @param a the object to compare
+	 * @param b the object to compare with
+	 * @return true if they contain the same content, false otherwise
 	 */
-	JsForm.prototype._pojoDifferFromInput = function (start, prefix, pojo) {
-		var differs = false;
-		$("input,select,textarea", start).each(function(){
-			// skip if we found a dif
-			if(differs) {
-				return;
-			}
-			
-			var name = $(this).attr("name");
-			// empty name - ignore
-			if (!name) {
-				return;
-			}
+	JsForm.prototype._equals = function(a, b)
+	{
+		// empty arrays
+		if(!a && b && b.length && b.length === 0) {
+			return true;
+		}
+		if(!b && a && a.length && a.length === 0) {
+			return true;
+		}
 
-			// skip grayed (=calculated) or transient fields
-			if($(this).hasClass("transient")) {
-				return;
+		if(!a && !b) {
+			return true;
+		}
+
+		var p = null;
+		for(p in a) {
+			if(typeof(b[p]) === 'undefined' && a[p] !== null && a[p] !== "") {
+				// 0 == undefined
+				if((a[p] === "0" || a[p] === 0) && !b[p])
+					continue;
+				return false;
 			}
-			
-			// must start with prefix
-			if(name.indexOf(prefix + ".") !== 0) {
-				return;
-			}
-			
-			// cut away the prefix
-			name = name.substring((prefix+".").length);
-			
-			// skip empty
-			if(name.length < 1) {
-				return;
-			}
-			
-			var val = $(this).val();
-			// set empty numbers to null
-			if(val === "" && ($(this).hasClass("number") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
-				val = null;
-			}
-			if ($(this).hasClass("number") || $(this).hasClass("currency")) {
-				val = that._getNumber(val);
-				if(isNaN(val)) {
-					val = 0;
-				}
-			}
-			if($(this).attr("type") === "checkbox" || $(this).attr("type") === "CHECKBOX") {
-				// arrays arehandled just didferent
-				if($(this).hasClass("array")) {
-					val = $(this).val();
-					var hasVal = false;
-					// search for the value
-					if(pojo[name])
-						$.each(pojo[name], function(){
-							if(this == val) {
-								hasVal = true;
-								return false;
-							}
-						});
-					if(hasVal !== $(this).is(':checked'))
-						differs = true;
-					// next...
-					return;
-				} else
-					val = $(this).is(':checked');
-			}
-					
-			// check if we have a . - if so split
-			if (name.indexOf(".") === -1)
-			{
-				// the vals differ
-				if(pojo[name] !== val) {
-					differs = true;
-				}
-			}
-			else
-			{
-				var parts = name.split(".");
-				
-				var d0 = pojo[parts[0]];
-				var d1, d2;
-				
-				if (!d0) {
-					differs = true;
-					return;
-				}
-				
-				if (parts.length === 2) {
-					// the vals differ
-					if(d0[parts[1]] !== val) {
-						differs = true;
+		}
+
+		for(p in a) {
+			if (a[p]) {
+				switch(typeof(a[p])) {
+				case 'object':
+					// go deep
+					if (!this._equals(a[p], b[p])) {
+						return false;
 					}
-				} else if (parts.length === 3) {
-					d1 = d0[parts[1]];
-					// the vals differ
-					if(d1[parts[2]] !== val) {
-						differs = true;
+					break;
+				case 'function': // skip functions
+					break;
+				default:
+					// both are "false"
+					if(!a[p] && !b[p]) {
+						break;
 					}
-				} else if (parts.length === 4)
-				{
-					d1 = d0[parts[1]];
-					d2 = d1[parts[2]];
-					// the vals differ
-					if(d2[parts[3]] !== val) {
-						differs = true;
+	
+					if((a === true || a === false) && a !== b) {
+						return false;
+					}
+	
+					if(("" + a[p]).length !== ("" +b[p]).length) {
+						return false;
+					}
+					if(!isNaN(a[p]) || !isNaN(b[p])) {
+						if(Number(a[p]) !== Number(b[p])) {
+							return false;
+						}
+					}
+	
+					if (a[p] !== b[p] && Number(a[p]) !== Number(b[p])) {
+						return false;
 					}
 				}
-				// more should not be necessary	
+			} else {
+				if (b[p]) {
+					return false;
+				}
 			}
-		});
-		return differs;
+		}
+
+		for(p in b) {
+			if((!a || typeof(a[p]) === 'undefined') && b[p] !== null && b[p] !== "") {
+				return false;
+			}
+		}
+
+		return true;
 	};
 	
 	/**
@@ -1903,26 +1861,17 @@
 	 * @return true if any change between formfields and the pojo is found
 	 */
 	JsForm.prototype.equals = function(pojo) {
-		var form = this.element;
-		var prefix = this.options.prefix;
-
-		// check the base
-		if(this._pojoDifferFromInput(form, prefix, pojo)) {
-			return false;
-		}
-		
-		var differs = false;
-		
-		// check for invalid fields
-		if($(".invalid", form).length > 0) {
-			return false;
-		}
-		
-		if(!this._equalsCollection(form, prefix, pojo))
-			return false;
-		
-		// we want to know if its equals -> return not
-		return !differs;
+		var obj = this.get(false);
+		return this._equals(obj, pojo);
+	};
+	
+	/**
+	 * Compares the current form with the last time the form was filled.
+	 * 
+	 * @returns {Boolean} true if the form has changed since the last fill
+	 */
+	JsForm.prototype.changed = function() {
+		return this.equals(this.options.data) === false;
 	};
 
 	JsForm.prototype._equalsCollection = function(form, prefix, pojo) {
