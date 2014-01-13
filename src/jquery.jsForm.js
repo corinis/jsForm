@@ -1225,8 +1225,7 @@
 	/**
 	 * uses form element and replaces them with "spans" that contain the actual content.
 	 * the original "inputs" are hidden 
-	 * @param form the form 
-	 * @param enable true: switch inputs with spans, false: switch spans back, undefined: toggle
+	 * @param enable {boolean} true: switch inputs with spans, false: switch spans back, undefined: toggle
 	 */
 	JsForm.prototype.preventEditing = function(prevent) {
 		var $this = $(this.element);

@@ -78,7 +78,6 @@
 	 */
 	JsFormControls.prototype._domInit = function() {
 		var location = $(this.element);
-		
 		// validation
 		// check required (this is the first check)
 		location.find("input.mandatory,textarea.mandatory").on("keyup", function(){
@@ -578,7 +577,7 @@
 					if(cell) {
 						return "&#160;";
 					}
-					return "";
+					return "0";
 				}
 				
 				return $.jsFormControls.Format.decimal(value);
