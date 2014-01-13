@@ -115,7 +115,7 @@ test("basic form", function(){
 	// update the fields
 	$("input[name='data.input']", basicForm).val("input2");
 	$("input[name='data.checkbox']", basicForm).click();
-	$("select[name='data.select']", basicForm).find('option[value="opt3"]').attr('selected', true);
+	$("select[name='data.select']", basicForm).find('option[value="opt3"]').prop('selected', true);
 	$("textarea[name='data.textarea']", basicForm).val("test\n2");
 	$("input[name='input']", basicForm).val("CHANGED");
 	$("#simpleFormField", basicForm).html("ASDF");
