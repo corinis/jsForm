@@ -777,7 +777,18 @@
 					}
 				}
 				else if ($(this).hasClass("number") || $(this).hasClass("integer")) {
-					val = that._getNumber(val);
+					if($(this).hasClass("date") && isNaN(val)) {
+						if($.format) {
+							var d = $.format.date(val);
+							d.setHours(0);
+							d.setMinutes(0);
+							d.setSeconds(0);
+							d.setMilliseconds(0);
+							val = d.getTime();
+						} else
+							val = new Date(val).getTime();
+					} else
+						val = that._getNumber(val);
 					if(isNaN(val)) {
 						val = 0;
 					}
@@ -1779,9 +1790,10 @@
 	 * compares two objects. note: empty string or null is the same as not existant
 	 * @param a the object to compare
 	 * @param b the object to compare with
+	 * @param idField if set then used for sub-objects instead of complete compare
 	 * @return true if they contain the same content, false otherwise
 	 */
-	JsForm.prototype._equals = function(a, b)
+	JsForm.prototype._equals = function(a, b, idField)
 	{
 		// empty arrays
 		if(!a && b && b.length && b.length === 0) {
@@ -1809,6 +1821,10 @@
 			if (a[p]) {
 				switch(typeof(a[p])) {
 				case 'object':
+					if(idField && a[p][idField]) {
+						if (a[p][idField] === b[p][idField])
+							continue;
+					}
 					// go deep
 					if (!this._equals(a[p], b[p])) {
 						return false;
@@ -1860,9 +1876,9 @@
 	 * @param pojo the pojo to compare with
 	 * @return true if any change between formfields and the pojo is found
 	 */
-	JsForm.prototype.equals = function(pojo) {
+	JsForm.prototype.equals = function(pojo, idField) {
 		var obj = this.get(false);
-		return this._equals(obj, pojo);
+		return this._equals(obj, pojo, idField);
 	};
 	
 	/**
@@ -1870,8 +1886,8 @@
 	 * 
 	 * @returns {Boolean} true if the form has changed since the last fill
 	 */
-	JsForm.prototype.changed = function() {
-		return this.equals(this.options.data) === false;
+	JsForm.prototype.changed = function(idField) {
+		return this.equals(this.options.data, idField) === false;
 	};
 
 	JsForm.prototype._equalsCollection = function(form, prefix, pojo) {
