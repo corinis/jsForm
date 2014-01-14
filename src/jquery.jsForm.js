@@ -65,7 +65,12 @@
 			 * optional array of elements that should be connected with the form. This
 			 * allows the splitting of the form into different parts of the dom.
 			 */
-			connect: null
+			connect: null,
+			/**
+			 * The class used when calling preventEditing. This will replace all
+			 * inputs with a span with the given field
+			 */
+			viewClass: "value"
 		}, options);
 
 		// read prefix from dom
@@ -1191,6 +1196,7 @@
 	 */
 	JsForm.prototype.preventEditing = function(prevent) {
 		var $this = $(this.element);
+		var viewClass = this.options.viewClass;
 		
 		if(typeof prevent === "undefined") {
 			// get the disable from the form itself 
@@ -1205,7 +1211,7 @@
 		if (prevent)
 		{
 			$this.find("input, textarea").each(function() {
-				if ($(this).closest("span.form")[0])
+				if ($(this).closest("span." + viewClass)[0])
 					return;
 				if($(this).attr("type") == "hidden")
 					return;
@@ -1221,7 +1227,7 @@
 				
 				// convert \n to brs - escape all other html
 				val = val.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
-				var thespan = $('<span class="form">'+val+'</span>');
+				var thespan = $('<span class="'+viewClass+'">'+val+'</span>');
 				if($(this).parent().hasClass("ui-wrapper"))
 					$(this).parent().hide().wrap(thespan);
 				else
@@ -1229,14 +1235,14 @@
 			});
 			// selects are handled slightly different
 			$this.find("select").each(function() {
-				if ($(this).closest("span.form")[0])
+				if ($(this).closest("span."+viewClass)[0])
 					return;
 				
 				var val = $(this).children(":selected").html();
 				if (val === "null" || val === null)
 					val = "";
 
-				var thespan = $('<span class="form">'+val+'</span>');
+				var thespan = $('<span class="'+viewClass+'">'+val+'</span>');
 				
 				// toggle switches work a little different 
 				if($(this).hasClass("ui-toggle-switch")) {
@@ -1249,7 +1255,7 @@
 		}
 		else
 		{
-			$this.find("span.form").each(function() {
+			$this.find("span." + viewClass).each(function() {
 				// remove text and then unwrap
 				var ele = $(this).children("input,select,textarea,.ui-wrapper,.ui-toggle-switch").show().detach();
 				$(this).before(ele);
