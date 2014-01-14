@@ -24,6 +24,14 @@ The main features of this library are:
 
 You can also check out some [Demos](http://www.gargan.org/jsform/index.jsp).
 
+# Libraries
+
+## Required
+* [jQuery](http://jquery.com/) 1.9 or higher
+
+## Optional
+* [jQuery Format Plugin](http://www.asual.com/jquery/format/) 1.2 or higher- used when working with date/number formats
+
 # Download
 
 Current Version: 1.1.2
