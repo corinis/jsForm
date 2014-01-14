@@ -343,17 +343,18 @@ test("direct access simple arrays", function(){
 	
 	equal($("#list1", basicForm).children().length, 5, "5 items in list1");
 	equal($("#list2", basicForm).children().length, 5, "5 items in list2");
-	equal(basicForm.jsForm("equals", original), true, "form has not changed");
+	equal(basicForm.jsForm("changed"), false, "form has not changed");
+	equal(basicForm.jsForm("equals", original), true, "form data has not changed");
 	// add an item in each list
 	$("#add1", basicForm).click();
 	$("#add2", basicForm).click();
 	equal($("#list1", basicForm).children().length, 6, "6 items in list1");
 	equal($("#list2", basicForm).children().length, 6, "6 items in list2");
 
-	$("#list1", basicForm).children().first().find("input").val("1111");
-	$("#list1", basicForm).children().last().find("input").val("1112");
-	$("#list2", basicForm).children().first().find("input").val("2221");
-	$("#list2", basicForm).children().last().find("input").val("2222");
+	$("#list1", basicForm).children().first().find("input").val("1111").change();
+	$("#list1", basicForm).children().last().find("input").val("1112").change();
+	$("#list2", basicForm).children().first().find("input").val("2221").change();
+	$("#list2", basicForm).children().last().find("input").val("2222").change();
 	var updated = basicForm.jsForm("get");
 	equal(updated.steps.length, 6, "6 steps");
 	equal(updated.steps[0], 1111, "first element: 1111");
@@ -361,7 +362,15 @@ test("direct access simple arrays", function(){
 	equal(updated.test.steps.length, 6, "6 steps in test");
 	equal(updated.test.steps[0], 2221, "first element: 2221");
 	equal(updated.test.steps[5], 2222, "last element: 2222");
-	
-	equal(basicForm.jsForm("equals", original), false, "form has changed");
+
+	equal($("#list1", basicForm).children().first().find("input").hasClass("changed"), true, "first input changed");
+	equal($("#list1", basicForm).children().eq(2).find("input").hasClass("changed"), false, "second input not changed");
+	equal($("#list1", basicForm).children().last().find("input").hasClass("changed"), true, "last input changed");
+	equal($("#list2", basicForm).children().first().find("input").hasClass("changed"), true, "first input changed");
+	equal($("#list2", basicForm).children().last().find("input").hasClass("changed"), true, "last input changed");
+
+	equal(basicForm.jsForm("changed"), true, "form has changed");
+	equal(basicForm.jsForm("equals", original), false, "form data has changed");
+	// clean up
 	basicForm.remove();
 });

@@ -37,6 +37,12 @@
 			 */
 			prefix: "data",
 			/**
+			 * set to null to discourage the tracking of "changed" fields. 
+			 * Disabling this will increase performance, but disabled the "changed" functionality.
+			 * This will add the given css class to changed fields.
+			 */
+			trackChanges: "changed",
+			/**
 			 * set to false to only validate visible fields. 
 			 * This is discouraged especially when you have tabs or similar elements in your form.
 			 */
@@ -344,6 +350,12 @@
 						$(line).data().pojo = {};
 						$(this).append(line);
 						
+						// init controls
+						that._enableTracking($("input,textarea,select", line));
+						// ne wline always has changes
+						if(that.options.trackChanges)
+							$("input,textarea,select", line).addClass(that.options.trackChanges);
+						
 						that._addCollectionControls(line);
 						
 						// trigger a callback
@@ -503,93 +515,6 @@
 			});
 			
 			
-		});
-		
-		// manage - obsolete
-		$(".manage", form).each(function(){
-			var fieldName = $(this).attr("data-field"); 
-			if(!fieldName) {
-				return;
-			}
-
-			// remember the collections
-			$(this).data("collections", collectionMap[fieldName]);
-
-			// start the multi-select
-			$(this).click(function(){
-				var dataService = $(this).attr("data-service");
-				var collectionList = $(this).data("collections");
-				
-				var btn = $(this);
-				var display = $(this).attr("data-display");
-				if(display) {
-					display = display.split(",");
-				}
-				
-				DataUtils.run(dataService, function(data){
-					var select = $('<select multiple="multiple"></select>');
-					select.data("collections", collectionList);
-					btn.data("select", select);
-					$.each(data, function(){
-						var cur = this;
-						var optionDisplay = "";
-						if(!display) {
-							optionDisplay = cur;
-						} else {
-							for(var j = 0; j < display.length; j++) {
-								optionDisplay += cur[display[j]] + " ";
-							}
-						}
-						var option = $('<option value="' + optionDisplay + '">' + optionDisplay + '</option>');
-						// check if we need to "select" that option
-						$(collectionList).each(function() {
-							$(this).children().each(function(count, ele){
-								if(cur.id === $(ele).data("pojo").id) {
-									option.prop("selected", true);
-								}
-							});
-						});
-						select.append(option);
-						option.data("pojo", cur);
-					});
-					
-					btn.after(select);
-					btn.hide();
-					
-					select.multiselect({
-						autoOpen: true,
-						open: function(){
-							//reposition
-							$(this).multiselect("widget").css("top", $(select).next().offset().top);
-							$(this).multiselect("widget").css("left", $(select).next().offset().left);
-							// hide button
-							$(select).next().hide();
-						},
-						close: function(){
-							btn.show();
-							select.remove();
-							$(this).multiselect("destroy");
-						}
-					}).multiselectfilter().bind("multiselectclick multiselectcheckall multiselectuncheckall", 
-						function( event, ui ){
-							var checkedValues = $.map($(this).multiselect("getChecked"), function( input ){
-								// we only get the same "value" - so check the option list for the correct pojo
-								return $("option[value='"+input.value+"']", select).data("pojo");
-							});
-							
-							// update collection
-							$.each($(select).data("collections"), function(){
-								that._fillList($(this), checkedValues, fieldName);
-							});
-							// reposition
-							btn.hide();
-							$(select).next().show();
-							$(this).multiselect("widget").css("top", $(select).next().offset().top);
-							$(this).multiselect("widget").css("left", $(select).next().offset().left);
-							$(select).next().hide();							
-						});
-				});
-			});
 		});
 	};
 	
@@ -905,6 +830,23 @@
 		return pojo;
 	};
 
+	/**
+	 * helper function to enable tracking on fields
+	 * @param ele the element to track
+	 */
+	JsForm.prototype._enableTracking = function(ele) {
+		var that = this;
+		if(that.options.trackChanges && !$(ele).data().track) {
+			$(ele).data().track = true;
+			$(ele).change(function(){
+				if($(this).val() !== $(this).data().orig) {
+					$(this).addClass(that.options.trackChanges);
+				}else {
+					$(this).removeClass(that.options.trackChanges);
+				}
+			});
+		}
+	};
 	
 	/**
 	* fill a dom subtree with data.
@@ -982,6 +924,7 @@
 			if(!name) {
 				return;
 			}
+			that._enableTracking(this);
 			
 			// ignore file inputs - they cannot be "prefilled"
 			if($(this).attr("type") == "file") {
@@ -1058,6 +1001,7 @@
 						$(this).val(cdata);
 				}
 				
+				$(this).data().orig = $(this).val();
 				$(this).change();
 				$(this).trigger("fill");
 			}
@@ -1074,6 +1018,9 @@
 				if (prefix) {
 					cname = cname.substring(prefix.length + 1);
 				}
+				
+				that._enableTracking(this);
+				
 				// remove "old" selected options
 				$(this).children("option:selected").prop("selected", false);
 				var pk = $(this).attr("data-key");
@@ -1093,6 +1040,7 @@
 				}
 				
 				$(this).children("option[value='"+value+"']").prop("selected", true);
+				$(this).data().orig = value;
 				$(this).val(value).change();
 				$(this).trigger("fill");
 			}
@@ -1886,8 +1834,20 @@
 	 * 
 	 * @returns {Boolean} true if the form has changed since the last fill
 	 */
-	JsForm.prototype.changed = function(idField) {
-		return this.equals(this.options.data, idField) === false;
+	JsForm.prototype.changed = function() {
+		if(!this.options.trackChanges)
+			return false;
+		
+		var changed = false;
+		var that = this;
+		$.each(this._getForm(), function(){
+			if($("." + that.options.trackChanges, this).size() > 0) {
+				changed = true;
+				return false;
+			}
+		});
+
+		return changed;
 	};
 
 	JsForm.prototype._equalsCollection = function(form, prefix, pojo) {
