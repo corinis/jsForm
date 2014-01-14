@@ -494,7 +494,8 @@
 					numberformat = i18n.number;
 				else if($(document).data().i18n && $(document).data().i18n.number)
 					numberformat = $(document).data().i18n.number;
-
+				// make sure num is a string
+				num = "" + num;
 				// get rid of the grouping seperator (if any exist)
 				if(num.indexOf(numberformat.groupingSeparator) !== -1)
 					num = num.replace(numberformat.groupingSeparator, "", "g");

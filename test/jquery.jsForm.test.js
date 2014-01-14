@@ -272,7 +272,7 @@ test("collection in collection test", function(){
 	basicForm.remove();
 });
 
-test("simple arrays", function(){
+test("simple arrays and checkboxes", function(){
 	// html code for basic form 
 	var basicForm = $('<div>\n'+
   	'<input type="checkbox" class="array" name="data.checks" value="a">\n'+
@@ -297,8 +297,7 @@ test("simple arrays", function(){
 	equal($("input.array[value='c']", basicForm).is(":checked"), true, "c checked");
 	equal($("input.array[value='d']", basicForm).is(":checked"), false, "d not checked");
 	equal(basicForm.jsForm("equals", original), true, "form has not changed");
-
-	/*
+/*
 	// update a field
 	$("input.array[value='a']", basicForm).prop("checked", false);
 	$("input.array[value='b']", basicForm).prop("checked", true);
@@ -309,7 +308,60 @@ test("simple arrays", function(){
 	var pojo = basicForm.jsForm("get");
 	
 	equal(pojo.checks, ["b", "c"], "b and c checked");
-	
-	basicForm.remove();
 */	
+	basicForm.remove();
+
+});
+
+
+test("direct access simple arrays", function(){
+	// html code for basic form 
+	var basicForm = $('<div>\n'+
+  	'<ul class="collection" data-field="data.steps" id="list1">\n'+
+  	'<li><input type="text" class="number" name="steps." /></li>\n' +
+  	'</ul>\b'+
+  	'<button class="add" data-field="data.steps" id="add1">add</button>\n'+
+  	'<ul class="collection" data-field="data.test.steps" id="list2">\n'+
+  	'<li><input type="text" class="number" name="steps." /></li>\n' +
+  	'</ul>\b'+
+  	'<button class="add" data-field="data.test.steps" id="add2">add</button>\n'+
+  	'</div>');
+	
+	$("body").append(basicForm);
+	
+	var original = {
+		steps: [10,20,30,40,50],
+		test: {
+			steps: [100,200,300,400,500]
+		}
+	};
+	
+	// default init: prefix = data
+	basicForm.jsForm({
+		data: original
+	});
+	
+	equal($("#list1", basicForm).children().length, 5, "5 items in list1");
+	equal($("#list2", basicForm).children().length, 5, "5 items in list2");
+	equal(basicForm.jsForm("equals", original), true, "form has not changed");
+	// add an item in each list
+	$("#add1", basicForm).click();
+	$("#add2", basicForm).click();
+	equal($("#list1", basicForm).children().length, 6, "6 items in list1");
+	equal($("#list2", basicForm).children().length, 6, "6 items in list2");
+
+	$("#list1", basicForm).children().first().find("input").val("1111");
+	$("#list1", basicForm).children().last().find("input").val("1112");
+	$("#list2", basicForm).children().first().find("input").val("2221");
+	$("#list2", basicForm).children().last().find("input").val("2222");
+	var updated = basicForm.jsForm("get");
+	equal(updated.steps.length, 6, "6 steps");
+	equal(updated.steps[0], 1111, "first element: 1111");
+	equal(updated.steps[5], 1112, "last element: 1112");
+	equal(updated.test.steps.length, 6, "6 steps in test");
+	equal(updated.test.steps[0], 2221, "first element: 2221");
+	equal(updated.test.steps[5], 2222, "last element: 2222");
+	
+	equal(basicForm.jsForm("equals", original), false, "form has changed");
+	basicForm.remove();
 });

@@ -157,9 +157,24 @@
 	 * @param msg the message to pring
 	 * @private
 	 */
-	JsForm.prototype._debug = function(msg) {
-		if(typeof console !== "undefined") {
-			console.log("JsForm: " + msg);
+	JsForm.prototype._debug = function(msg, param) {
+		try {
+			if (!window.console || !window.console.log)
+				return
+				
+			var p = null;
+			if($.isPlainObject(param)) {
+				p = JSON.stringify(param, null, " ");
+			} else 
+				p = param;
+			
+			if(!p) {
+				p = "";
+			}
+				
+			window.console.log(msg + p);
+		} catch(ex) {
+			// ignore
 		}
 	};
 
@@ -325,28 +340,20 @@
 					// and has a template
 					if(tmpl) {
 						var line = tmpl.clone(true);
-						$(this).append(line);
 						$(line).addClass("POJO");
-						$(line).data("pojo", {});
+						$(line).data().pojo = {};
+						$(this).append(line);
 						
 						that._addCollectionControls(line);
 						
 						// trigger a callback
 						$(this).trigger("addCollection", [line, $(line).data().pojo]);
 						
-						// the new entry has as index the count of all "lines"
-						var idx = $(this).children(".POJO").length;
-
-						// fill the line with data
-						that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
-
 						// its possible to have "sub" collections
 						that._initCollection(line, fieldName.substring(fieldName.indexOf('.')+1));
 						
 						// trigger a callback after the data has been rendered)
 						$(this).trigger("postAddCollection", [line, $(line).data().pojo]);
-
-						
 					}
 				});
 			});
@@ -1176,12 +1183,8 @@
 			}
 			
 			fieldname = fieldname.substring((prefix+".").length);
-			if(fieldname.length < 1) {
-				return;
-			}
 			
 			var colParent = that._getParent(pojo, fieldname, true);
-			
 			// get only the last part
 			if(fieldname.indexOf('.') !== -1) {
 				fieldname = fieldname.substring(fieldname.lastIndexOf('.') + 1);
@@ -1189,13 +1192,9 @@
 			
 			// clear the collection
 			colParent[fieldname] = [];
-			
+
 			// go through all direct childs - each one is an element
 			$(this).children().each(function(){
-				if(!ignoreInvalid && invalid) {
-					return;
-				}
-				
 				var ele = {};
 				ele = that._createPojoFromInput($(this), fieldname, ele);
 				
@@ -1206,6 +1205,8 @@
 				if(!that._isEmpty(ele)) {
 					if($(".invalid", this).length > 0) {
 						invalid = true;
+						if(!ignoreInvalid)
+							return false;
 					}
 					colParent[fieldname].push(ele);
 				} else {
@@ -1785,7 +1786,7 @@
 		// a string
 		return (pojo === "" || pojo === " "); 
 	};
-	
+
 	/**
 	 * compares two objects. note: empty string or null is the same as not existant
 	 * @param a the object to compare
@@ -1809,15 +1810,13 @@
 
 		var p = null;
 		for(p in a) {
-			if(typeof(b[p]) === 'undefined' && a[p] !== null && a[p] !== "") {
+			if(typeof(b[p]) === 'undefined' && a[p] !== null && a[p] !== "" && a[p].length != 0) {
 				// 0 == undefined
 				if((a[p] === "0" || a[p] === 0) && !b[p])
 					continue;
 				return false;
 			}
-		}
-
-		for(p in a) {
+			
 			if (a[p]) {
 				switch(typeof(a[p])) {
 				case 'object':
@@ -1841,16 +1840,17 @@
 					if((a === true || a === false) && a !== b) {
 						return false;
 					}
-	
+					if(!isNaN(a[p]) || !isNaN(b[p])) {
+						if(Math.abs(Number(a[p]) - Number(b[p])) < 0.0000001) {
+							break;
+						}
+						return false;
+					}
+
 					if(("" + a[p]).length !== ("" +b[p]).length) {
 						return false;
 					}
-					if(!isNaN(a[p]) || !isNaN(b[p])) {
-						if(Number(a[p]) !== Number(b[p])) {
-							return false;
-						}
-					}
-	
+
 					if (a[p] !== b[p] && Number(a[p]) !== Number(b[p])) {
 						return false;
 					}
@@ -1872,7 +1872,7 @@
 	};
 	
 	/**
-	 * Compares a pojo with form fields
+	 * Compares a pojo with the current generated object
 	 * @param pojo the pojo to compare with
 	 * @return true if any change between formfields and the pojo is found
 	 */
@@ -1953,7 +1953,7 @@
 	 */
 	JsForm.prototype.fill = function(pojo) {
 		// set the new data
-		this.options.data = pojo;
+		this.options.data = $.extend({}, pojo);
 		// fill everything
 		this._fill();
 	};
