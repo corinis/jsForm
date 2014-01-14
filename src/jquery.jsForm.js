@@ -1001,7 +1001,8 @@
 						$(this).val(cdata);
 				}
 				
-				$(this).data().orig = $(this).val();
+				if(that.options.trackChanges)
+					$(this).data().orig = $(this).val();
 				$(this).change();
 				$(this).trigger("fill");
 			}
@@ -1040,9 +1041,10 @@
 				}
 				
 				$(this).children("option[value='"+value+"']").prop("selected", true);
-				$(this).data().orig = value;
-				$(this).val(value).change();
-				$(this).trigger("fill");
+				$(this).val(value);
+				if(that.options.trackChanges)
+					$(this).data().orig = $(this).val();
+				$(this).change().trigger("fill");
 			}
 		});
 	};
@@ -1845,6 +1847,25 @@
 				changed = true;
 				return false;
 			}
+		});
+
+		return changed;
+	};
+
+	/**
+	 * Resets any changes and updates the dat abased on the input 
+	 */
+	JsForm.prototype.resetChanged = function() {
+		if(!this.options.trackChanges)
+			return false;
+		
+		var changed = false;
+		var that = this;
+		$.each(this._getForm(), function(){
+			$("." + that.options.trackChanges, this).each(function(){
+				$(this).removeClass(that.options.trackChanges);
+				$(this).data().orig = $(this).val();
+			});
 		});
 
 		return changed;
