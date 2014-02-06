@@ -12,10 +12,10 @@ test("data formatting", function(){
 
 test("internationalization", function(){
 	// default: english
-   equal($.jsFormControls.Format.decimal(1123456.54), "1,123,456.54", "decimal");
+   equal($.jsFormControls.Format.decimal(1123456.54), "1,123,456.54", "default decimal");
    //$.jsFormControls.Format.dateTime(cdata)
    //$.jsFormControls.Format.date(cdata)
-   equal($.jsFormControls.Format.currency(1123456.54), "1,123,456.54", "currency"); 
+   equal($.jsFormControls.Format.asNumber("1,123,456.54"), 1123456.54, "decimal to number"); 
 	
 	 // set english locale
 	   $(document).data("i18n", {
@@ -31,16 +31,22 @@ test("internationalization", function(){
 	     },
 	     number: {
 	       "format": "#,##0.###",
-	       "groupingSeparator": ",",
-	       "decimalSeparator": "."
-	     }
+	       "groupingSeparator": ".",
+	       "decimalSeparator": ","
+	     },
+	     currency: {
+	    	 "prefix": "",
+	    	 "suffix": " €",
+	    	 "fractionDigits": 2
+	    }
 	   });
 	   
 		  
-	   equal($.jsFormControls.Format.decimal(1123456.54), "1,123,456.54", "decimal");
+	   equal($.jsFormControls.Format.decimal(1123456.54), "1.123.456,54", "decimal (de)");
 	   //$.jsFormControls.Format.dateTime(cdata)
 	   //$.jsFormControls.Format.date(cdata)
-	   equal($.jsFormControls.Format.currency(1123456.54), "1,123,456.54", "currency"); 
+	   equal($.jsFormControls.Format.currency(1123456.54), "1.123.456,54 €", "currency (€ suffix)"); 
+	   equal($.jsFormControls.Format.asNumber("1.123.456,54 €"), 1123456.54, "currency number  (€ suffix)"); 
 
 	   // set german locale
 	   $(document).data("i18n", {
@@ -55,15 +61,21 @@ test("internationalization", function(){
 	       "shortDateFormat": "dd.MM.yy"
 	     },
 	     number: {
-	       "format": "#.##0,###",
-	       "groupingSeparator": ".",
-	       "decimalSeparator": ","
-	     }
+	       "format": "#,##0.###",
+	       "groupingSeparator": ",",
+	       "decimalSeparator": "."
+	     },
+	     currency: {
+	    	 "prefix": "$",
+	    	 "suffix": "",
+	    	 "fractionDigits": 2
+    	 }
 	   });
-	   equal($.jsFormControls.Format.decimal(1123456.54), "1.123.456,54", "decimal");
+	   equal($.jsFormControls.Format.decimal(1123456.54), "1,123,456.54", "decimal US");
 	   //$.jsFormControls.Format.dateTime(cdata)
 	   //$.jsFormControls.Format.date(cdata)
-	   equal($.jsFormControls.Format.currency(1123456.54), "1.123.456,54", "currency"); 
+	   equal($.jsFormControls.Format.currency(1123456.54), "$1,123,456.54", "currency  ($ prefix)"); 
+	   equal($.jsFormControls.Format.asNumber("$1,123,456.54"), 1123456.54, "currency number ($ prefix)"); 
 
 });
 

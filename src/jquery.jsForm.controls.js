@@ -489,13 +489,37 @@
 					groupingSeparator: ",",
 					decimalSeparator: "."
 				};
-
-				if(typeof i18n !== "undefined")
+				var pre = null, post = null;
+				if(typeof i18n !== "undefined") {
 					numberformat = i18n.number;
-				else if($(document).data().i18n && $(document).data().i18n.number)
+					if(i18n.currency) {
+						pre = i18n.currency.prefix;
+						post = i18n.currency.suffix;
+					}
+				}
+				else if($(document).data().i18n && $(document).data().i18n.number) {
 					numberformat = $(document).data().i18n.number;
+					if($(document).data().i18n.currency) {
+						pre = $(document).data().i18n.currency.prefix;
+						post = $(document).data().i18n.currency.suffix;
+					}
+				}
+				
 				// make sure num is a string
 				num = "" + num;
+				
+				// check for currency pre/postfix
+				if(pre && pre.length > 0){
+					if(num.indexOf(pre) == 0)
+						num = num.substring(pre.length);
+				}
+				if(post && post.length > 0){
+					if(num.indexOf(post) > 0)
+						num = num.substring(0, num.length - post.length);
+				}
+				
+				num = $.trim(num);
+
 				// get rid of the grouping seperator (if any exist)
 				if(num.indexOf(numberformat.groupingSeparator) !== -1)
 					num = num.replace(numberformat.groupingSeparator, "", "g");
@@ -578,10 +602,29 @@
 					if(cell) {
 						return "&#160;";
 					}
-					return "0";
+					value = 0;
 				}
 				
-				return $.jsFormControls.Format.decimal(value);
+				var num =  $.jsFormControls.Format.decimal(value);
+				// check for currency
+				var pre = null, post = null;
+				if(typeof i18n !== "undefined") {
+					if(i18n.currency) {
+						pre = i18n.currency.prefix;
+						post = i18n.currency.suffix;
+					}
+				}
+				else if($(document).data().i18n && $(document).data().i18n.number) {
+					if($(document).data().i18n.currency) {
+						pre = $(document).data().i18n.currency.prefix;
+						post = $(document).data().i18n.currency.suffix;
+					}
+				}
+				if(pre)
+					num = pre + num;
+				if(post)
+					num = num + post;
+				return num;
 			},
 
 			/**
