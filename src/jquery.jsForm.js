@@ -33,7 +33,7 @@
 			 */
 			data: null,
 			/**
-			 * the prefix used to annotate theinput fields
+			 * the prefix used to annotate the input fields
 			 */
 			prefix: "data",
 			/**
@@ -905,7 +905,10 @@
 				// check for percentage: this is value * 100
 				if ($(this).hasClass("percent") && !isNaN(cdata)) {
 					cdata = 100 * Number(cdata);
-				}
+				} else if($(this).hasClass("currency")) {
+					if (!cdata)
+						cdata = 0;
+				} 
 				
 				// format the string
 				if($.jsFormControls)

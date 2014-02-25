@@ -19,7 +19,7 @@
 	if(typeof Handlebars !== "undefined") {
 		Handlebars.registerHelper("currency", function(data){
 			if(!data)
-				return "0";
+				return $.jsFormControls.Format.currency(0);
 			return $.jsFormControls.Format.currency(data);
 		});
 		Handlebars.registerHelper("dec", function(data){
@@ -132,6 +132,8 @@
 		var numberRegexp =  new RegExp("^[0-9.,-]+$");
 		location.find("input.number").keyup(function(){
 			var val = $(this).val();
+			if($(this).hasClass("currency") && val)
+				val = $.jsFormControls.Format._getNumber(val);
 			if(val.length > 0) {
 				if($(this).hasClass("autoclean")) {
 					$(this).val(val.replace(/[^0-9.,-]/g, ""));
@@ -147,11 +149,20 @@
 		}).keyup();
 		
 		// currency formatting (add decimal)
-		location.find("input.currency").change(function(){
-			var val = $(this).val();
-			if(val.length > 0) {
-				$(this).val($.jsFormControls.Format.currency($.jsFormControls.Format._getNumber(val)));
-			}			
+		location.find("input.currency").each(function(){
+			$(this).on("change blur", function(){
+				var val = $(this).val();
+				if(val.length > 0) {
+					$(this).val($.jsFormControls.Format.currency($.jsFormControls.Format._getNumber(val)));
+				}			
+			});
+
+			$(this).focus(function(){
+				var val = $(this).val();
+				if(val.length > 0) {
+					$(this).val($.jsFormControls.Format._getNumber(val));
+				}			
+			});
 		});
 
 		location.find("input.percent").change(function(){
@@ -159,6 +170,13 @@
 			if(val.length > 0) {
 				$(this).val($.jsFormControls.Format.decimal($.jsFormControls.Format._getNumber(val)));
 			}			
+
+			$(this).focus(function(){
+				var val = $(this).val();
+				if(val.length > 0) {
+					$(this).val($.jsFormControls.Format._getNumber(val));
+				}			
+			});
 		});
 
 
@@ -612,12 +630,14 @@
 					if(i18n.currency) {
 						pre = i18n.currency.prefix;
 						post = i18n.currency.suffix;
+						debug("cura: ", i18n.currency);
 					}
 				}
 				else if($(document).data().i18n && $(document).data().i18n.number) {
 					if($(document).data().i18n.currency) {
 						pre = $(document).data().i18n.currency.prefix;
 						post = $(document).data().i18n.currency.suffix;
+						debug("curb: ", $(document).data().i18n.currency);
 					}
 				}
 				if(pre)
