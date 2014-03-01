@@ -630,14 +630,12 @@
 					if(i18n.currency) {
 						pre = i18n.currency.prefix;
 						post = i18n.currency.suffix;
-						debug("cura: ", i18n.currency);
 					}
 				}
 				else if($(document).data().i18n && $(document).data().i18n.number) {
 					if($(document).data().i18n.currency) {
 						pre = $(document).data().i18n.currency.prefix;
 						post = $(document).data().i18n.currency.suffix;
-						debug("curb: ", $(document).data().i18n.currency);
 					}
 				}
 				if(pre)
