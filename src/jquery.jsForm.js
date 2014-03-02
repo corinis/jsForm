@@ -424,10 +424,10 @@
 						
 						// its possible to have "sub" collections
 						that._initCollection(line);
-
+						
 						// trigger a callback
-						$(this).trigger("addCollection", [line, $(line).data().pojo]);
-
+						$(this).trigger("addCollection", [line, pojo]);
+						
 						// the new entry has as index the count of all "lines"
 						var idx = $(this).children(".POJO").length;
 						
@@ -435,6 +435,9 @@
 						that._fillData(line, pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
 						
 						$(this).append(line);
+						
+						// trigger a callback after the data has been rendered)
+						$(this).trigger("postAddCollection", [line, pojo]);
 					}
 				});
 				
@@ -1441,6 +1444,9 @@
 			
 			that._addCollectionControls(line);
 			
+			// trigger a callback
+			$(container).trigger("addCollection", [line, cur]);
+
 			if(prefix) {
 				// fill data - including the index
 				that._fillData(line, cur, prefix, i+1);
@@ -1450,6 +1456,9 @@
 				that._fillCollection(line, cur, prefix);
 			}
 			container.append(line);
+
+			// trigger a callback
+			$(container).trigger("postAddCollection", [line, $(line).data().pojo]);
 
 		}
 	};
