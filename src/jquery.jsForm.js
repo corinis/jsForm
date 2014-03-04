@@ -394,7 +394,6 @@
 			$(this).on("insert", function(ev, pojo){
 				if(!pojo)
 					pojo = $(this).data().pojo;
-				
 				// insert only works if there is a pojo
 				if(!pojo) {
 					return;
@@ -1390,10 +1389,10 @@
 		
 		
 		// check if we need to sort the array
-		if($(container).hasClass("sort")) {
-			var sortField = $(container).attr("data-sort");
+		if(container.hasClass("sort")) {
+			var sortField = container.attr("data-sort");
 			if(sortField) {
-				switch($(container).attr("data-sorttype")) {
+				switch(container.attr("data-sorttype")) {
 				case 'alpha':
 					data.sort();
 					break;
@@ -1416,7 +1415,7 @@
 					});
 				}
 				// descending: reverse
-				if($(container).attr("data-sortdesc")) {
+				if(container.attr("data-sortdesc")) {
 					data.reverse();
 				}
 			}
@@ -1445,7 +1444,7 @@
 			that._addCollectionControls(line);
 			
 			// trigger a callback
-			$(container).trigger("addCollection", [line, cur]);
+			container.trigger("addCollection", [line, cur]);
 
 			if(prefix) {
 				// fill data - including the index
@@ -1458,7 +1457,7 @@
 			container.append(line);
 
 			// trigger a callback
-			$(container).trigger("postAddCollection", [line, $(line).data().pojo]);
+			container.trigger("postAddCollection", [line, $(line).data().pojo]);
 
 		}
 	};
@@ -1478,9 +1477,11 @@
 
 		$(".delete", line).click(function(){
 			var ele = $(this).closest(".POJO");
+			var pojo = $(ele).data().pojo;
+			var base = $(this).closest(".collection");
+			ele.detach();
 			// trigger a callback
-			$(this).closest(".collection").trigger("deleteCollection", [ele, $(ele).data().pojo]);
-			ele.remove();
+			$(base).trigger("deleteCollection", [ele, pojo]);
 		});
 		$(".sortUp", line).click(function(){
 			// check if there is an up
