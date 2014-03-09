@@ -1996,8 +1996,12 @@
 	 */
 	JsForm.prototype.destroy = function( ) {
 		return $(this.element).each(function(){
-			$(window).unbind('.jsForm');
 			$(this).removeData('jsForm');
+			
+			if($.jsFormControls) {
+				// handle multiple form parts
+				$(this).jsFormControls("destroy");
+			}
 		});
 	};
 

@@ -349,6 +349,17 @@
 		
 		return true;
 	};
+	
+	/**
+	 * destroy the jsformcontrols and its resources.
+	 * @private
+	 */
+	JsFormControls.prototype.destroy = function( ) {
+		return $(this.element).each(function(){
+			$(this).removeData('jsFormControls');
+		});
+	};
+
 
 	// init and call methods
 	$.fn.jsFormControls = function ( method ) {
