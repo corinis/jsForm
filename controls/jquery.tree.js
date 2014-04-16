@@ -38,7 +38,7 @@
 			 */
 			id: null,
 			/**
-			 * field used as name
+			 * field used as name, this can also be a function that renders the object
 			 */
 			name: "name",
 			/**
@@ -87,7 +87,11 @@
 			/**
 			 * callback function when a node is drag/dropped. if null drag/dropping is disabled
 			 */
-			drop: null
+			drop: null,
+			/**
+			 * optional "root" target which will be visible when dragging starts
+			 */
+			rootTarget: '<ins class="ui-icon ui-icon-home"></ins><i>Root</i>'
 		}, options);
 		
 		this.element = element;
@@ -110,7 +114,7 @@
 	
 	Tree.prototype._paint = function(basenode, data) {
 		// return if empty
-		if(data === null || !data.length || data.length == 0)
+		if(!data || !data.length || data.length == 0)
 			return;
 		
 		var that = this, config = this.options, $this = $(this.element);
@@ -206,9 +210,31 @@
 		// now add dragndrop capability
 		$("li", $this).draggable({
 			opacity: 0.5,
-			revert:true
+			revert:true,
+			start: function(){
+				if(config.rootNode) {
+					config.rootNode.show();
+				}
+			},
+			stop: function() {
+				if(config.rootNode) {
+					config.rootNode.hide();
+				}
+			}
 		});
 		
+		if(config.rootTarget) {
+			var node =$('<li class="node control tree-item"><span class="ui-droppable"></span></li>');
+			if($.isFunction(config.rootTarget))
+				node.children("span").append(config.rootTarget());
+			else
+				node.children("span").append(config.rootTarget);
+			console.log(node.html());
+			config.rootNode = node;
+			node.hide();
+			$this.children("ul.tree").prepend(node);
+		}
+
 		// and drop them
 		$("li span", $this).droppable({
 			tolerance: "pointer",
