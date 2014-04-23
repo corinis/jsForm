@@ -208,7 +208,7 @@
 		// regular expression
 		location.find("input.regexp").each(function(){
 			if($(this).hasClass("autoclean")) {
-				$(this).data("regexp", new RegExp($(this).attr("data-regexp"), "g"));
+				$(this).data("regexp", new RegExp($(this).attr("data-regexp"), 'g'));
 			}
 			else {
 				$(this).data("regexp", new RegExp($(this).attr("data-regexp")));
@@ -548,13 +548,12 @@
 				}
 				
 				num = $.trim(num);
-
 				// get rid of the grouping seperator (if any exist)
 				if(num.indexOf(numberformat.groupingSeparator) !== -1)
-					num = num.replace(numberformat.groupingSeparator, "", "g");
+					num = num.replace(new RegExp("\\" +numberformat.groupingSeparator, 'g'), "");
 				// now convert the decimal seperator into a "real" decimal
 				if(numberformat.decimalSeparator !== '.' && num.indexOf(numberformat.decimalSeparator) !== -1) {
-					num = num.replace(numberformat.decimalSeparator, ".", "g");
+					num = num.replace(new RegExp(numberformat.decimalSeparator, 'g'), ".");
 				}
 				
 				return Number(num);

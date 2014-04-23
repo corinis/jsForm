@@ -900,7 +900,7 @@
 				}
 				var cdata = that._get(data, cname, false, idx);
 
-				if(!cdata) {
+				if(!cdata && cdata !== 0 && cdata !== false) {
 					cdata = "";
 				}
 				
@@ -910,7 +910,7 @@
 				} else if($(this).hasClass("currency")) {
 					if (!cdata)
 						cdata = 0;
-				} 
+				}
 				
 				// format the string
 				if($.jsFormControls)
@@ -1692,7 +1692,7 @@
 		// remove thousand seperator...
 		if(num.indexOf(",") != -1)
 		{
-			num = num.replace(",", "", "g");
+			num = num.replace(new RegExp(",", 'g'), "");
 		}
 		
 		
