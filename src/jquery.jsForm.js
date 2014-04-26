@@ -348,26 +348,47 @@
 				// search for a collection with that name
 				$.each($(this).data("collections"), function() {
 					var tmpl = $(this).data("template");
+					
 					// and has a template
 					if(tmpl) {
 						var line = tmpl.clone(true);
 						$(line).addClass("POJO");
 						$(line).data().pojo = {};
+
+						var prefill = $(this).data("prefill");
+						if(!prefill)
+							prefill = $(this).val("data-prefill");
+						// allow prefill
+						if(prefill){
+							if($.isFunction(prefill))
+								prefill($(line).data().pojo, $(line));
+							else if(prefill.substring)
+								$(line).data().pojo = JSON.parse(prefill);
+							else if($.isPlainObject(prefill))
+								$(line).data().pojo = prefill;
+							
+						}
 						$(this).append(line);
 						
 						// init controls
 						that._enableTracking($("input,textarea,select", line));
-						// ne wline always has changes
+						// new line always has changes
 						if(that.options.trackChanges)
 							$("input,textarea,select", line).addClass(that.options.trackChanges);
 						
 						that._addCollectionControls(line);
-						
+
+						// its possible to have "sub" collections
+						that._initCollection(line, fieldName.substring(fieldName.indexOf('.')+1));
+
 						// trigger a callback
 						$(this).trigger("addCollection", [line, $(line).data().pojo]);
 						
-						// its possible to have "sub" collections
-						that._initCollection(line, fieldName.substring(fieldName.indexOf('.')+1));
+						// the new entry has as index the count of all "lines"
+						var idx = $(this).children(".POJO").length;
+
+						// "fill data"
+						that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
 						
 						// trigger a callback after the data has been rendered)
 						$(this).trigger("postAddCollection", [line, $(line).data().pojo]);
