@@ -242,6 +242,7 @@ test("collection in collection test", function(){
   	'  <div class="collection users" data-field="groups.users">\n'+
   	'    <div class="entry">'+
   	'      <input name="users.name"/>\n'+
+  	'      <input name="users.value" class="number"/>\n'+
   	'      <span class="delete">X</span>\n'+
   	'    </div>'+
   	'  </div>'+
@@ -273,6 +274,7 @@ test("collection in collection test", function(){
 
 	// update a field
 	$("div.collection.group", basicForm).children().eq(0).find(".collection.users").children().eq(0).find("input[name='users.name']").val("TESTUSER");
+	$("div.collection.group", basicForm).children().eq(0).find(".collection.users").children().eq(1).find("input[name='users.value']").val("33");
 	
 	equal(basicForm.jsForm("equals", original), false, "form has different data");
 
@@ -280,6 +282,7 @@ test("collection in collection test", function(){
 	var pojo = basicForm.jsForm("get");
 	
 	equal(pojo.groups[0].users[0].name, "TESTUSER", "test change in collection");
+	equal(pojo.groups[0].users[1].value, 33, "test change in collection");
 	
 	basicForm.remove();
 });
