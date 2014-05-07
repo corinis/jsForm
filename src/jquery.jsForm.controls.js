@@ -539,7 +539,7 @@
 				
 				// check for currency pre/postfix
 				if(pre && pre.length > 0){
-					if(num.indexOf(pre) == 0)
+					if(num.indexOf(pre) === 0)
 						num = num.substring(pre.length);
 				}
 				if(post && post.length > 0){
