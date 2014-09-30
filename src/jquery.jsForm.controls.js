@@ -539,7 +539,7 @@
 				
 				// check for currency pre/postfix
 				if(pre && pre.length > 0){
-					if(num.indexOf(pre) === 0)
+					if(num.indexOf(pre) == 0)
 						num = num.substring(pre.length);
 				}
 				if(post && post.length > 0){
@@ -676,12 +676,14 @@
 			 */
 			date: function(row, cell, value, columnDef, dataContext) {
 				value = $.jsFormControls.Format._getValue(row, cell, value, columnDef);
-				if(!value || value === "" || isNaN(value)) {
+				if(!value || value === "") {
 					if(cell) {
 						return "&#160;";
 					}
 					return "";
 				}
+				if(isNaN(value))
+					return value;
 				
 				var d = new Date();
 				d.setTime(value);
@@ -709,13 +711,14 @@
 			 */
 			time: function(row, cell, value, columnDef, dataContext) {
 				value = $.jsFormControls.Format._getValue(row, cell, value, columnDef);
-				if(!value || value === "" || isNaN(value)) {
+				if(!value || value === "") {
 					if(cell) {
 						return "&#160;";
 					}
 					return "";
 				}
-				
+				if(isNaN(value))
+					return value;
 				var d = new Date();
 				d.setTime(value);
 				
