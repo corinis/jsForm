@@ -706,7 +706,11 @@
 					val = null;
 				} else if($(this).hasClass("object") || $(this).hasClass("POJO")) {
 					if($("option:selected", this).data() && $("option:selected", this).data().pojo) {
-						val = $("option:selected", this).data().pojo;
+						if($("option:selected", this).data().pojo)
+							val = $("option:selected", this).data().pojo;
+						else if($("option:selected", this).attr("data-obj"))
+							val = JSON.parse($("option:selected", this).attr("data-obj"));
+							
 					} else {
 						val = $(this).data("pojo");
 					}
@@ -758,6 +762,9 @@
 					if($(this).hasClass("array")) {
 						// the special case: array+checkbox is handled on the actual setting
 						val = $(this).val();
+						if($(this).attr("data-obj")) {
+							val = JSON.parse($(this).attr("data-obj"));
+						}
 					} else
 						val = $(this).is(':checked');
 				}
@@ -994,14 +1001,28 @@
 					if($(this).hasClass("array")) {
 						// checkbox: set if any part of the array matches
 						var cbVal = $(this).val();
+						var cbId = null;
+						if($(this).attr("data-obj")) {
+							cbVal = JSON.parse($(this).attr("data-obj"));
+						}
+						// get the id
+						if($(this).attr("data-id")) {
+							cbId = $(this).attr("data-id");
+							cbVal = cbVal[cbId];
+						}
+
 						var found = false;
-						if(cdata) 
+						if(cdata) {
 							$.each(cdata, function(){
-								if(this == cbVal) {
+								var cid = this;
+								if(cbId)
+									cid = cid[cbId];
+								if(cid == cbVal) {
 									found = true;
 									return false;
 								}
 							});
+						}
 						// select
 						$(this).prop("checked", found);
 					} else

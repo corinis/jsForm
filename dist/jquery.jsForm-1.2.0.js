@@ -33,7 +33,7 @@
 			 */
 			data: null,
 			/**
-			 * the prefix used to annotate theinput fields
+			 * the prefix used to annotate the input fields
 			 */
 			prefix: "data",
 			/**
@@ -65,7 +65,12 @@
 			 * optional array of elements that should be connected with the form. This
 			 * allows the splitting of the form into different parts of the dom.
 			 */
-			connect: null
+			connect: null,
+			/**
+			 * The class used when calling preventEditing. This will replace all
+			 * inputs with a span with the given field
+			 */
+			viewClass: "value"
 		}, options);
 
 		// read prefix from dom
@@ -343,26 +348,47 @@
 				// search for a collection with that name
 				$.each($(this).data("collections"), function() {
 					var tmpl = $(this).data("template");
+					
 					// and has a template
 					if(tmpl) {
 						var line = tmpl.clone(true);
 						$(line).addClass("POJO");
 						$(line).data().pojo = {};
+
+						var prefill = $(this).data("prefill");
+						if(!prefill)
+							prefill = $(this).val("data-prefill");
+						// allow prefill
+						if(prefill){
+							if($.isFunction(prefill))
+								prefill($(line).data().pojo, $(line));
+							else if(prefill.substring)
+								$(line).data().pojo = JSON.parse(prefill);
+							else if($.isPlainObject(prefill))
+								$(line).data().pojo = prefill;
+							
+						}
 						$(this).append(line);
 						
 						// init controls
 						that._enableTracking($("input,textarea,select", line));
-						// ne wline always has changes
+						// new line always has changes
 						if(that.options.trackChanges)
 							$("input,textarea,select", line).addClass(that.options.trackChanges);
 						
 						that._addCollectionControls(line);
-						
+
+						// its possible to have "sub" collections
+						that._initCollection(line, fieldName.substring(fieldName.indexOf('.')+1));
+
 						// trigger a callback
 						$(this).trigger("addCollection", [line, $(line).data().pojo]);
 						
-						// its possible to have "sub" collections
-						that._initCollection(line, fieldName.substring(fieldName.indexOf('.')+1));
+						// the new entry has as index the count of all "lines"
+						var idx = $(this).children(".POJO").length;
+
+						// "fill data"
+						that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
 						
 						// trigger a callback after the data has been rendered)
 						$(this).trigger("postAddCollection", [line, $(line).data().pojo]);
@@ -389,7 +415,6 @@
 			$(this).on("insert", function(ev, pojo){
 				if(!pojo)
 					pojo = $(this).data().pojo;
-				
 				// insert only works if there is a pojo
 				if(!pojo) {
 					return;
@@ -419,10 +444,10 @@
 						
 						// its possible to have "sub" collections
 						that._initCollection(line);
-
+						
 						// trigger a callback
-						$(this).trigger("addCollection", [line, $(line).data().pojo]);
-
+						$(this).trigger("addCollection", [line, pojo]);
+						
 						// the new entry has as index the count of all "lines"
 						var idx = $(this).children(".POJO").length;
 						
@@ -430,6 +455,9 @@
 						that._fillData(line, pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
 						
 						$(this).append(line);
+						
+						// trigger a callback after the data has been rendered)
+						$(this).trigger("postAddCollection", [line, pojo]);
 					}
 				});
 				
@@ -678,7 +706,11 @@
 					val = null;
 				} else if($(this).hasClass("object") || $(this).hasClass("POJO")) {
 					if($("option:selected", this).data() && $("option:selected", this).data().pojo) {
-						val = $("option:selected", this).data().pojo;
+						if($("option:selected", this).data().pojo)
+							val = $("option:selected", this).data().pojo;
+						else if($("option:selected", this).attr("data-obj"))
+							val = JSON.parse($("option:selected", this).attr("data-obj"));
+							
 					} else {
 						val = $(this).data("pojo");
 					}
@@ -730,6 +762,9 @@
 					if($(this).hasClass("array")) {
 						// the special case: array+checkbox is handled on the actual setting
 						val = $(this).val();
+						if($(this).attr("data-obj")) {
+							val = JSON.parse($(this).attr("data-obj"));
+						}
 					} else
 						val = $(this).is(':checked');
 				}
@@ -893,13 +928,16 @@
 				}
 				var cdata = that._get(data, cname, false, idx);
 
-				if(!cdata) {
+				if(!cdata && cdata !== 0 && cdata !== false) {
 					cdata = "";
 				}
 				
 				// check for percentage: this is value * 100
 				if ($(this).hasClass("percent") && !isNaN(cdata)) {
 					cdata = 100 * Number(cdata);
+				} else if($(this).hasClass("currency")) {
+					if (!cdata)
+						cdata = 0;
 				}
 				
 				// format the string
@@ -963,14 +1001,28 @@
 					if($(this).hasClass("array")) {
 						// checkbox: set if any part of the array matches
 						var cbVal = $(this).val();
+						var cbId = null;
+						if($(this).attr("data-obj")) {
+							cbVal = JSON.parse($(this).attr("data-obj"));
+						}
+						// get the id
+						if($(this).attr("data-id")) {
+							cbId = $(this).attr("data-id");
+							cbVal = cbVal[cbId];
+						}
+
 						var found = false;
-						if(cdata) 
+						if(cdata) {
 							$.each(cdata, function(){
-								if(this == cbVal) {
+								var cid = this;
+								if(cbId)
+									cid = cid[cbId];
+								if(cid == cbVal) {
 									found = true;
 									return false;
 								}
 							});
+						}
 						// select
 						$(this).prop("checked", found);
 					} else
@@ -1001,7 +1053,8 @@
 						$(this).val(cdata);
 				}
 				
-				$(this).data().orig = $(this).val();
+				if(that.options.trackChanges)
+					$(this).data().orig = $(this).val();
 				$(this).change();
 				$(this).trigger("fill");
 			}
@@ -1040,9 +1093,10 @@
 				}
 				
 				$(this).children("option[value='"+value+"']").prop("selected", true);
-				$(this).data().orig = value;
-				$(this).val(value).change();
-				$(this).trigger("fill");
+				$(this).val(value);
+				if(that.options.trackChanges)
+					$(this).data().orig = $(this).val();
+				$(this).change().trigger("fill");
 			}
 		});
 	};
@@ -1189,6 +1243,7 @@
 	 */
 	JsForm.prototype.preventEditing = function(prevent) {
 		var $this = $(this.element);
+		var viewClass = this.options.viewClass;
 		
 		if(typeof prevent === "undefined") {
 			// get the disable from the form itself 
@@ -1203,7 +1258,7 @@
 		if (prevent)
 		{
 			$this.find("input, textarea").each(function() {
-				if ($(this).closest("span.form")[0])
+				if ($(this).closest("span." + viewClass)[0])
 					return;
 				if($(this).attr("type") == "hidden")
 					return;
@@ -1219,7 +1274,7 @@
 				
 				// convert \n to brs - escape all other html
 				val = val.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
-				var thespan = $('<span class="form">'+val+'</span>');
+				var thespan = $('<span class="'+viewClass+'">'+val+'</span>');
 				if($(this).parent().hasClass("ui-wrapper"))
 					$(this).parent().hide().wrap(thespan);
 				else
@@ -1227,14 +1282,14 @@
 			});
 			// selects are handled slightly different
 			$this.find("select").each(function() {
-				if ($(this).closest("span.form")[0])
+				if ($(this).closest("span."+viewClass)[0])
 					return;
 				
 				var val = $(this).children(":selected").html();
 				if (val === "null" || val === null)
 					val = "";
 
-				var thespan = $('<span class="form">'+val+'</span>');
+				var thespan = $('<span class="'+viewClass+'">'+val+'</span>');
 				
 				// toggle switches work a little different 
 				if($(this).hasClass("ui-toggle-switch")) {
@@ -1247,7 +1302,7 @@
 		}
 		else
 		{
-			$this.find("span.form").each(function() {
+			$this.find("span." + viewClass).each(function() {
 				// remove text and then unwrap
 				var ele = $(this).children("input,select,textarea,.ui-wrapper,.ui-toggle-switch").show().detach();
 				$(this).before(ele);
@@ -1376,10 +1431,10 @@
 		
 		
 		// check if we need to sort the array
-		if($(container).hasClass("sort")) {
-			var sortField = $(container).attr("data-sort");
+		if(container.hasClass("sort")) {
+			var sortField = container.attr("data-sort");
 			if(sortField) {
-				switch($(container).attr("data-sorttype")) {
+				switch(container.attr("data-sorttype")) {
 				case 'alpha':
 					data.sort();
 					break;
@@ -1402,7 +1457,7 @@
 					});
 				}
 				// descending: reverse
-				if($(container).attr("data-sortdesc")) {
+				if(container.attr("data-sortdesc")) {
 					data.reverse();
 				}
 			}
@@ -1430,6 +1485,9 @@
 			
 			that._addCollectionControls(line);
 			
+			// trigger a callback
+			container.trigger("addCollection", [line, cur]);
+
 			if(prefix) {
 				// fill data - including the index
 				that._fillData(line, cur, prefix, i+1);
@@ -1439,6 +1497,9 @@
 				that._fillCollection(line, cur, prefix);
 			}
 			container.append(line);
+
+			// trigger a callback
+			container.trigger("postAddCollection", [line, $(line).data().pojo]);
 
 		}
 	};
@@ -1458,9 +1519,11 @@
 
 		$(".delete", line).click(function(){
 			var ele = $(this).closest(".POJO");
+			var pojo = $(ele).data().pojo;
+			var base = $(this).closest(".collection");
+			ele.detach();
 			// trigger a callback
-			$(this).closest(".collection").trigger("deleteCollection", [ele, $(ele).data().pojo]);
-			ele.remove();
+			$(base).trigger("deleteCollection", [ele, pojo]);
 		});
 		$(".sortUp", line).click(function(){
 			// check if there is an up
@@ -1671,7 +1734,7 @@
 		// remove thousand seperator...
 		if(num.indexOf(",") != -1)
 		{
-			num = num.replace(",", "", "g");
+			num = num.replace(new RegExp(",", 'g'), "");
 		}
 		
 		
@@ -1850,6 +1913,25 @@
 		return changed;
 	};
 
+	/**
+	 * Resets any changes and updates the dat abased on the input 
+	 */
+	JsForm.prototype.resetChanged = function() {
+		if(!this.options.trackChanges)
+			return false;
+		
+		var changed = false;
+		var that = this;
+		$.each(this._getForm(), function(){
+			$("." + that.options.trackChanges, this).each(function(){
+				$(this).removeClass(that.options.trackChanges);
+				$(this).data().orig = $(this).val();
+			});
+		});
+
+		return changed;
+	};
+
 	JsForm.prototype._equalsCollection = function(form, prefix, pojo) {
 		var that = this;
 		var differs = false;
@@ -1956,8 +2038,12 @@
 	 */
 	JsForm.prototype.destroy = function( ) {
 		return $(this.element).each(function(){
-			$(window).unbind('.jsForm');
 			$(this).removeData('jsForm');
+			
+			if($.jsFormControls) {
+				// handle multiple form parts
+				$(this).jsFormControls("destroy");
+			}
 		});
 	};
 
@@ -2056,7 +2142,7 @@
 	if(typeof Handlebars !== "undefined") {
 		Handlebars.registerHelper("currency", function(data){
 			if(!data)
-				return "0";
+				return $.jsFormControls.Format.currency(0);
 			return $.jsFormControls.Format.currency(data);
 		});
 		Handlebars.registerHelper("dec", function(data){
@@ -2169,6 +2255,8 @@
 		var numberRegexp =  new RegExp("^[0-9.,-]+$");
 		location.find("input.number").keyup(function(){
 			var val = $(this).val();
+			if($(this).hasClass("currency") && val)
+				val = $.jsFormControls.Format._getNumber(val);
 			if(val.length > 0) {
 				if($(this).hasClass("autoclean")) {
 					$(this).val(val.replace(/[^0-9.,-]/g, ""));
@@ -2184,11 +2272,20 @@
 		}).keyup();
 		
 		// currency formatting (add decimal)
-		location.find("input.currency").change(function(){
-			var val = $(this).val();
-			if(val.length > 0) {
-				$(this).val($.jsFormControls.Format.currency($.jsFormControls.Format._getNumber(val)));
-			}			
+		location.find("input.currency").each(function(){
+			$(this).on("change blur", function(){
+				var val = $(this).val();
+				if(val.length > 0) {
+					$(this).val($.jsFormControls.Format.currency($.jsFormControls.Format._getNumber(val)));
+				}			
+			});
+
+			$(this).focus(function(){
+				var val = $(this).val();
+				if(val.length > 0) {
+					$(this).val($.jsFormControls.Format._getNumber(val));
+				}			
+			});
 		});
 
 		location.find("input.percent").change(function(){
@@ -2196,6 +2293,13 @@
 			if(val.length > 0) {
 				$(this).val($.jsFormControls.Format.decimal($.jsFormControls.Format._getNumber(val)));
 			}			
+
+			$(this).focus(function(){
+				var val = $(this).val();
+				if(val.length > 0) {
+					$(this).val($.jsFormControls.Format._getNumber(val));
+				}			
+			});
 		});
 
 
@@ -2227,7 +2331,7 @@
 		// regular expression
 		location.find("input.regexp").each(function(){
 			if($(this).hasClass("autoclean")) {
-				$(this).data("regexp", new RegExp($(this).attr("data-regexp"), "g"));
+				$(this).data("regexp", new RegExp($(this).attr("data-regexp"), 'g'));
 			}
 			else {
 				$(this).data("regexp", new RegExp($(this).attr("data-regexp")));
@@ -2368,6 +2472,17 @@
 		
 		return true;
 	};
+	
+	/**
+	 * destroy the jsformcontrols and its resources.
+	 * @private
+	 */
+	JsFormControls.prototype.destroy = function( ) {
+		return $(this.element).each(function(){
+			$(this).removeData('jsFormControls');
+		});
+	};
+
 
 	// init and call methods
 	$.fn.jsFormControls = function ( method ) {
@@ -2526,19 +2641,42 @@
 					groupingSeparator: ",",
 					decimalSeparator: "."
 				};
-
-				if(typeof i18n !== "undefined")
+				var pre = null, post = null;
+				if(typeof i18n !== "undefined") {
 					numberformat = i18n.number;
-				else if($(document).data().i18n && $(document).data().i18n.number)
+					if(i18n.currency) {
+						pre = i18n.currency.prefix;
+						post = i18n.currency.suffix;
+					}
+				}
+				else if($(document).data().i18n && $(document).data().i18n.number) {
 					numberformat = $(document).data().i18n.number;
+					if($(document).data().i18n.currency) {
+						pre = $(document).data().i18n.currency.prefix;
+						post = $(document).data().i18n.currency.suffix;
+					}
+				}
+				
 				// make sure num is a string
 				num = "" + num;
+				
+				// check for currency pre/postfix
+				if(pre && pre.length > 0){
+					if(num.indexOf(pre) === 0)
+						num = num.substring(pre.length);
+				}
+				if(post && post.length > 0){
+					if(num.indexOf(post) > 0)
+						num = num.substring(0, num.length - post.length);
+				}
+				
+				num = $.trim(num);
 				// get rid of the grouping seperator (if any exist)
 				if(num.indexOf(numberformat.groupingSeparator) !== -1)
-					num = num.replace(numberformat.groupingSeparator, "", "g");
+					num = num.replace(new RegExp("\\" +numberformat.groupingSeparator, 'g'), "");
 				// now convert the decimal seperator into a "real" decimal
 				if(numberformat.decimalSeparator !== '.' && num.indexOf(numberformat.decimalSeparator) !== -1) {
-					num = num.replace(numberformat.decimalSeparator, ".", "g");
+					num = num.replace(new RegExp(numberformat.decimalSeparator, 'g'), ".");
 				}
 				
 				return Number(num);
@@ -2615,10 +2753,29 @@
 					if(cell) {
 						return "&#160;";
 					}
-					return "0";
+					value = 0;
 				}
 				
-				return $.jsFormControls.Format.decimal(value);
+				var num =  $.jsFormControls.Format.decimal(value);
+				// check for currency
+				var pre = null, post = null;
+				if(typeof i18n !== "undefined") {
+					if(i18n.currency) {
+						pre = i18n.currency.prefix;
+						post = i18n.currency.suffix;
+					}
+				}
+				else if($(document).data().i18n && $(document).data().i18n.number) {
+					if($(document).data().i18n.currency) {
+						pre = $(document).data().i18n.currency.prefix;
+						post = $(document).data().i18n.currency.suffix;
+					}
+				}
+				if(pre)
+					num = pre + num;
+				if(post)
+					num = num + post;
+				return num;
 			},
 
 			/**
