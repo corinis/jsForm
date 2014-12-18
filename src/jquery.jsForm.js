@@ -1028,7 +1028,7 @@
 					} else
 						$(this).prop("checked", (cdata === true || cdata === "true"));
 				} else {
-					if(!cdata) {
+					if(!cdata && cdata !== 0 && cdata !== false) {
 						cdata = "";
 					}
 					
