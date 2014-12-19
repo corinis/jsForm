@@ -15,7 +15,7 @@
 	
 	
 	/**
-	 * @param element {Node} the cotnainer node that should be converted to a jsForm
+	 * @param element {Node} the container node that should be converted to a jsForm
 	 * @param options {object} the configuraton object
 	 * @constructor
 	 */
@@ -824,41 +824,23 @@
 			else
 			{
 				var parts = name.split(".");
-				
-				var d0 = pojo[parts[0]];
-				var d1, d2;
-				
-				// multiple parts: make sure its an object TODO find a better way to handle multiple levels with auto-create
-				if (!d0 || !$.isPlainObject(d0)) {
+				var prev;
+				var current = pojo[parts[0]];
+				if (!current || !$.isPlainObject(current)) {
 					pojo[parts[0]] = {};
-					d0 = pojo[parts[0]]; 
+					current = pojo[parts[0]]; 
 				}
 				
-				if (parts.length === 2) {
-					d0[parts[1]] = val;
-				} else if (parts.length === 3) {
-					d1 = d0[parts[1]];
-					if(d1 === undefined || d1 === null) {
-						d1 = {};
-						d0[parts[1]] = d1;
+				for(var i = 1; i < parts.length - 1; i++) {
+					prev = current;
+					current = prev[parts[i]];
+					if(current === undefined || current === null) {
+						current = {};
+						prev[parts[i]] = current;
 					}
-					d1[parts[2]] = val;
-				} else if (parts.length === 4)
-				{
-					d1 = d0[parts[1]];
-					if(d1 === null || d1 === undefined) {
-						d1 = {};
-						d0[parts[1]] = d1;
-					}
-					d2 = d1[parts[2]];
-					if(d2 === undefined || d1 === null) {
-						d2 = {};
-						d1[parts[2]] = d2;
-					}
-					d1[parts[2]] = val;
-					d2[parts[3]] = val;
 				}
-				// more should not be necessary	
+				
+				current[parts[parts.length - 1]] = val;
 			}
 		});
 		
