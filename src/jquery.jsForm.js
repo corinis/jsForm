@@ -936,7 +936,7 @@
 	 * search for collections to fill 
 	 * @param parent the parentnode
 	 * @param data the data
- 	 * @param prefix the prefix used to find fields
+	 * @param prefix the prefix used to find fields
 	 * @param idx the index - this is only used for collections
 	 * @private
 	 */
@@ -986,8 +986,7 @@
 
 					$(this).click(function(){
 						$(this).toggleClass(selectedClass);
-					})
-					
+					});
 				});
 			}
 			$("input[name='"+fieldname+"']", this).prop('checked', false);
@@ -1034,7 +1033,7 @@
 			});
 		
 		});
-	}
+	};
 
 	
 	/**
