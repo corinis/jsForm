@@ -34,10 +34,10 @@ You can also check out some [Demos](http://www.gargan.org/jsform/index.jsp).
 
 # Download
 
-Current Version: 1.1.2
+Current Version: 1.3.0
 
-* [Minified](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.1.2.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
-* [Source](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.1.2.js)
+* [Minified](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.3.0.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
+* [Source](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.3.0.js)
 
 # Documentation
 
@@ -113,4 +113,10 @@ $(function(){
 </html>
 ```
 
-
+## Also check out the other samples:
+ * [complex json with collections within collections](https://raw.github.com/corinis/jsForm/master/complex-sample.html)
+ * [complex json with collections, sortable and editable](https://raw.github.com/corinis/jsForm/master/sortable-editable-sample.html)
+ * [select from a given list of objects](https://raw.github.com/corinis/jsForm/master/sample-multiselect.html)
+ * [show elements based on conditions within the data](https://raw.github.com/corinis/jsForm/master/sample-conditional.html)
+ * [use the tagit control to select from a list of objects](https://raw.github.com/corinis/jsForm/master/autocomplete-form-tagit.html)
+ 
