@@ -844,6 +844,73 @@
 			}
 		});
 		
+		// for "selection" collection
+		$(start).find(".selectcollection").each(function(){
+			var name = $(this).attr("data-field");
+			
+			// empty name - ignore
+			if (!name) {
+				return;
+			}
+
+			// skip grayed (=calculated) or transient fields
+			if($(this).hasClass("transient")) {
+				return;
+			}
+			
+			// must start with prefix
+			if(name.indexOf(prefix + ".") !== 0) {
+				return;
+			}
+			
+			$(this).trigger("validate", true);
+			
+			// cut away the prefix
+			name = name.substring((prefix+".").length);
+			
+			// always an array (reset current data)
+			pojo[name] = [];
+			
+			// see if we go by checkbox or by css class (if both -> class wins)
+			var selectedClass = $(this).attr("data-selected");
+			var id = $(this).attr("data-id");
+			
+			$(this).children().each(function(){
+				// check selection
+				if(selectedClass) {
+					if(!$(this).hasClass(selectedClass))
+						return;
+				} else {
+					if(!$("input[name='"+name+"']", this).prop('checked'))
+						return;
+				}
+				
+				// get the "id"/object
+				var cobj = null;
+				// no id given - check the value of the checkbox
+				if(!id) {
+					cobj = $("input[name='"+name+"']", this).val();
+				} else {
+					// get the object
+					cobj = $(this).data("obj");
+					if(!cobj && $(this).attr("data-obj")) {
+						cobj = JSON.parse($(this).attr("data-obj"));
+					}
+				}
+				
+				// no object/data found
+				if(!cobj)
+					return;
+				
+				pojo[name].push(cobj);
+				
+				
+			});
+
+
+		});
+
+		
 		return pojo;
 	};
 
@@ -864,6 +931,111 @@
 			});
 		}
 	};
+
+	/**
+	 * search for collections to fill 
+	 * @param parent the parentnode
+	 * @param data the data
+ 	 * @param prefix the prefix used to find fields
+	 * @param idx the index - this is only used for collections
+	 * @private
+	 */
+	JsForm.prototype._fillSelectCollection = function (parent, data, prefix, idx) {
+		var that = this;
+		
+		var $parent = $(parent);
+		
+		// locate all "select collections"
+		$parent.find(".selectcollection").each(function() {
+			var selectedClass = $(this).attr("data-selected");
+			var id = $(this).attr("data-id");
+			var fieldname = $(this).attr("data-field");
+
+			// only collections with the correct prefix
+			if(!data || !fieldname || fieldname.indexOf(prefix+".") !== 0) {
+				return;
+			}
+	
+			// data for the collection filling
+			var colData = null;
+			
+			var cname = fieldname;
+			// remove the prefix
+			if (prefix) {
+				cname = cname.substring(prefix.length + 1);
+			}
+			colData = that._get(data, cname);
+	
+			if(!colData || !$.isArray(colData)) {
+				return;
+			}
+
+			// cut away any prefixes - only the fieldname is used
+			if(fieldname.indexOf('.') !== -1) {
+				fieldname = fieldname.substring(fieldname.lastIndexOf('.')+1);
+			}
+
+			// reset selection
+			if(selectedClass) {
+				$(this).children("." + selectedClass).removeClass(selectedClass);
+				$(this).children().each(function(){
+					if($(this).hasClass("jsfselect"))
+						return;
+					// identify that we already bound
+					$(this).addClass("jsfselect");
+
+					$(this).click(function(){
+						$(this).toggleClass(selectedClass);
+					})
+					
+				});
+			}
+			$("input[name='"+fieldname+"']", this).prop('checked', false);
+			
+			// now go through each child and apply selection if appropriate
+			$(this).children().each(function(){
+				// get the "id"/object
+				var cid = "";
+				// no id given - check the value of the checkbox
+				if(!id) {
+					cid = $("input[name='"+fieldname+"']", this).val();
+				} else {
+					// get the object
+					var obj = $(this).data("obj");
+					if(!obj && $(this).attr("data-obj")) {
+						obj = JSON.parse($(this).attr("data-obj"));
+					}
+					// avoid exception
+					if(!obj)
+						return;
+					// take the id field of the object
+					cid = obj[id];
+				}
+				
+				if(!cid)
+					return;
+				
+				for(var i = 0; i < colData.length; i++) {
+					var did = colData[i];
+					if(id)
+						did = did[id];
+					
+					// found it
+					if(cid == did){
+						if(selectedClass) {
+							$(this).addClass(selectedClass);
+						}
+						$("input[name='"+fieldname+"']", this).prop('checked', true);
+						return;
+					}
+				}
+				
+				
+			});
+		
+		});
+	}
+
 	
 	/**
 	* fill a dom subtree with data.
@@ -1345,6 +1517,7 @@
 		
 		// fill base 
 		that._fillData(ele, that.options.data, that.options.prefix);
+		that._fillSelectCollection(ele, that.options.data, that.options.prefix);
 		that._fillCollection(ele, that.options.data, that.options.prefix);
 		// (re-)evaluate all conditionals
 		that._evaluateConditionals(ele, that.options.data);

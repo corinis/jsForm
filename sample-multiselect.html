@@ -1,0 +1,81 @@
+<html>
+<head>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<style type="text/css">
+.selected {
+	color: green !important;
+}
+.jsfselect {
+	cursor: pointer;
+	color: blue;
+}
+</style>
+<script src="src/jquery.jsForm.js"></script>
+<script>
+$(function(){
+	// some json data
+	var jsonData = {
+		name: "TestName",	// standard inputs
+		links: [{href:'http://www.gargan.org',description:'Gargan.org'},{href:'http://www.github.com',description:'GitHub'}],	// lists
+		countries: ["austria", "germany", "uk"],
+		user: [{id:1, name:"user1"}]
+	};
+	
+	var selectData = [
+{href:'http://www.gargan.org',description:'Gargan.org'},
+{href:'http://www.github.com',description:'GitHub'},
+{href:'http://www.jquery.com',description:'Jquery'}
+	];
+
+	// prepare the collection (could also be hardcoded)
+	$.each(selectData, function(){
+		var row = $('<tr><td><input type="checkbox" name="links"/>' +this.description + '</td></tr>' );
+		row.data("obj", this);
+		$("#selectdata").append(row);
+	});
+
+	// initialize the form, prefix is optional and defaults to data
+	$("#details").jsForm({
+		data:jsonData
+	});
+
+	$("#show").click(function() {
+		// show the json data
+		alert(JSON.stringify($("#details").jsForm("get"), null, " "));
+	});
+});
+</script>
+</head>
+<body>
+<h1>Multi Select test</h1>
+<div id="details">
+	Name: <input name="data.name"/><br/>
+	<!-- use the href field to check for which is selected -->
+	<table>
+		<tbody class="selectcollection" data-field="data.links" data-id="href" id="selectdata">
+		</tbody>
+	</table>
+	
+	<!-- selection of strings -->
+	<ul class="selectcollection" data-field="data.countries">
+		<li><input type="checkbox" name="countries" value="austria">Austria</li>
+		<li><input type="checkbox" name="countries" value="australia">Australia</li>
+		<li><input type="checkbox" name="countries" value="germany">Germany</li>
+		<li><input type="checkbox" name="countries" value="uk">UK</li>
+		<li><input type="checkbox" name="countries" value="usa">USA</li>
+	</ul>
+
+	<!-- object defined in html instead of js - also use css instead of checkbox-->
+	Click to select:
+	<ul class="selectcollection" data-field="data.user" data-id="id" data-selected="selected" >
+		<li data-obj='{"id":1,"name":"user1"}'>User 1</li>
+		<li data-obj='{"id":2,"name":"user2"}'>User 2</li>
+		<li data-obj='{"id":3,"name":"user3"}'>User 3</li>
+		<li data-obj='{"id":4,"name":"user4"}'>User 4</li>
+		<li data-obj='{"id":5,"name":"user5"}'>User 5</li>
+	</ul>
+	
+</div>
+<button id="show">Show Object</button>
+</body>
+</html>
