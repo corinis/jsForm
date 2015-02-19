@@ -58,7 +58,8 @@ compatible to jquery-ui.
 
 # Quickstart
 
-* Start with a simple html to show you the basic usage [download sample](https://raw.github.com/corinis/jsForm/master/sample.html):
+* Start with a simple html to show you the basic usage [download sample](https://raw.github.com/corinis/jsForm/master/sample.html) [view life](http://www.gargan.org/jsform/index.jsp).
+:
 
 ```html
 <html>
@@ -114,6 +115,9 @@ $(function(){
 ```
 
 ## Also check out the other samples:
+
+[view life demos](http://www.gargan.org/jsform/index.jsp)
+
  * [complex json with collections within collections](https://raw.github.com/corinis/jsForm/master/complex-sample.html)
  * [complex json with collections, sortable and editable](https://raw.github.com/corinis/jsForm/master/sortable-editable-sample.html)
  * [select from a given list of objects](https://raw.github.com/corinis/jsForm/master/sample-multiselect.html)
