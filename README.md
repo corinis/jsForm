@@ -14,13 +14,14 @@ The main features of this library are:
 * Provide basic functions for formatting (i.e. date/time, money, byte) using html markup
 * Provide form validation functionality
 * handle collections (arrays) with subobjects
+* handle binaries (blobs) within json by converting them to data url
 * provides helper methods to handle array manipulation (add new entry/remove an entry) using only html markup
 * Can be used in connection with an autocomplete function to add new array objects
 * Compatible with [jQuery UI](http://jqueryui.com/) and [jQuery Mobile](http://jquerymobile.com/)
-* addon library for form controls and layouting (comes bundled in the minified version)
+* addon library for form controls and layouting (comes bundled in the minified version), internationalisation
 * fully unit tested using [QUnit](http://www.gargan.org/jsform/test/test.jquery.jsForm.html)
 * jslint clean
-* Minified+Gzipped: 6kb
+* Minified+Gzipped: 7kb
 
 You can also check out some [Demos](http://www.gargan.org/jsform/index.jsp).
 
