@@ -17,12 +17,17 @@ module.exports = function( grunt ) {
 		concat: {
 			js: {
 				src: ["src/jquery.jsForm.js", "src/jquery.jsForm.controls.js"],
-				dest: "dist/jquery.jsForm-<%= pkg.version %>.js"
+				dest: "js/jquery.jsForm-<%= pkg.version %>.js"
+			},
+			js2: {
+				src: ["src/jquery.jsForm.js", "src/jquery.jsForm.controls.js"],
+				dest: "js/jquery.jsForm.js"
 			}
+
 		},
 		jshint: {
 			dist: {
-				src: [ "dist/jquery.jsForm-<%= pkg.version %>.js" ],
+				src: [ "js/jquery.jsForm-<%= pkg.version %>.js" ],
 				options: srcHintOptions
 			},
 			grunt: {
@@ -43,11 +48,11 @@ module.exports = function( grunt ) {
 		uglify: {
 			all: {
 				files: {
-					"dist/jquery.jsForm.<%= pkg.version %>.min.js": [ "dist/jquery.jsForm-<%= pkg.version %>.js" ]
+					"js/jquery.jsForm.min.js": [ "js/jquery.jsForm-<%= pkg.version %>.js" ]
 				},
 				options: {
-					banner: "/*!\n * jQuery.jsForm v<%= pkg.version %> | (c) 2013 <%=pkg.author.name%> <%=pkg.author.url%>\n * Usage: <%=pkg.homepage%>\n */\n",
-					sourceMap: "dist/jquery.jsForm.min.map",
+					banner: "/*!\n * jQuery.jsForm v<%= pkg.version %> | (c) 2015 <%=pkg.author.name%> <%=pkg.author.url%>\n * Usage: <%=pkg.homepage%>\n */\n",
+					sourceMap: "js/jquery.jsForm.min.map",
 					beautify: {
 						ascii_only: true
 					}
@@ -64,6 +69,6 @@ module.exports = function( grunt ) {
 
 
 	// Short list as a high frequency watch task
-	grunt.registerTask( "default", [ "concat:js", "uglify", "jshint" ] );
+	grunt.registerTask( "default", [ "concat:js", "concat:js2", "uglify", "jshint" ] );
 };
 

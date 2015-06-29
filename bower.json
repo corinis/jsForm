@@ -1,0 +1,43 @@
+{
+  "name": "jquery-jsform",
+  "version": "1.3.1",
+  "homepage": "https://github.com/corinis/jsForm",
+  "authors": [
+    "Niko <niko.berger@corinis.com>"
+  ],
+    "repository": {
+    "type": "git",
+    "url": "git://github.com/corinis/jsForm.git"
+  },
+  "bugs": "https://github.com/corinis/jsForm/issues",
+  "description": "jQuery based form library that allows you to handle data within a js object (i.e. JSON) with html forms.\nYou can modify all fields/properties by simply creating a html form with the correct naming schema (MVVM Pattern).\n\nThe main features of this library are:\n    Full standard html with data available in a js object\n    Update an existing js object with changes done within a form\n    Fully internationalizable with number format, currency and date formatting\n    Provide basic functions for formatting (i.e. date/time, money) using html markup\n    Provide form validation functionality\n    handle collections (arrays) with subobjects\n provides helper methods to handle array manipulation (add new entry/remove an entry, sorting) using only html markup\n Can be used in connection with an autocomplete function to add new array objects",
+  "main": [
+    "js/jquery.jsForm.min.js",
+    "lib/jquery.format-1.3.js"
+  ],
+  "keywords": [
+    "jquery",
+    "form",
+    "json",
+    "mvvm",
+    "form2json",
+    "json2form",
+    "ajax"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "jquery": ">=1.9"
+  },
+  "ignore": [
+    "**/.*",
+    "*.html",
+    "*.txt",
+    "*.json",
+    "*.md",
+    "Gruntfile.js",
+    "node_modules",
+    "bower_components",
+    "test",
+    "src"
+  ]
+}

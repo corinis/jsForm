@@ -19,7 +19,7 @@ The main features of this library are:
 * Can be used in connection with an autocomplete function to add new array objects
 * Compatible with [jQuery UI](http://jqueryui.com/) and [jQuery Mobile](http://jquerymobile.com/)
 * addon library for form controls and layouting (comes bundled in the minified version), internationalisation
-* fully unit tested using [QUnit](http://www.gargan.org/jsform/test/test.jquery.jsForm.html)
+* unit tested using [QUnit](http://www.gargan.org/jsform/test/test.jquery.jsForm.html)
 * jslint clean
 * Minified+Gzipped: 7kb
 
@@ -35,10 +35,10 @@ You can also check out some [Demos](http://www.gargan.org/jsform/index.jsp).
 
 # Download
 
-Current Version: 1.3.0
+Current Version: 1.3.1
 
-* [Minified](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.3.0.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
-* [Source](https://github.com/corinis/jsForm/raw/master/dist/jquery.jsForm-1.3.0.js)
+* [Minified](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
+* [Combined Source](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.js)
 
 # Documentation
 

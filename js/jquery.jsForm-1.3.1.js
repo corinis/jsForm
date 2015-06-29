@@ -952,7 +952,7 @@
 			var fieldname = $(this).attr("data-field");
 
 			// only collections with the correct prefix
-			if(!data || !fieldname || fieldname.indexOf(prefix+".") !== 0) {
+			if(!fieldname || fieldname.indexOf(prefix+".") !== 0) {
 				return;
 			}
 	
@@ -967,7 +967,7 @@
 			colData = that._get(data, cname);
 	
 			if(!colData || !$.isArray(colData)) {
-				return;
+				colData = [];
 			}
 
 			// cut away any prefixes - only the fieldname is used
@@ -986,7 +986,11 @@
 
 					$(this).click(function(){
 						$(this).toggleClass(selectedClass);
+						$(this).trigger("selected");
 					});
+					
+					// trigger "deselected"
+					$(this).trigger("selected");
 				});
 			}
 			$("input[name='"+fieldname+"']", this).prop('checked', false);
@@ -1022,7 +1026,7 @@
 					// found it
 					if(cid == did){
 						if(selectedClass) {
-							$(this).addClass(selectedClass);
+							$(this).addClass(selectedClass).trigger("selected");
 						}
 						$("input[name='"+fieldname+"']", this).prop('checked', true);
 						return;
