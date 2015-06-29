@@ -39,6 +39,11 @@ Current Version: 1.3.1
 
 * [Minified](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
 * [Combined Source](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.js)
+ 
+On bower.io:
+```
+bower install jquery-jsform --save
+```
 
 # Documentation
 
