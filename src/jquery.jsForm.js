@@ -500,9 +500,9 @@
 		$("input.object", form).each(function(){
 			$(this).on("update", function(evt){
 				var pojo = $(this).data().pojo;
-				if (pojo && $(this).attr("data-display")) {
-					$(this).val(that._renderObject(pojo, $(this).attr("data-display")));
-				}
+				if($(this).attr("data-display") || $(this).attr("data-render")) {
+					$(this).val(that._renderObject(pojo, $(this).attr("data-display"), $(this).attr("data-render")));
+				} 
 			});
 		});
 		
@@ -1131,18 +1131,18 @@
 				if (prefix) {
 					cname = cname.substring(prefix.length + 1);
 				}
-				
 				var cdata = that._get(data, cname, false, idx);
 				
-				// check for percentage: this is value * 100
 				if ($(this).hasClass("object")) {
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
-					$(this).trigger("update");
+					// set the cdata
+					cdata = that._renderObject(cdata, $(this).attr("data-display"), $(this).attr("data-render"));
 				} else if ($(this).hasClass("jsobject")) {
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
 				} else if ($(this).hasClass("percent") && !isNaN(cdata)) {
+					// check for percentage: this is value * 100
 					cdata = 100 * Number(cdata);
 				} else if($.isPlainObject(cdata)) {
 					$(this).data().pojo = cdata;
@@ -1210,8 +1210,10 @@
 				
 				if(that.options.trackChanges)
 					$(this).data().orig = $(this).val();
-				$(this).change();
+
+				// make sure fill comes before change to allow setting of values
 				$(this).trigger("fill");
+				$(this).change();
 			}
 		});
 
