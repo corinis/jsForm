@@ -1138,9 +1138,7 @@
 				if ($(this).hasClass("object")) {
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
-					if($(this).attr("data-display") || $(this).attr("data-render")) {
-						cdata = that._renderObject(cdata, $(this).attr("data-display"), $(this).attr("data-render"));
-					} 
+					$(this).trigger("update");
 				} else if ($(this).hasClass("jsobject")) {
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
@@ -1392,6 +1390,52 @@
 		return this.options.data;
 	};
 
+	/**
+	 * allow setting a field to read-only and back
+	 * @param field the field to set the mode (editing/view)
+	 * @param mode true to 
+	 */
+	JsForm.prototype.fieldMode = function(field, mode) {
+		if(!field)
+			return;
+		// check if this is already a jquery object, otherwise ocnvert
+		if(!field.data) {
+			field = $("input[name='"+field + "']", this.element);
+		}
+		
+		var viewClass = this.options.viewClass;
+		
+		if(mode) {
+			if (field.closest("span." + viewClass)[0])
+				return;
+			
+			var val = field.val();
+			if (val === "null" || val === null || field.attr("type") === "submit")
+				val = "";
+			if(field.hasClass("trueFalse")) {
+				if(field.is(':checked'))
+					val = 'X';
+				else
+					val = '&#160;';
+			}
+			
+			// convert \n to brs - escape all other html
+			val = val.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
+			var thespan = $('<span class="'+viewClass+'">'+val+'</span>');
+			if(field.parent().hasClass("ui-wrapper"))
+				field.parent().hide().wrap(thespan);
+			else
+				field.hide().wrap(thespan);
+		} else {
+			// remove text and then unwrap
+			var span = field.closest("span." + viewClass);
+			var ele = field.show().detach();
+			span.before(ele);
+			span.remove();
+		}
+
+	};
+	
 	/**
 	 * uses form element and replaces them with "spans" that contain the actual content.
 	 * the original "inputs" are hidden 
