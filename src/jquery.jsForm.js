@@ -103,7 +103,7 @@
 			} else {
 				try {
 					if(typeof console !== "undefined") {
-						console.log("jquery.JsForm.controls not available!");
+						this._debug("jquery.JsForm.controls not available!");
 					}
 				} catch(ex) {
 					// ignore
@@ -389,7 +389,7 @@
 
 						// "fill data"
 						that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
-						
+
 						// trigger a callback after the data has been rendered)
 						$(this).trigger("postAddCollection", [line, $(line).data().pojo]);
 					}
@@ -653,6 +653,8 @@
 		// check if we have an "original" pojo
 		var startObj = null;
 		var that = this;
+		// normally we edit the pojo on ourselves - so result is null
+		var result = null;
 		
 		// get it from the starting dom element
 		if($(start).data("pojo")) {
@@ -774,7 +776,8 @@
 			}
 			// handle simple collection
 			if(name.length < 1) {
-				pojo = val;
+				// handle simple collection: we want the val as result
+				result = val;
 				return false;
 			}
 
@@ -911,7 +914,7 @@
 		});
 
 		
-		return pojo;
+		return result;
 	};
 
 	/**
@@ -1131,6 +1134,7 @@
 				if (prefix) {
 					cname = cname.substring(prefix.length + 1);
 				}
+				
 				var cdata = that._get(data, cname, false, idx);
 				
 				if ($(this).hasClass("object")) {
@@ -1145,9 +1149,14 @@
 					// check for percentage: this is value * 100
 					cdata = 100 * Number(cdata);
 				} else if($.isPlainObject(cdata)) {
-					$(this).data().pojo = cdata;
-					$(this).addClass("POJO");
-					cdata = that._renderObject(cdata, $(this).attr("data-display"), $(this).attr("data-render"));
+					// for simple arrays - make sure cdata is not an object but an empty string, otherwise add wont work
+					if(cname === '') {
+						cdata = '';
+					} else {
+						$(this).data().pojo = cdata;
+						$(this).addClass("POJO");
+						cdata = that._renderObject(cdata, $(this).attr("data-display"), $(this).attr("data-render"));
+					}
 				} 
 				
 
@@ -1354,20 +1363,25 @@
 
 			// go through all direct childs - each one is an element
 			$(this).children().each(function(){
-				var ele = {};
-				ele = that._createPojoFromInput($(this), fieldname, ele);
-				
-				// also collect sub-collections
-				that._getCollection($(this), fieldname, ele, ignoreInvalid);
+				var ele = {}, result;
+				result = that._createPojoFromInput($(this), fieldname, ele);
+				if(!result) {
+					that._debug("no string result - get subcollection");
+					// also collect sub-collections
+					that._getCollection($(this), fieldname, ele, ignoreInvalid);
+				}
 				
 				// check if the pojo is empty
-				if(!that._isEmpty(ele)) {
+				if(!that._isEmpty(ele) || result) {
 					if($(".invalid", this).length > 0) {
 						invalid = true;
 						if(!ignoreInvalid)
 							return false;
 					}
-					colParent[fieldname].push(ele);
+					if(!result) {
+						colParent[fieldname].push(ele);
+					} else
+						colParent[fieldname].push(result);
 				} else {
 					$(".invalid", this).removeClass("invalid");
 				}
