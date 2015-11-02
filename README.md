@@ -61,6 +61,7 @@ compatible to jquery-ui.
 * [Tree](https://github.com/corinis/jsForm/wiki/Tree)
  - [jquery.tree.js](https://raw.github.com/corinis/jsForm/master/controls/jquery.tree.js)
  - [jquery.tree.css](https://raw.github.com/corinis/jsForm/master/controls/jquery.tree.css)
+* [jquery.responsiveDialog.js](https://github.com/corinis/jsForm/wiki/jquery.responsiveDialog.js) Plugin which extends the default jquery.ui dialog to be more responsive
 
 # Quickstart
 
