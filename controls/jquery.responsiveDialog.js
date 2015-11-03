@@ -7,17 +7,59 @@
  *  - close will move to the left and turn into a back arrow
  *  - other buttons will move to the top right (i.e. save) but with an icon
  *  
- */
+ *  Usage:
+ *  
+ *  Init the dialog as normal and add responsive configuration options.
+ *  Note: this works only when creating the dialog, not when setting the
+ *  options later:
+ *  
+ *  
+$detail.dialog({
+	width: 600,
+	height: 450,
+	responsive: {
+		limit: 600,	
+		left: {
+			'class': 'red-style',
+			text: '<img src="chevron-left.png"/> Icon',
+			click: function() { 
+				$(this).dialog("close"); 
+			}
+		},
+		center: { 'class': 'green-background' },
+		right: true
+	},
+	closeOnEscape: true,
+	buttons: [
+	    {
+	    	text: i18n.dialog_ok,
+	    	responsive: {
+	    		html: '<img src="icon-check.png">',
+	    		position: 1
+	    	},
+	    	click: function() {
+	    		alert("OK");
+	    	}
+	    },
+		{ 
+			text: i18n.dialog_cancel,
+			responsive: false,
+			click: function() { 
+				$(this).dialog("close"); 
+			}
+		}
+	]
+};
+*/
 $.widget("ui.dialog", $.ui.dialog, {
 	open: function() {
 		
 		if(this.options.responsive) {
 			
-			var isSS = screen.width <= this.options.responsive.limit;
-			console.log("load: " + isSS + " effect: " + this.options.responsive.animate);
+			var isResponsive = screen.width <= this.options.responsive.limit;
 			
 			// reset changes if it WAS fullscreen
-			if(this.fullScreen) {
+			if(this.fullScreen && !isSS) {
 				this.uiDialogTitlebar.show();
 				this.uiDialogButtonPane.show();
 				this.uiDialogTitlepane.hide();
@@ -26,16 +68,18 @@ $.widget("ui.dialog", $.ui.dialog, {
 				this.uiDialog.css("margin", "auto");
 			}
 
-			// set full screen flag
-			this.fullScreen = true;
-			
-			// hide the default panes
-			this.uiDialogTitlebar.hide();
-			this.uiDialogButtonPane.hide();
-			this.uiDialogTitlepane.show();
-			this.uiDialog.removeClass("ui-corner-all");
-			this._setOption("draggable", false);
-			this.uiDialog.css("margin", "-2px"); // remove extra border
+			if(isSS) {
+				// set full screen flag
+				this.fullScreen = true;
+				
+				// hide the default panes
+				this.uiDialogTitlebar.hide();
+				this.uiDialogButtonPane.hide();
+				this.uiDialogTitlepane.show();
+				this.uiDialog.removeClass("ui-corner-all");
+				this._setOption("draggable", false);
+				this.uiDialog.css("margin", "-2px"); // remove extra border
+			}
 			
 		} 
 		// invoke the parent widget
