@@ -15,6 +15,7 @@
 
 .tree .control span{
 	cursor:pointer;
+	display:inline-block;
 }
 
 .tree span {
@@ -23,9 +24,9 @@
 }
 
 .tree li {
-  line-height: 18px;
+  line-height: 20px;
   margin-left: 18px;
-  min-height: 18px;
+  min-height: 22px;
   min-width: 18px;
   margin-top: -6px;
   white-space: nowrap;

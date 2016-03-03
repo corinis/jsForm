@@ -7,6 +7,7 @@
  *  - close will move to the left and turn into a back arrow
  *  - other buttons will move to the top right (i.e. save) but with an icon
  *  
+ * You can force responsive dialog by setting $(document).data().mobile to true
  *  Usage:
  *  
  *  Init the dialog as normal and add responsive configuration options.
@@ -56,10 +57,10 @@ $.widget("ui.dialog", $.ui.dialog, {
 		
 		if(this.options.responsive) {
 			
-			var isResponsive = screen.width <= this.options.responsive.limit;
+			var isResponsive = ($(document).width() <= this.options.responsive.limit) || $(document).data().mobile;
 			
 			// reset changes if it WAS fullscreen
-			if(this.fullScreen && !isSS) {
+			if(this.fullScreen && !isResponsive) {
 				this.uiDialogTitlebar.show();
 				this.uiDialogButtonPane.show();
 				this.uiDialogTitlepane.hide();
@@ -68,7 +69,7 @@ $.widget("ui.dialog", $.ui.dialog, {
 				this.uiDialog.css("margin", "auto");
 			}
 
-			if(isSS) {
+			if(isResponsive) {
 				// set full screen flag
 				this.fullScreen = true;
 				
@@ -210,7 +211,7 @@ $.widget("ui.dialog", $.ui.dialog, {
 		
 		this.uiDialogTitlepane = $( "<div>" );
 		this.uiDialogTitlepane.hide();
-		this.uiDialogTitlepane.addClass("ui-dialog-titlebar ui-widget-header ui-helper-clearfix ui-dialog-titlepane" );
+		this.uiDialogTitlepane.addClass("ui-dialog-titlebar ui-widget-header ui-helper-clearfix ui-dialog-titlepane resp-fullscreen" );
 		
 		// four parts: left-buttons - title - rightbuttons - menu
 		this.uiDialogTitlepaneLeft = $( "<div>" );
@@ -230,7 +231,7 @@ $.widget("ui.dialog", $.ui.dialog, {
 			}
 		}
 		
-		this.uiDialogTitlepaneRight = $( "<div style='float:right'>" );
+		this.uiDialogTitlepaneRight = $( "<div style='float:right' class='resp-right-btn'>" );
 		if(config.right) {
 			if(config.right['class']) {
 				this.uiDialogTitlepaneRight.addClass(config.right['class']);
@@ -304,8 +305,6 @@ $.widget("ui.dialog", $.ui.dialog, {
 	},
 	
 	close: function() {
-		console.log("close");
-		
 		return this._super();
 	}
 });

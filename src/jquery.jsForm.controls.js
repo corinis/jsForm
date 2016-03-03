@@ -161,7 +161,8 @@
 				var val = $(this).val();
 				if(val.length > 0) {
 					$(this).val($.jsFormControls.Format._getNumber(val));
-				}			
+				}
+				$(this).select();
 			});
 		});
 
@@ -175,7 +176,8 @@
 				var val = $(this).val();
 				if(val.length > 0) {
 					$(this).val($.jsFormControls.Format._getNumber(val));
-				}			
+				}
+				$(this).select();
 			});
 		});
 
@@ -436,15 +438,11 @@
 			 * format a string based on teh classes in a dom element
 			 */
 			format: function(ele, cdata) {
-				if($(ele).hasClass("dateTime")) {
+				if($(ele).hasClass("dateTime") || $(ele).hasClass("datetime")) {
 					if(isNaN(cdata))
 						return cdata;
 					return $.jsFormControls.Format.dateTime(cdata);
-				} if($(ele).hasClass("datetime")) {
-					if(isNaN(cdata))
-						return cdata;
-					return $.jsFormControls.Format.dateTime(cdata);
-				} else if($(ele).hasClass("date")) {
+				}  else if($(ele).hasClass("date")) {
 					if(isNaN(cdata))
 						return cdata;
 					return $.jsFormControls.Format.date(cdata);
@@ -568,6 +566,40 @@
 				o += val;
 				return o;
 			},
+			
+			/**
+			 * use moment.js to parse a datestring.
+			 * this will use:
+			 * - predefined i18n formats (strict mode)
+			 * - default momentjs (non-strict)
+			 * 
+			 */
+			asMoment: function(value) {
+				// try date
+				if(typeof moment === "undefined") {
+					return new Date(value);
+				}
+				
+				var dformat = moment().toMomentFormatString(i18n.date.format);
+				var tformat = moment().toMomentFormatString(i18n.date.timeFormat);
+				var formats = [dformat + " " + tformat, dformat, tformat];
+				
+				var m = null;
+				$.each(formats, function(){
+					if(m)
+						return false;
+					var cur = moment(value, this, true);
+					if(cur.isValid()) {
+						m = cur;
+						return false;
+					}
+				});
+				
+				if(!m) {
+					m = moment(value);
+				}
+				return m;
+			},
 
 			asNumber: function(value) {
 				return $.jsFormControls.Format._getNumber(value);
@@ -670,6 +702,8 @@
 				
 				return (this.date(value) + " " + this.time(value));
 			},
+			
+			
 
 			/**
 			 * @private
@@ -721,7 +755,7 @@
 					return value;
 				var d = new Date();
 				d.setTime(value);
-				
+
 				var timeFormat = "HH:mm";
 				if(typeof i18n !== "undefined") {
 					if(i18n.timeFormat)

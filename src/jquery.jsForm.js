@@ -326,6 +326,58 @@
 				});
 			} 
 
+			$(this).on("add", function(ev, pojo){
+				var fieldName = $(this).attr("data-field"); 
+				var tmpl = $(this).data("template");
+				if(!pojo) {
+					pojo = {};
+				}
+				
+				// and has a template
+				if(tmpl) {
+					var line = tmpl.clone(true);
+					$(line).addClass("POJO");
+					$(line).data().pojo = pojo;
+
+					var prefill = $(this).data("prefill");
+					if(!prefill)
+						prefill = $(this).val("data-prefill");
+					// allow prefill
+					if(prefill){
+						if($.isFunction(prefill))
+							prefill($(line).data().pojo, $(line));
+						else if(prefill.substring)
+							$(line).data().pojo = JSON.parse(prefill);
+						else if($.isPlainObject(prefill))
+							$(line).data().pojo = prefill;
+						
+					}
+					$(this).append(line);
+					
+					// init controls
+					that._enableTracking($("input,textarea,select", line));
+					// new line always has changes
+					if(that.options.trackChanges)
+						$("input,textarea,select", line).addClass(that.options.trackChanges);
+					
+					that._addCollectionControls(line);
+
+					// its possible to have "sub" collections
+					that._initCollection(line, fieldName.substring(fieldName.indexOf('.')+1));
+
+					// trigger a callback
+					$(this).trigger("addCollection", [line, $(line).data().pojo]);
+					
+					// the new entry has as index the count of all "lines"
+					var idx = $(this).children(".POJO").length;
+
+					// "fill data"
+					that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
+
+					// trigger a callback after the data has been rendered)
+					$(this).trigger("postAddCollection", [line, $(line).data().pojo]);
+				}
+			});
 		});
 
 		$(".add", form).each(function(){
@@ -347,52 +399,7 @@
 				
 				// search for a collection with that name
 				$.each($(this).data("collections"), function() {
-					var tmpl = $(this).data("template");
-					
-					// and has a template
-					if(tmpl) {
-						var line = tmpl.clone(true);
-						$(line).addClass("POJO");
-						$(line).data().pojo = {};
-
-						var prefill = $(this).data("prefill");
-						if(!prefill)
-							prefill = $(this).val("data-prefill");
-						// allow prefill
-						if(prefill){
-							if($.isFunction(prefill))
-								prefill($(line).data().pojo, $(line));
-							else if(prefill.substring)
-								$(line).data().pojo = JSON.parse(prefill);
-							else if($.isPlainObject(prefill))
-								$(line).data().pojo = prefill;
-							
-						}
-						$(this).append(line);
-						
-						// init controls
-						that._enableTracking($("input,textarea,select", line));
-						// new line always has changes
-						if(that.options.trackChanges)
-							$("input,textarea,select", line).addClass(that.options.trackChanges);
-						
-						that._addCollectionControls(line);
-
-						// its possible to have "sub" collections
-						that._initCollection(line, fieldName.substring(fieldName.indexOf('.')+1));
-
-						// trigger a callback
-						$(this).trigger("addCollection", [line, $(line).data().pojo]);
-						
-						// the new entry has as index the count of all "lines"
-						var idx = $(this).children(".POJO").length;
-
-						// "fill data"
-						that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
-
-						// trigger a callback after the data has been rendered)
-						$(this).trigger("postAddCollection", [line, $(line).data().pojo]);
-					}
+					$(this).trigger("add");
 				});
 			});
 		});
@@ -922,6 +929,9 @@
 	 * @param ele the element to track
 	 */
 	JsForm.prototype._enableTracking = function(ele) {
+		if(!ele || ele.length == 0) {
+			return;
+		}
 		var that = this;
 		if(that.options.trackChanges && !$(ele).data().track) {
 			$(ele).data().track = true;
@@ -1366,7 +1376,7 @@
 				var ele = {}, result;
 				result = that._createPojoFromInput($(this), fieldname, ele);
 				if(!result) {
-					that._debug("no string result - get subcollection");
+					//that._debug("no string result - get subcollection");
 					// also collect sub-collections
 					that._getCollection($(this), fieldname, ele, ignoreInvalid);
 				}
@@ -1552,19 +1562,17 @@
 	
 	/**
 	 * fill a form based on a pojo. 
-	 * @param form the form
-	 * @param options the options used to fill
-	 * @param prefix the optional prefix used to identify fields for this form
+	 * @param noInput set true to not set any inputs
 	 * @private
 	 */
-	JsForm.prototype._fill = function() {
+	JsForm.prototype._fill = function(noInput) {
 		var that = this;
 		$(this.element).addClass("POJO");
 		$(this.element).data("pojo", this.options.data);
 
 		// handle multiple form parts
 		$.each(this._getForm(), function(){
-			that._fillDom(this);
+			that._fillDom(this, noInput);
 		});
 	};
 	
@@ -1572,16 +1580,20 @@
 	 * This is the actual worker function that fills a dom element
 	 * with data.
 	 * @param ele the element to fill
+	 * @param noInput skip input fields
 	 * @private
 	 */
-	JsForm.prototype._fillDom = function(ele) {
+	JsForm.prototype._fillDom = function(ele, noInput) {
 		var that = this;
-		that._clear(ele, that.options.prefix);
+		// dont clear if we only fill the inputs
+		if(!noInput) {
+			that._clear(ele, that.options.prefix);
+		}
 		
 		// fill base 
 		that._fillData(ele, that.options.data, that.options.prefix);
 		that._fillSelectCollection(ele, that.options.data, that.options.prefix);
-		that._fillCollection(ele, that.options.data, that.options.prefix);
+		that._fillCollection(ele, that.options.data, that.options.prefix, noInput);
 		// (re-)evaluate all conditionals
 		that._evaluateConditionals(ele, that.options.data);
 	};
@@ -1593,7 +1605,7 @@
 	 * @param prefix a prefix for each line of data
 	 * @private
 	 */
-	JsForm.prototype._fillCollection = function(container, data, prefix) {
+	JsForm.prototype._fillCollection = function(container, data, prefix, noInput) {
 		var that = this;
 		// fill collections
 		$(".collection", container).each(function() {
@@ -1616,7 +1628,22 @@
 
 			if(colData) {
 				// fill the collection
-				that._fillList(container, colData, cname);
+				if(noInput) {
+					for(var i = 0; i < colData.length; i++) {
+						// cut away any prefixes - only the fieldname is used
+						if(cname.indexOf('.') !== -1) {
+							prefix = cname.substring(cname.lastIndexOf('.')+1);
+						}
+						
+						var line = $(container.children().get(i));
+						var cur = colData[i];
+						that._fillData(line, cur, cname, i+1);
+						// fill with data
+						that._fillCollection(line, cur, cname, noInput);
+					}
+				} else {
+					that._fillList(container, colData, cname);
+				}
 			}
 		});
 	};
@@ -2218,6 +2245,23 @@
 		this._fill();
 	};
 
+	/**
+	 * fill the fields with data. Not inputs or selects
+	 * <ul>
+	 *  <li>&lt;span class="field"&gt;prefix.fieldname&lt;/span&gt;
+	 *  <li>&lt;a class="field" href="prefix.fieldname"&gt;linktest&lt;/a&gt;
+	 *  <li>&lt;img class="field" src="prefix.fieldname"/&gt;
+	 * </ul>
+	 * @param data {object} the data
+	 */
+	JsForm.prototype.fillFields = function(pojo) {
+		// set the new data
+		this.options.data = $.extend({}, pojo);
+		// fill only fields - no inputs
+		this._fill(true);
+	};
+
+	
 	/**
 	 * re-evaluate the conditionals in the form based on the given data.
 	 * if no data is given, the form is serialized
