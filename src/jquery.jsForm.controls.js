@@ -62,6 +62,11 @@
 				return "";
 			return $.jsFormControls.Format.byte(data);
 		});
+		Handlebars.registerHelper("integer", function(data){
+			if(!data)
+				return "";
+			return $.jsFormControls.Format.integer(data);
+		});
 	}
 	
 	function JsFormControls(element) {
@@ -454,6 +459,8 @@
 					return $.jsFormControls.Format.byte(cdata);
 				} else if($(ele).hasClass("decimal")) {
 					return $.jsFormControls.Format.decimal(cdata);
+				} else if($(ele).hasClass("integer")) {
+					return $.jsFormControls.Format.integer(cdata);
 				} else if($(ele).hasClass("percent")) {
 					return $.jsFormControls.Format.decimal(cdata);
 				}
@@ -517,7 +524,7 @@
 					decimalSeparator: "."
 				};
 				var pre = null, post = null;
-				if(typeof i18n !== "undefined") {
+				if(typeof i18n !== "undefined" && i18n.number) {
 					numberformat = i18n.number;
 					if(i18n.currency) {
 						pre = i18n.currency.prefix;
@@ -632,7 +639,7 @@
 					decimalSeparator: "."
 				};
 
-				if(typeof i18n !== "undefined")
+				if(typeof i18n !== "undefined" && i18n.number)
 					numberformat = i18n.number;
 				else if($(document).data().i18n && $(document).data().i18n.number)
 					numberformat = $(document).data().i18n.number;
@@ -644,6 +651,41 @@
 				// convert to a nice number for display
 				var n = num, 
 					c = isNaN(c = Math.abs(comma)) ? 2 : comma, 
+					d = numberformat.decimalSeparator, // decimal d == undefined ? "," : d, 
+					t = numberformat.groupingSeparator, // thousand: t == undefined ? "." : t, 
+					i = parseInt(n = Math.abs( +n || 0).toFixed(c), 10) + "", 
+					j = (j = i.length) > 3 ? j % 3 : 0;
+				return (num<0 ? "-" : "") + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+			},
+			
+			
+			/**
+			 * @private
+			 */
+			integer: function(num) {
+				if (num === "" || !num || isNaN(num)) {
+					return num;
+				}
+				
+				// default number format
+				var numberformat = {
+					format: "#,##0.###",
+					groupingSeparator: ",",
+					decimalSeparator: "."
+				};
+
+				if(typeof i18n !== "undefined" && i18n.number)
+					numberformat = i18n.number;
+				else if($(document).data().i18n && $(document).data().i18n.number)
+					numberformat = $(document).data().i18n.number;
+
+				var comma = 0;
+				if (Math.abs(num - Math.floor(num)) > 0.001) {
+					comma = 2;
+				}
+				// convert to a nice number for display
+				var n = num, 
+					c = 0, 
 					d = numberformat.decimalSeparator, // decimal d == undefined ? "," : d, 
 					t = numberformat.groupingSeparator, // thousand: t == undefined ? "." : t, 
 					i = parseInt(n = Math.abs( +n || 0).toFixed(c), 10) + "", 
@@ -702,8 +744,6 @@
 				
 				return (this.date(value) + " " + this.time(value));
 			},
-			
-			
 
 			/**
 			 * @private
@@ -755,7 +795,7 @@
 					return value;
 				var d = new Date();
 				d.setTime(value);
-
+				
 				var timeFormat = "HH:mm";
 				if(typeof i18n !== "undefined") {
 					if(i18n.timeFormat)
