@@ -644,18 +644,64 @@
 		});
 		
 	};
+	
 	/**
-	* ceate a pojo from a form. Takes special data definition classes into account:
-	* <ul>
-	*  <li>number|currency: the content will be transformed into a number (default string</li>
-	*  <li>transient: will be ignored</li>
-	*  <li>prefix.fieldname.value: will create the whole object subtree</li> 
-	* </ul> 
-	* @param start the element to start from (ie. the form or tr)
-	* @param pojo the pojo to write everything to
-	* @param prefix a prefix: only fields with the given prefix will be included in the pojo
-	* @private
-	*/
+	 * Handle arrays when creating pojos
+	 * @param ele the element
+	 * @param pojo the base object
+	 * @param name the name of the field
+	 * @param val the value to check agains
+	 * @private
+	 */
+	JsForm.prototype._handleArrayInPojo = function(ele, pojo, name, val) {
+		// create an array out of this
+		if(!pojo[name]) {
+			pojo[name] = [];
+		}
+		
+		if(ele.attr("type") === "checkbox" || ele.attr("type") === "CHECKBOX") {
+			// do we want the value of not
+			var use = ele.is(":checked");
+			var pushVal = true;
+			$.each(pojo[name], function(data, index){
+				if(this == val) {
+					// dont need to push
+					pushVal = false;
+					// we dont use it - remove it
+					if(!use)
+						pojo[name].splice(index, 1);
+					return false;
+				}
+			});
+			if(pushVal && use)
+				pojo[name].push(val);
+		} else {
+			var num = ele.attr("data-array");
+			if(!num || isNaN(num)) {
+				num = null;
+			} else
+				num = Number(num);
+
+			// no num -> add the array
+			if(num === null)
+				pojo[name].push(val);
+			else
+				pojo[name][num] = val;
+		}		
+	}
+	
+	/**
+	 * ceate a pojo from a form. Takes special data definition classes into account:
+	 * <ul>
+	 *  <li>number|currency: the content will be transformed into a number (default string</li>
+	 *  <li>transient: will be ignored</li>
+	 *  <li>prefix.fieldname.value: will create the whole object subtree</li> 
+	 * </ul> 
+	 * @param start the element to start from (ie. the form or tr)
+	 * @param pojo the pojo to write everything to
+	 * @param prefix a prefix: only fields with the given prefix will be included in the pojo
+	 * @private
+	 */
 	JsForm.prototype._createPojoFromInput = function (start, prefix, pojo) {
 		// check if we have an "original" pojo
 		var startObj = null;
@@ -767,6 +813,7 @@
 					}
 				}
 				else if($(this).attr("type") === "checkbox" || $(this).attr("type") === "CHECKBOX") {
+					
 					// a checkbox as an array
 					if($(this).hasClass("array")) {
 						// the special case: array+checkbox is handled on the actual setting
@@ -791,42 +838,9 @@
 			// check if we have a . - if so split
 			if (name.indexOf(".") === -1)
 			{
-				// this might actually be an array!
+				// handle arrays
 				if($(this).hasClass("array")) {
-					// create an array out of this
-					if(!pojo[name]) {
-						pojo[name] = [];
-					}
-					
-					if($(this).attr("type") === "checkbox" || $(this).attr("type") === "CHECKBOX") {
-						// do we want the value of not
-						var use = $(this).is(":checked");
-						var pushVal = true;
-						$.each(pojo[name], function(data, index){
-							if(this == val) {
-								// dont need to push
-								pushVal = false;
-								// we dont use it - remove it
-								if(!use)
-									pojo[name].splice(index, 1);
-								return false;
-							}
-						});
-						if(pushVal && use)
-							pojo[name].push(val);
-					} else {
-						var num = $(this).attr("data-array");
-						if(!num || isNaN(num)) {
-							num = null;
-						} else
-							num = Number(num);
-	
-						// no num -> add the array
-						if(num === null)
-							pojo[name].push(val);
-						else
-							pojo[name][num] = val;
-					}
+					that._handleArrayInPojo($(this), pojo, name, val);
 				}
 				else
 					pojo[name] = val;
@@ -850,7 +864,15 @@
 					}
 				}
 				
-				current[parts[parts.length - 1]] = val;
+				// set prev as the name
+				prev = parts[parts.length - 1];
+				
+				// handle arrays 
+				if($(this).hasClass("array")) { 
+					that._handleArrayInPojo($(this), current, prev, val);
+				} else {
+					current[prev] = val;
+				}
 			}
 		});
 		
