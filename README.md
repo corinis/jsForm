@@ -32,10 +32,11 @@ You can also check out some [Demos](http://www.gargan.org/jsform/index.jsp).
 
 ## Optional
 * [jQuery Format Plugin](http://www.asual.com/jquery/format/) 1.2 or higher- used when working with date/number formats
+* [Moment.js](http://momentjs.com/) allows for finer grained international date support
 
 # Download
 
-Current Version: 1.3.1
+Current Version: 1.3.2
 
 * [Minified](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
 * [Combined Source](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.js)
