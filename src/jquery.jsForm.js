@@ -1782,9 +1782,10 @@
 		// enable controls on the line
 		if($.jsFormControls) {
 			$(line).jsFormControls();
-		} 
-
-		$(".delete", line).click(function(){
+		}
+		
+		// delete the current line
+		line.on("delete", function(){
 			var ele = $(this).closest(".POJO");
 			var pojo = $(ele).data().pojo;
 			var base = $(this).closest(".collection");
@@ -1792,7 +1793,8 @@
 			// trigger a callback
 			$(base).trigger("deleteCollection", [ele, pojo]);
 		});
-		$(".sortUp", line).click(function(){
+
+		line.on(".sortUp", function(){
 			// check if there is an up
 			var ele = $(this).closest(".POJO");
 			var prev = ele.prev(".POJO");
@@ -1805,7 +1807,7 @@
 			// reorder (if possible)
 			that._reorder(ele);
 		});
-		$(".sortDown", line).click(function(){
+		line.on(".sortDown", function(){
 			// check if there is a down
 			var ele = $(this).closest(".POJO");
 			var next = ele.next(".POJO");
@@ -1817,6 +1819,17 @@
 			next.after(ele);
 			// reorder (if possible)
 			that._reorder(ele);
+		});
+		
+		
+		$(".delete", line).click(function(){
+			line.trigger("delete");
+		});
+		$(".sortUp", line).click(function(){
+			line.trigger("sortUp");
+		});
+		$(".sortDown", line).click(function(){
+			line.trigger("sortDown");
 		});
 		
 		// if collection is sortable: refresh it
