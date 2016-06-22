@@ -688,7 +688,7 @@
 			else
 				pojo[name][num] = val;
 		}		
-	}
+	};
 	
 	/**
 	 * ceate a pojo from a form. Takes special data definition classes into account:
@@ -951,7 +951,7 @@
 	 * @param ele the element to track
 	 */
 	JsForm.prototype._enableTracking = function(ele) {
-		if(!ele || ele.length == 0) {
+		if(!ele || ele.length === 0) {
 			return;
 		}
 		var that = this;
