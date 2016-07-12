@@ -6,6 +6,7 @@
 $(function(){
     // some json data
     var jsonData = {
+	"description": "testing",    		
     "objects": [
         {
             "id": 1,
@@ -13,7 +14,15 @@ $(function(){
             "find": {
                 "name": "asdf"
             }
+        },
+        {
+            "id": 2,
+            "enable": false,
+            "find": {
+                "name": "asdf"
+            }
         }
+        
     ]
 };
 
@@ -53,6 +62,7 @@ $(function(){
 
 <h1>Simple Form Test - working with objects</h1>
 <div id="details">
+	<input name="data.description"/>
    <ul class="collection" data-field="data.objects">
         <li>
             <label for="objects.id">id:</label>

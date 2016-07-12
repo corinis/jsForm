@@ -36,7 +36,7 @@ You can also check out some [Demos](http://www.gargan.org/jsform/index.jsp).
 
 # Download
 
-Current Version: 1.3.2
+Current Version: 1.3.3
 
 * [Minified](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
 * [Combined Source](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.js)
@@ -82,7 +82,8 @@ $(function(){
 		description: "long Description\nMultiline",	// textarea
 		links: [{href:'http://www.gargan.org',description:'Gargan.org'},{href:'http://www.github.com',description:'GitHub'}],	// lists
 		active: true,	// checkbox
-		state: "VISIBLE"	// selects (enums)
+		type: "COOL", // radio (enums)
+		state: "VISIBLE",	// selects (enums)
 	};
 
 	// initialize the form, prefix is optional and defaults to data
@@ -108,6 +109,10 @@ $(function(){
 		<option value="IMPORTANT">important</option>
 		<option value="HIDDEN">hidden</option>		
 	</select>
+	<br/>
+	<input type="radio" name="data.type" value="COOL"/> Cool<br/>
+	<input type="radio" name="data.type" value="HOT"/> Hot<br/>
+	<input type="radio" name="data.type" value="WARM"/> Warm<br/>
 	<fieldset>
 		<legend>Links</legend>
 		<ul class="collection" data-field="data.links">

@@ -112,7 +112,7 @@
 		}
 
 		// fill/init with the first data
-		this._fill(this.options);
+		this._fill();
 	};
 	
 	/**
@@ -165,12 +165,13 @@
 	
 	/**
 	 * simple debug helper
-	 * @param msg the message to pring
+	 * @param msg the message to print
 	 * @private
 	 */
 	JsForm.prototype._debug = function(msg, param) {
 		try {
-			if (!window.console || !window.console.log)
+			var cons = console || (window?window.console:null);
+			if (!cons || !cons.log)
 				return;
 				
 			var p = null;
@@ -183,7 +184,7 @@
 				p = "";
 			}
 				
-			window.console.log(msg + p);
+			cons.log(msg + p);
 		} catch(ex) {
 			// ignore
 		}
@@ -616,9 +617,12 @@
 			
 			if($(this).attr("type") === "checkbox") {
 				$(this).prop("checked", false);
+			} else if($(this).attr("type") === "radio") {
+				$(this).prop("checked", false);
 			} else {
 				$(this).val("");
 			}
+			
 			if($(this).hasClass("blob")) {
 				$(this).removeData("blob");
 			}
@@ -784,7 +788,7 @@
 				// set empty numbers or dates to null
 				if(val === "" && ($(this).hasClass("number") || $(this).hasClass("percent") || $(this).hasClass("integer") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
 					val = null;
-				} 
+				}  
 				
 				// check for percentage: this is input / 100
 				if ($(this).hasClass("percent")) {
@@ -823,6 +827,11 @@
 						}
 					} else
 						val = $(this).is(':checked');
+				}
+				else if($(this).attr("type") === "radio" || $(this).attr("type") === "RADIO") {
+					if(!$(this).is(':checked')) {
+						return;
+					}
 				}
 				else if($(this).hasClass("bool")) {
 					val = ($(this).val() === "true");
@@ -1080,6 +1089,7 @@
 	* <ul>
 	*  <li>&lt;span class="field"&gt;prefix.fieldname&lt;/span&gt;
 	*  <li>&lt;input name="prefix.fieldname"/&gt;
+	*  <li>&lt;input type="checkbox" name="prefix.fieldname"/&gt;
 	*  <li>&lt;a class="field" href="prefix.fieldname"&gt;linktest&lt;/a&gt;
 	*  <li>&lt;img class="field" src="prefix.fieldname"/&gt;
 	* </ul>
@@ -1223,6 +1233,8 @@
 						$(this).prop("checked", found);
 					} else
 						$(this).prop("checked", (cdata === true || cdata === "true"));
+				} else if($(this).attr("type") === "radio") {
+					$(this).prop("checked", cdata == $(this).val());
 				} else {
 					if(!cdata && cdata !== 0 && cdata !== false) {
 						cdata = "";
@@ -1599,7 +1611,7 @@
 	};
 	
 	/**
-	 * This is the actual worker function that fills a dom element
+	 * This is the actual worker function that fills the dom subtree
 	 * with data.
 	 * @param ele the element to fill
 	 * @param noInput skip input fields
@@ -1614,7 +1626,9 @@
 		
 		// fill base 
 		that._fillData(ele, that.options.data, that.options.prefix);
+		// fill select-collections
 		that._fillSelectCollection(ele, that.options.data, that.options.prefix);
+		// fill normal collection forms
 		that._fillCollection(ele, that.options.data, that.options.prefix, noInput);
 		// (re-)evaluate all conditionals
 		that._evaluateConditionals(ele, that.options.data);
@@ -1625,6 +1639,7 @@
 	 * @param container the container element
 	 * @param data an array containing the the data
 	 * @param prefix a prefix for each line of data
+	 * @param noInput skip input fields
 	 * @private
 	 */
 	JsForm.prototype._fillCollection = function(container, data, prefix, noInput) {
