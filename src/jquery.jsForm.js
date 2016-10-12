@@ -386,14 +386,16 @@
 				return;
 			}
 			
-			// only init once
-			if($(this).data("collections")) {
-				return;
-			}
-			
 			// add the collection
 			$(this).data().collections = collectionMap[fieldName];
+
+			// only init once
+			if($(this).data().hasJsForm) {
+				return;
+			}
+			$(this).data().hasJsForm = true;
 			
+
 			$(this).click(function(ev){
 				ev.preventDefault();
 				
@@ -784,16 +786,11 @@
 				// set empty numbers or dates to null
 				if(val === "" && ($(this).hasClass("number") || $(this).hasClass("percent") || $(this).hasClass("integer") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
 					val = null;
-				} 
+				}
 				
-				// check for percentage: this is input / 100
-				if ($(this).hasClass("percent")) {
-					val = that._getNumber(val);
-					if(isNaN(val)) {
-						val = 0;
-					} else {
-						val /= 100;
-					}
+				// we might have a value processor on this: this is added by the jsForm.controls
+				if($(this).data().processor) {
+					val = $(this).data().processor(val);
 				}
 				else if ($(this).hasClass("number") || $(this).hasClass("integer")) {
 					if($(this).hasClass("date") && isNaN(val)) {
@@ -1124,12 +1121,15 @@
 					cdata = "";
 				}
 				
-				// check for percentage: this is value * 100
-				if ($(this).hasClass("percent") && !isNaN(cdata)) {
-					cdata = 100 * Number(cdata);
-				} else if($(this).hasClass("currency")) {
+				// check for currency
+				if($(this).hasClass("currency")) {
 					if (!cdata)
 						cdata = 0;
+				}
+				
+				// keep the original in the title
+				if($(this).hasClass("titleval")) {
+					$(this).attr("title", cdata);
 				}
 				
 				// format the string
@@ -1177,9 +1177,6 @@
 				} else if ($(this).hasClass("jsobject")) {
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
-				} else if ($(this).hasClass("percent") && !isNaN(cdata)) {
-					// check for percentage: this is value * 100
-					cdata = 100 * Number(cdata);
 				} else if($.isPlainObject(cdata)) {
 					// for simple arrays - make sure cdata is not an object but an empty string, otherwise add wont work
 					if(cname === '') {
@@ -1786,7 +1783,7 @@
 		
 		// delete the current line
 		line.on("delete", function(){
-			var ele = $(this).closest(".POJO");
+			var ele = $(this);
 			var pojo = $(ele).data().pojo;
 			var base = $(this).closest(".collection");
 			ele.detach();
@@ -1794,9 +1791,9 @@
 			$(base).trigger("deleteCollection", [ele, pojo]);
 		});
 
-		line.on(".sortUp", function(){
+		line.on("sortUp", function(){
 			// check if there is an up
-			var ele = $(this).closest(".POJO");
+			var ele = $(this);
 			var prev = ele.prev(".POJO");
 			if(prev.size() === 0) {
 				// no previous element - return
@@ -1807,9 +1804,9 @@
 			// reorder (if possible)
 			that._reorder(ele);
 		});
-		line.on(".sortDown", function(){
+		line.on("sortDown", function(){
 			// check if there is a down
-			var ele = $(this).closest(".POJO");
+			var ele = $(this);
 			var next = ele.next(".POJO");
 			if(next.size() === 0) {
 				// no next element - return
@@ -1823,13 +1820,13 @@
 		
 		
 		$(".delete", line).click(function(){
-			line.trigger("delete");
+			$(this).closest(".POJO").trigger("delete");
 		});
 		$(".sortUp", line).click(function(){
-			line.trigger("sortUp");
+			$(this).closest(".POJO").trigger("sortUp");
 		});
 		$(".sortDown", line).click(function(){
-			line.trigger("sortDown");
+			$(this).closest(".POJO").trigger("sortDown");
 		});
 		
 		// if collection is sortable: refresh it
@@ -1962,6 +1959,10 @@
      * @param path a dot notation path to search for.  Use format parent[1].child
      */
     JsForm.prototype._getValueWithArrays = function(obj, path) {
+    	if(obj === null) {
+    		return null;
+    	}
+    	
         path = path.split('.');
         var arrayPattern = /(.*)\[(\d+)\]/;
         for (var i = 1; i < path.length; i++) {
