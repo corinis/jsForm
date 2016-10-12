@@ -991,8 +991,9 @@
 				var tu = "";
 				
 				var convert = function(){
-					if(num === "")
+					if(num === "") {
 						return;
+					}
 					
 					var curNum = Number(num);
 					
@@ -1017,12 +1018,10 @@
 						result += curNum * 24 * 3600000; break;
 					
 					}
-					
 					// reset
 					tu = "";
 					num = "";
-
-				}
+				};
 				
 				for(var i = 0; i < val.length; i++) {
 					var c = val.charAt(i);
@@ -1041,7 +1040,7 @@
 							// convert the old number
 							convert();
 						}
-						num += c; 
+						num += c;
 						break;
 					case 'm':
 					case 'i':
@@ -1059,18 +1058,13 @@
 					default:
 						// ignore
 					}
-					
-					
 				}
 				
 				// one more convert - just in case we missed something
 				convert();
-				
 				return result;
-				
 			}
 	};
-
 })( jQuery, window );
 
 

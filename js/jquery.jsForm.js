@@ -387,14 +387,16 @@
 				return;
 			}
 			
-			// only init once
-			if($(this).data("collections")) {
-				return;
-			}
-			
 			// add the collection
 			$(this).data().collections = collectionMap[fieldName];
+
+			// only init once
+			if($(this).data().hasJsForm) {
+				return;
+			}
+			$(this).data().hasJsForm = true;
 			
+
 			$(this).click(function(ev){
 				ev.preventDefault();
 				
@@ -622,7 +624,6 @@
 			} else {
 				$(this).val("");
 			}
-			
 			if($(this).hasClass("blob")) {
 				$(this).removeData("blob");
 			}
@@ -788,16 +789,11 @@
 				// set empty numbers or dates to null
 				if(val === "" && ($(this).hasClass("number") || $(this).hasClass("percent") || $(this).hasClass("integer") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
 					val = null;
-				}  
+				}
 				
-				// check for percentage: this is input / 100
-				if ($(this).hasClass("percent")) {
-					val = that._getNumber(val);
-					if(isNaN(val)) {
-						val = 0;
-					} else {
-						val /= 100;
-					}
+				// we might have a value processor on this: this is added by the jsForm.controls
+				if($(this).data().processor) {
+					val = $(this).data().processor(val);
 				}
 				else if ($(this).hasClass("number") || $(this).hasClass("integer")) {
 					if($(this).hasClass("date") && isNaN(val)) {
@@ -1134,12 +1130,15 @@
 					cdata = "";
 				}
 				
-				// check for percentage: this is value * 100
-				if ($(this).hasClass("percent") && !isNaN(cdata)) {
-					cdata = 100 * Number(cdata);
-				} else if($(this).hasClass("currency")) {
+				// check for currency
+				if($(this).hasClass("currency")) {
 					if (!cdata)
 						cdata = 0;
+				}
+				
+				// keep the original in the title
+				if($(this).hasClass("titleval")) {
+					$(this).attr("title", cdata);
 				}
 				
 				// format the string
@@ -1187,9 +1186,6 @@
 				} else if ($(this).hasClass("jsobject")) {
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
-				} else if ($(this).hasClass("percent") && !isNaN(cdata)) {
-					// check for percentage: this is value * 100
-					cdata = 100 * Number(cdata);
 				} else if($.isPlainObject(cdata)) {
 					// for simple arrays - make sure cdata is not an object but an empty string, otherwise add wont work
 					if(cname === '') {
@@ -1801,7 +1797,7 @@
 		
 		// delete the current line
 		line.on("delete", function(){
-			var ele = $(this).closest(".POJO");
+			var ele = $(this);
 			var pojo = $(ele).data().pojo;
 			var base = $(this).closest(".collection");
 			ele.detach();
@@ -1809,9 +1805,9 @@
 			$(base).trigger("deleteCollection", [ele, pojo]);
 		});
 
-		line.on(".sortUp", function(){
+		line.on("sortUp", function(){
 			// check if there is an up
-			var ele = $(this).closest(".POJO");
+			var ele = $(this);
 			var prev = ele.prev(".POJO");
 			if(prev.size() === 0) {
 				// no previous element - return
@@ -1822,9 +1818,9 @@
 			// reorder (if possible)
 			that._reorder(ele);
 		});
-		line.on(".sortDown", function(){
+		line.on("sortDown", function(){
 			// check if there is a down
-			var ele = $(this).closest(".POJO");
+			var ele = $(this);
 			var next = ele.next(".POJO");
 			if(next.size() === 0) {
 				// no next element - return
@@ -1838,13 +1834,13 @@
 		
 		
 		$(".delete", line).click(function(){
-			line.trigger("delete");
+			$(this).closest(".POJO").trigger("delete");
 		});
 		$(".sortUp", line).click(function(){
-			line.trigger("sortUp");
+			$(this).closest(".POJO").trigger("sortUp");
 		});
 		$(".sortDown", line).click(function(){
-			line.trigger("sortDown");
+			$(this).closest(".POJO").trigger("sortDown");
 		});
 		
 		// if collection is sortable: refresh it
@@ -1976,7 +1972,11 @@
      * @param obj
      * @param path a dot notation path to search for.  Use format parent[1].child
      */
-    JsForm.prototype._getValueWithArrays = function(obj, path) {
+	JsForm.prototype._getValueWithArrays = function(obj, path) {
+		if(obj === null) {
+			return null;
+		}
+
         path = path.split('.');
         var arrayPattern = /(.*)\[(\d+)\]/;
         for (var i = 1; i < path.length; i++) {
@@ -2492,6 +2492,11 @@
 				return "";
 			return $.jsFormControls.Format.humanTime(data);
 		});
+		Handlebars.registerHelper("humanTime", function(data){
+			if(!data)
+				return "";
+			return $.jsFormControls.Format.humanTime(data);
+		});
 		Handlebars.registerHelper("byte", function(data){
 			if(!data)
 				return "";
@@ -2630,6 +2635,17 @@
 			}			
 		});
 
+		// variable unit
+		location.find("input.vunit").change(function(){
+			var val = $(this).val();
+			if(val.length > 0) {
+				// save the actual data
+				val = $.jsFormControls.Format._getNumber(val);
+				$(this).data().val = val;
+				$(this).val($.jsFormControls.Format.vunit(val, $(this).attr("data-unit")));
+			}			
+		});
+
 		var integerRegexp = new RegExp("^[0-9]+$");
 		location.find("input.integer").keyup(function(){
 			var val = $(this).val();
@@ -2649,14 +2665,14 @@
 
 		// regular expression
 		location.find("input.regexp").each(function(){
-			if($(this).hasClass("autoclean")) {
-				$(this).data("regexp", new RegExp($(this).attr("data-regexp"), 'g'));
-			}
-			else {
-				$(this).data("regexp", new RegExp($(this).attr("data-regexp")));
-			}
-			
 			$(this).keyup(function(){
+				if($(this).hasClass("autoclean")) {
+					$(this).data("regexp", new RegExp($(this).attr("data-regexp"), 'g'));
+				}
+				else {
+					$(this).data("regexp", new RegExp($(this).attr("data-regexp")));
+				}
+
 				var val = $(this).val();
 				if(val.length > 0) {
 					var regexp = $(this).data("regexp");
@@ -2875,7 +2891,8 @@
 	
 	$.jsFormControls.Format = {
 			/**
-			 * format a string based on teh classes in a dom element
+			 * format a string based on the classes in a dom element.
+			 * This will also set a proccessor to "revert" the data
 			 */
 			format: function(ele, cdata) {
 				if($(ele).hasClass("dateTime") || $(ele).hasClass("datetime")) {
@@ -2893,11 +2910,21 @@
 						return cdata;
 					return $.jsFormControls.Format.byte(cdata);
 				} else if($(ele).hasClass("decimal")) {
+					$(ele).data().processor = $.jsFormControls.Format.getDecimal;
 					return $.jsFormControls.Format.decimal(cdata);
-				} else if($(ele).hasClass("integer")) {
-					return $.jsFormControls.Format.integer(cdata);
+				} else if($(ele).hasClass("vunit")) {
+					// save the actual data
+					$(this).data().val = cdata;
+					$(ele).data().processor = $.jsFormControls.Format.getVunit;
+					return $.jsFormControls.Format.vunit(cdata, $(ele).attr("data-unit"));
 				} else if($(ele).hasClass("percent")) {
-					return $.jsFormControls.Format.decimal(cdata);
+					$(ele).data().processor = $.jsFormControls.Format.getPercent;
+					return $.jsFormControls.Format.percent(cdata);
+				} else if($(ele).hasClass("humantime")) {
+					$(ele).data().processor = $.jsFormControls.Format.getHumanTime;
+					return $.jsFormControls.Format.humanTime(cdata);
+				} else if($(ele).hasClass("timespan")) {
+					return $.jsFormControls.Format.timespan(cdata);
 				}
 				
 				return cdata;
@@ -3060,6 +3087,23 @@
 			},
 
 			/**
+			 * variable unit. this works by prefixing k(kilo) m(mega) g(giga) t(tera)
+			 */
+			vunit: function(value, unit) {
+				if (value === "" || !value || isNaN(value)) {
+					return value;
+				}
+				
+				if(value < 1000) {
+					return $.jsFormControls.Format.decimal(value) + ' ' + unit;
+				}
+				var un = 1000;
+				var exp = Math.floor(Math.log(value) / Math.log(un));
+				var pre = "kmgtpe".charAt(exp-1) + unit;
+				return $.jsFormControls.Format.decimal(Math.round(value*100 / Math.pow(un, exp))/100) + ' ' + pre;
+			},
+			
+			/**
 			 * @private
 			 */
 			decimal: function(num) {
@@ -3092,7 +3136,6 @@
 					j = (j = i.length) > 3 ? j % 3 : 0;
 				return (num<0 ? "-" : "") + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
 			},
-			
 			
 			/**
 			 * @private
@@ -3127,7 +3170,42 @@
 					j = (j = i.length) > 3 ? j % 3 : 0;
 				return (num<0 ? "-" : "") + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
 			},
+			
+			getDecimal: function(val) {
+				if (num === "") {
+					return 0;
+				}
+				
+				return Number(val);
+				
+			},
 
+			getVunit: function(val) {
+				if (num === "") {
+					return 0;
+				}
+				
+				return Number(val);
+			},
+
+			percent: function(num) {
+				if (num === "" || !num || isNaN(num)) {
+					return num;
+				}
+				
+				return $.jsFormControls.Format.decimal(num*100);
+			},
+
+			getPercent: function(val) {
+				if (val === "") {
+					return 0;
+				}
+				
+				if(val.indexOf("%") !== -1)
+					val = val.substring(0, val.length-1);
+				
+				return Number(val) / 100;
+			},
 
 			/**
 			 * @private
@@ -3255,6 +3333,9 @@
 			 */
 			timespan: function(row, cell, value, columnDef, dataContext) {
 				value = $.jsFormControls.Format._getValue(row, cell, value, columnDef);
+				
+				if(!value)
+					value = "0";
 
 				var tokens = value.split(":");
 				// check each token
@@ -3326,9 +3407,99 @@
 				}
 				// trim output
 				return out.trim();
+			},
+			
+			/**
+			 * convert a string with a time in human format back to a long.
+			 * This works for any combination of
+			 * Xh Xm xs xms 
+			 * 
+			 * @param val the value to convert
+			 */
+			getHumanTime: function(val) {
+				if(!val || val === "")
+					return 0;
+				
+				// go through val
+				var result = 0;
+				var num = "";
+				var tu = "";
+				
+				var convert = function(){
+					if(num === "") {
+						return;
+					}
+					
+					var curNum = Number(num);
+					
+					switch(tu) {
+					case "ms":
+					case "mill":
+						result += curNum; break;
+					case "s":
+					case "secs":
+						result += curNum * 1000; break;
+					case "":
+					case "m":
+					case "min":
+					case "minute":
+						result += curNum * 60000; break;
+					case "h":
+					case "hour":
+						result += curNum * 3600000; break;
+					case "d":
+					case "day":
+					case "days":
+						result += curNum * 24 * 3600000; break;
+					
+					}
+					// reset
+					tu = "";
+					num = "";
+				};
+				
+				for(var i = 0; i < val.length; i++) {
+					var c = val.charAt(i);
+					switch(c) {
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+					case '8':
+					case '9':
+						if(tu !== "") {
+							// convert the old number
+							convert();
+						}
+						num += c;
+						break;
+					case 'm':
+					case 'i':
+					case 'n':
+					case 's':
+					case 'h':
+					case 'o':
+					case 'u':
+					case 'r':
+					case 'a':
+					case 'e':
+					case 'c':
+					case 'y':
+					case 'd': tu += c; break;
+					default:
+						// ignore
+					}
+				}
+				
+				// one more convert - just in case we missed something
+				convert();
+				return result;
 			}
 	};
-
 })( jQuery, window );
 
 

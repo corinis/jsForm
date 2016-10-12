@@ -1972,11 +1972,11 @@
      * @param obj
      * @param path a dot notation path to search for.  Use format parent[1].child
      */
-    JsForm.prototype._getValueWithArrays = function(obj, path) {
-    	if(obj === null) {
-    		return null;
-    	}
-    	
+	JsForm.prototype._getValueWithArrays = function(obj, path) {
+		if(obj === null) {
+			return null;
+		}
+
         path = path.split('.');
         var arrayPattern = /(.*)\[(\d+)\]/;
         for (var i = 1; i < path.length; i++) {
