@@ -10,6 +10,7 @@ $(function(){
 		description: "long Description\nMultiline",	// textarea
 		links: [{href:'http://www.gargan.org',description:'Gargan.org'},{href:'http://www.github.com',description:'GitHub'}],	// lists
 		active: true,	// checkbox
+		type: "COOL", // radio (enums)
 		state: "VISIBLE",	// selects (enums)
 		age: 45, // number 
 		quips: ["Don't left school interfere with your education!", "Can you repeat the question? I was thinking about cookies.", "In my house I'm the boss, my wife is just the decision maker."]
@@ -39,6 +40,10 @@ $(function(){
 		<option value="IMPORTANT">important</option>
 		<option value="HIDDEN">hidden</option>		
 	</select>
+	<br/>
+	<input type="radio" name="data.type" value="COOL"/> Cool<br/>
+	<input type="radio" name="data.type" value="HOT"/> Hot<br/>
+	<input type="radio" name="data.type" value="WARM"/> Warm<br/>
 	<fieldset>
 		<legend>Links</legend>
 		<ul class="collection" data-field="data.links">
