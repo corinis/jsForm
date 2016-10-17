@@ -659,13 +659,18 @@
 					return value;
 				}
 				
+				var neg = value < 0;
+				if(neg)
+					value *= -1; 
+					
+				
 				if(value < 1000) {
-					return $.jsFormControls.Format.decimal(value) + ' ' + unit;
+					return (neg?'-':'') + $.jsFormControls.Format.decimal(value) + ' ' + unit;
 				}
 				var un = 1000;
 				var exp = Math.floor(Math.log(value) / Math.log(un));
 				var pre = "kmgtpe".charAt(exp-1) + unit;
-				return $.jsFormControls.Format.decimal(Math.round(value*100 / Math.pow(un, exp))/100) + ' ' + pre;
+				return (neg?'-':'') + $.jsFormControls.Format.decimal(Math.round(value*100 / Math.pow(un, exp))/100) + ' ' + pre;
 			},
 			
 			/**
