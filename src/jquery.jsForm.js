@@ -1290,9 +1290,28 @@
 				var value = that._get(data, cname, false, idx);
 				// try selecting based on the id 
 				if (value[pk] || !isNaN(value[pk])) {
-					$(this).children("option[value='"+value[pk]+"']").prop("selected", true);
-					// actually set the value and trigger the change
-					$(this).val(value[pk]).change();
+					// find out which one to select
+					$(this).children("option").each(function(){
+						var obj = $(this).data().pojo;
+						if(!obj) {
+							obj = $(this).data().obj;
+						}
+						if(obj) {
+							if(value[pk] === obj[pk]) {
+								$(this).prop("selected", true);
+								return false;
+							}
+						} else {
+							// make sure to avoid string issues: use ==
+							if($(this).val() == value[pk]) {
+								$(this).attr("selected", true);
+								return false;
+							}
+						}
+					});
+					
+					// trigger the change
+					$(this).change();
 					return;
 				} else if($(this).hasClass("bool")) {
 					value = value ? "true" : "false";
