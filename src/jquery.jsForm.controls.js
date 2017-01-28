@@ -128,8 +128,27 @@
 		// show datepicker for all inputs
 		location.find("input.date").each(function(){
 			var format = $(this).attr("data-format");
-			// only if jquery ui is available
-			if($(this).datepicker) {
+			if($(this).jqxDateTimeInput) {
+				$(this).data().valclass = "jqxDateTimeInput";
+				
+				// jqwidget
+				if(format)
+					$(this).jqxDateTimeInput({formatString: format});
+				else {
+					// get date format
+					var dateformat = null;
+					
+					if(typeof i18n !== "undefined")
+						dateformat = i18n.date;
+					else if($(document).data().i18n && $(document).data().i18n.date)
+						dateformat = $(document).data().i18n.date;
+
+					$(this).jqxDateTimeInput({formatString: dateformat.shortDateFormat});
+				}
+				
+			}
+			else if($(this).datepicker) {
+				// jquery ui
 				if(format)
 					$(this).datepicker({dateFormat: format});
 				else
@@ -137,6 +156,36 @@
 			}
 		});
 			
+		// date-time picker
+		location.find("input.dateTime").each(function(){
+			var format = $(this).attr("data-format");
+			if($(this).jqxDateTimeInput) {
+				$(this).data().valclass = "jqxDateTimeInput"; 
+				// jqwidget
+				if(format)
+					$(this).jqxDateTimeInput({formatString: format, showTimeButton:true});
+				else {
+					// get date format
+					var dateformat = null;
+					
+					if(typeof i18n !== "undefined")
+						dateformat = i18n.date;
+					else if($(document).data().i18n && $(document).data().i18n.date)
+						dateformat = $(document).data().i18n.date;
+					$(this).jqxDateTimeInput({formatString: dateformat.shortDateFormat + " HH:mm", showTimeButton: true});
+				}
+			}
+		});
+		
+		// show time
+		location.find("input.time").each(function(){
+			if($(this).jqxDateTimeInput) {
+				// jqwidget
+				$(this).jqxDateTimeInput({formatString: 'HH:mm', showTimeButton: true, showDateButton:false});
+				$(this).data().valclass = "jqxDateTimeInput"; 
+			}
+		});
+
 		
 		// input validation (number)
 		var numberRegexp =  new RegExp("^[0-9.,-]+$");
@@ -663,7 +712,6 @@
 				if(neg)
 					value *= -1; 
 					
-				
 				if(value < 1000) {
 					return (neg?'-':'') + $.jsFormControls.Format.decimal(value) + ' ' + unit;
 				}
@@ -849,7 +897,7 @@
 					year += 1900;
 				}
 				
-				// default number format
+				// get date format
 				var dateformat = null;
 				
 				if(typeof i18n !== "undefined")
