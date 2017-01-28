@@ -9,11 +9,11 @@
  */
 ;(function( $, window, undefined ){
 	"use strict";
-	
+
 	var JSFORM_INIT_FUNCTIONS = {},	// remember initialization functions
 	JSFORM_MAP = {};	// remember all forms
-	
-	
+
+
 	/**
 	 * @param element {Node} the container node that should be converted to a jsForm
 	 * @param options {object} the configuraton object
@@ -21,7 +21,7 @@
 	 */
 	function JsForm (element, options) {
 		var $this = $(element);
-		
+
 		// create the options
 		this.options = $.extend({}, {
 			/**
@@ -62,6 +62,19 @@
 			 */
 			processors: null,
 			/**
+			 * dataHandler will be called for each field filled. 
+			 */
+			dataHandler: null, /*{
+				serialize: function(val, field, obj) {
+					if(field.hasClass("reverse"))
+						return val.reverse();
+				},
+				deserialize: function(val, field, obj) {
+					if(field.hasClass("reverse"))
+						return val.reverse();
+				}
+			}*/
+			/**
 			 * optional array of elements that should be connected with the form. This
 			 * allows the splitting of the form into different parts of the dom.
 			 */
@@ -79,7 +92,7 @@
 				this.options.prefix = $this.attr("data-prefix");
 			}
 		}
-		
+
 		this.element = element;
 
 		this._init();
@@ -92,7 +105,7 @@
 	JsForm.prototype._init = function() { 
 		// init the basic dom functionality
 		this._domInit();
-		
+
 		// enable form controls
 		if(this.options.controls) {
 			if($.jsFormControls) {
@@ -114,7 +127,7 @@
 		// fill/init with the first data
 		this._fill();
 	};
-	
+
 	/**
 	 * Connect a dom element with an already existing form.
 	 * @param ele the new part of the form
@@ -124,7 +137,7 @@
 		this._initCollection(ele, this.options.prefix);
 		// init conditionals
 		this._initConditional(ele, this.options.prefix, this.options);
-		
+
 		// enable form controls
 		if(this.options.controls) {
 			if($.jsFormControls) {
@@ -138,14 +151,14 @@
 			this.options.connect = [];
 		this.options.connect.push(ele);
 	};
-	
+
 	/**
 	 * @return all nodes for this jsform (main + connected)
 	 */
 	JsForm.prototype.getNodes = function() {
 		return this._getForm();
 	};
-	
+
 	/**
 	 * init the dom. This can be called multiple times.
 	 * this will also enable "add", "insert" and "delete" for collections
@@ -153,7 +166,7 @@
 	 */
 	JsForm.prototype._domInit = function() {
 		var that = this;
-		
+
 		// handle multiple form parts
 		$.each(this._getForm(), function(){
 			// collection lists with buttons
@@ -162,7 +175,7 @@
 			that._initConditional(this, that.options.prefix, that.options);
 		});
 	};
-	
+
 	/**
 	 * simple debug helper
 	 * @param msg the message to print
@@ -173,17 +186,17 @@
 			var cons = console || (window?window.console:null);
 			if (!cons || !cons.log)
 				return;
-				
+
 			var p = null;
 			if($.isPlainObject(param)) {
 				p = JSON.stringify(param, null, " ");
 			} else 
 				p = param;
-			
+
 			if(!p) {
 				p = "";
 			}
-				
+
 			cons.log(msg + p);
 		} catch(ex) {
 			// ignore
@@ -233,10 +246,10 @@
 			else
 				ele.show();
 		};
-		
+
 		// remember the conditionals for faster dom access
 		this.conditionals = $(form).find(".conditional"); 
-		
+
 		this.conditionals.each(function(){
 			$(this).data().conditionalEval = [];
 			var fields = $(this).attr("data-show");
@@ -263,7 +276,7 @@
 			}
 		});
 	};
-	
+
 	/**
 	 * evaluate conditionals on the form
 	 * @param form the form to search for conditionals
@@ -278,7 +291,7 @@
 			});
 		});
 	};
-	
+
 	/**
 	 * initialize collections
 	 * @param form the base dom element
@@ -288,9 +301,9 @@
 	JsForm.prototype._initCollection = function(form, prefix) {
 		// all collections
 		var collectionMap = {},
-			that = this;
+		that = this;
 		$(form).data().collections = collectionMap; 
-			
+
 		$(".collection", form).each(function() {
 			var colName = $(this).attr("data-field");
 			// skip collections without a data-field mapping
@@ -299,7 +312,7 @@
 			}
 
 			var container = $(this);
-			
+
 			// remember the collection
 			var cols = collectionMap[colName];
 			if(cols) {
@@ -307,10 +320,10 @@
 			} else {
 				collectionMap[colName] = [container];
 			}
-			
+
 			//init the collection
 			that._initList(container);
-			
+
 			// after adding: check if we want reorder control
 			if(!container.hasClass("ui-sortable") && container.hasClass("sortable") && container.sortable) {
 				// get the config object
@@ -320,20 +333,24 @@
 				} else {
 					config = JSON.parse(config);
 				}
-				
+
 				container.sortable(config);
 				container.on("sortstop", function( event, ui ) {
 					that._reorder(container);
 				});
 			} 
 
-			$(this).on("add", function(ev, pojo){
+			$(this).on("add", function(ev, pojo, fn){
 				var fieldName = $(this).attr("data-field"); 
+				// skip if fieldName doest match
+				if(fn && fieldName != fn)
+					return;
+				
 				var tmpl = $(this).data("template");
 				if(!pojo) {
 					pojo = {};
 				}
-				
+
 				// and has a template
 				if(tmpl) {
 					var line = tmpl.clone(true);
@@ -351,16 +368,16 @@
 							$(line).data().pojo = JSON.parse(prefill);
 						else if($.isPlainObject(prefill))
 							$(line).data().pojo = prefill;
-						
+
 					}
 					$(this).append(line);
-					
+
 					// init controls
 					that._enableTracking($("input,textarea,select", line));
 					// new line always has changes
 					if(that.options.trackChanges)
 						$("input,textarea,select", line).addClass(that.options.trackChanges);
-					
+
 					that._addCollectionControls(line);
 
 					// its possible to have "sub" collections
@@ -368,7 +385,7 @@
 
 					// trigger a callback
 					$(this).trigger("addCollection", [line, $(line).data().pojo]);
-					
+
 					// the new entry has as index the count of all "lines"
 					var idx = $(this).children(".POJO").length;
 
@@ -386,7 +403,7 @@
 			if(!fieldName) {
 				return;
 			}
-			
+
 			// add the collection
 			$(this).data().collections = collectionMap[fieldName];
 
@@ -395,33 +412,33 @@
 				return;
 			}
 			$(this).data().hasJsForm = true;
-			
+
 
 			$(this).click(function(ev){
 				ev.preventDefault();
-				
+
 				// search for a collection with that name
 				$.each($(this).data("collections"), function() {
-					$(this).trigger("add");
+					$(this).trigger("add", [null, fieldName]);
 				});
 			});
 		});
-		
+
 		// insert: similar to add - but works with events
 		$(".insert", form).each(function(){
 			var fieldName = $(this).attr("data-field"); 
 			if(!fieldName) {
 				return;
 			}
-			
+
 			// only init once
 			if($(this).data("collections")) {
 				return;
 			}
-			
+
 			// remember the collections
 			$(this).data("collections", collectionMap[$(this).attr("data-field")]);
-			
+
 			$(this).on("insert", function(ev, pojo){
 				if(!pojo)
 					pojo = $(this).data().pojo;
@@ -432,13 +449,13 @@
 				var beforeInsertCallback = $(this).data("beforeInsert");
 				if(beforeInsertCallback && $.isFunction(beforeInsertCallback)) {
 					pojo = beforeInsertCallback(pojo);
-					
+
 					// insert only works if there is a pojo
 					if(!pojo) {
 						return;
 					}
 				}
-				
+
 				// search for a collection with that name
 				$.each($(this).data("collections"), function() {
 					var tmpl = $(this).data("template");
@@ -451,54 +468,54 @@
 						line.data().pojo = pojo;
 
 						that._addCollectionControls(line);
-						
+
 						// its possible to have "sub" collections
 						that._initCollection(line);
-						
+
 						// trigger a callback
 						$(this).trigger("addCollection", [line, pojo]);
-						
+
 						// the new entry has as index the count of all "lines"
 						var idx = $(this).children(".POJO").length;
-						
+
 						// fill the "information"
 						that._fillData(line, pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
-						
+
 						$(this).append(line);
-						
+
 						// trigger a callback after the data has been rendered)
 						$(this).trigger("postAddCollection", [line, pojo]);
 					}
 				});
-				
+
 				// empty field
 				$(this).val("");
 				$(this).data().pojo = null;
 				$(this).focus();
 			});
 		});
-		
+
 		// insert: helper button (triggers insert)
 		$(".insertAction", form).each(function(){
 			var fieldName = $(this).attr("data-field"); 
 			if(!fieldName) {
 				return;
 			}
-			
+
 			// only init once
 			if($(this).data("inserter")) {
 				return;
 			}
-			
+
 			// find the insert element for this data-field
 			var inserter = $(this).parent().find(".insert");
 			if(!inserter) {
 				return;
 			}
-			
+
 			// remember the inserter
 			$(this).data("inserter", inserter);
-			
+
 			$(this).click(function(ev){
 				ev.preventDefault();
 				$(this).data("inserter").trigger("insert");
@@ -515,47 +532,47 @@
 				} 
 			});
 		});
-		
+
 		// fileupload
 		$("input.blob", form).each(function(){
 			// only available on input type file
 			if($(this).attr("type") !== "file") {
 				return;
 			}
-			
+
 			var blobInput = $(this);
-			
+
 			// bind on change
 			$(this).on("change", function(evt){
-				
+
 				//get file name
 				var fileName = $(this).val().split(/\\/).pop();
 				blobInput.data("name", fileName);
-				
+
 				var files = evt.target.files; // FileList object
 				// Loop through the FileList (and render image files as thumbnails.(skip for ie < 9)
 				if(files && files.length) {
 					$.each(files, function() {
 						var reader = new FileReader();
-	
+
 						// closure to capture the file information
 						reader.onload = function(e) {
 							// get the result
 							blobInput.data("blob", e.target.result);
 						};
-	
+
 						// Read in the image file as a data URL.
 						reader.readAsDataURL(this);
-	
+
 						$(this).trigger("fileChange");
 					});
 				} 
 			});
-			
-			
+
+
 		});
 	};
-	
+
 	/**
 	 * init a container that has a tempalate child (first child). 
 	 * @param container the contianer element
@@ -566,17 +583,17 @@
 		if(container.data("template")) {
 			return;
 		}
-		
+
 		// get all children
 		var tmpl = container.children().detach();
-		
+
 		// remove an id if there is one
 		tmpl.removeAttr("id");
 		container.data("template", tmpl);
 	};
 
 	/**
-	 * generate the array with all dome elements that are conencted with 
+	 * generate the array with all DOM elements that are connected with 
 	 * the form.
 	 * @private
 	 */
@@ -588,7 +605,7 @@
 			});
 		return form;
 	};
-	
+
 	/**
 	 * clear/reset a form. The prefix is normally predefined by init
 	 * @param form the form 
@@ -599,7 +616,7 @@
 		if(!prefix) {
 			prefix = this.options.prefix;
 		}
-		
+
 		$(form).removeData("pojo");
 		$("input,select,textarea", form).each(function(){
 			var name = $(this).attr("name");
@@ -613,14 +630,16 @@
 			if(name.length < 1) {
 				return;
 			}
-			
+
 			// remove all pojos
 			$(this).removeData("pojo");
-			
+
 			if($(this).attr("type") === "checkbox") {
 				$(this).prop("checked", false);
 			} else if($(this).attr("type") === "radio") {
 				$(this).prop("checked", false);
+			} else if($(this).data().valclass && $(this)[$(this).data().valclass].val){
+				$(this)[$(this).data().valclass](val, "");
 			} else {
 				$(this).val("");
 			}
@@ -637,7 +656,7 @@
 			// trigger change
 			$(this).change();
 		});
-		
+
 		$(".collection", form).each(function() {
 			var fieldname = $(this).attr("data-field");
 			// only collections with the correct prefix
@@ -647,9 +666,9 @@
 			// get rid of all
 			$(this).empty();
 		});
-		
+
 	};
-	
+
 	/**
 	 * Handle arrays when creating pojos
 	 * @param ele the element
@@ -663,7 +682,7 @@
 		if(!pojo[name]) {
 			pojo[name] = [];
 		}
-		
+
 		if(ele.attr("type") === "checkbox" || ele.attr("type") === "CHECKBOX") {
 			// do we want the value of not
 			var use = ele.is(":checked");
@@ -694,7 +713,7 @@
 				pojo[name][num] = val;
 		}		
 	};
-	
+
 	/**
 	 * ceate a pojo from a form. Takes special data definition classes into account:
 	 * <ul>
@@ -713,44 +732,47 @@
 		var that = this;
 		// normally we edit the pojo on ourselves - so result is null
 		var result = null;
-		
+
 		// get it from the starting dom element
 		if($(start).data("pojo")) {
 			startObj = $(start).data("pojo");
 		}
-		
+
 		// if we have an object, use this as base and fill the pojo
 		if(startObj) {
 			$.extend(true, pojo, startObj);
 		}
-		
+
 		$(start).find("input,select,textarea,.jsobject").each(function(){
 			var name = $(this).attr("data-name");
 			if(!name) {
 				name = $(this).attr("name");
 			}
-			
+
 			// empty name - ignore
 			if (!name) {
 				return;
 			}
 
 			// skip grayed (=calculated) or transient fields
-			if($(this).hasClass("transient")) {
+			if($(this).hasClass("transient") || $(this).hasClass("grayed")) {
 				return;
 			}
-			
+
 			// must start with prefix
 			if(name.indexOf(prefix + ".") !== 0) {
 				return;
 			}
-			
+
 			$(this).trigger("validate", true);
-			
+
 			// cut away the prefix
 			name = name.substring((prefix+".").length);
-			
+
 			var val = $(this).val();
+			if($(this).data().valclass && $(this)[$(this).data().valclass]){
+				val = $(this)[$(this).data().valclass]("val");
+			} 
 
 			// jsobject use the pojo data directly - ignore the rest
 			if($(this).hasClass("jsobject")) {
@@ -761,7 +783,7 @@
 				if(that.options.skipEmpty && (!val || val === "" || val.trim() === "")) {
 					return;
 				}
-				
+
 				if($(this).hasClass("emptynull") && (!val || val === ""  || val === "null" || val.trim() === "")) { // nullable fields do not send empty string
 					val = null;
 				} else if($(this).hasClass("object") || $(this).hasClass("POJO")) {
@@ -770,7 +792,7 @@
 							val = $("option:selected", this).data().pojo;
 						else if($("option:selected", this).attr("data-obj"))
 							val = JSON.parse($("option:selected", this).attr("data-obj"));
-							
+
 					} else {
 						val = $(this).data("pojo");
 					}
@@ -786,11 +808,11 @@
 				} else if($(this).hasClass("blob")) { // file upload blob
 					val = $(this).data("blob");
 				} else
-				// set empty numbers or dates to null
-				if(val === "" && ($(this).hasClass("number") || $(this).hasClass("percent") || $(this).hasClass("integer") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
-					val = null;
-				}
-				
+					// set empty numbers or dates to null
+					if(val === "" && ($(this).hasClass("number") || $(this).hasClass("percent") || $(this).hasClass("integer") || $(this).hasClass("dateFilter")|| $(this).hasClass("dateTimeFilter"))) {
+						val = null;
+					}
+
 				// we might have a value processor on this: this is added by the jsForm.controls
 				if($(this).data().processor) {
 					val = $(this).data().processor(val);
@@ -813,7 +835,7 @@
 					}
 				}
 				else if($(this).attr("type") === "checkbox" || $(this).attr("type") === "CHECKBOX") {
-					
+
 					// a checkbox as an array
 					if($(this).hasClass("array")) {
 						// the special case: array+checkbox is handled on the actual setting
@@ -833,6 +855,12 @@
 					val = ($(this).val() === "true");
 				}
 			}
+			
+			// we got the value - send it to the processor
+			if(that.options.dataHandler) {
+				val = that.options.dataHandler.serialize(val, $(this), pojo); 
+			}
+			
 			// handle simple collection
 			if(name.length < 1) {
 				// handle simple collection: we want the val as result
@@ -859,7 +887,7 @@
 					pojo[parts[0]] = {};
 					current = pojo[parts[0]]; 
 				}
-				
+
 				for(var i = 1; i < parts.length - 1; i++) {
 					prev = current;
 					current = prev[parts[i]];
@@ -868,10 +896,10 @@
 						prev[parts[i]] = current;
 					}
 				}
-				
+
 				// set prev as the name
 				prev = parts[parts.length - 1];
-				
+
 				// handle arrays 
 				if($(this).hasClass("array")) { 
 					that._handleArrayInPojo($(this), current, prev, val);
@@ -880,11 +908,11 @@
 				}
 			}
 		});
-		
+
 		// for "selection" collection
 		$(start).find(".selectcollection").each(function(){
 			var name = $(this).attr("data-field");
-			
+
 			// empty name - ignore
 			if (!name) {
 				return;
@@ -894,24 +922,24 @@
 			if($(this).hasClass("transient")) {
 				return;
 			}
-			
+
 			// must start with prefix
 			if(name.indexOf(prefix + ".") !== 0) {
 				return;
 			}
-			
+
 			$(this).trigger("validate", true);
-			
+
 			// cut away the prefix
 			name = name.substring((prefix+".").length);
-			
+
 			// always an array (reset current data)
 			pojo[name] = [];
-			
+
 			// see if we go by checkbox or by css class (if both -> class wins)
 			var selectedClass = $(this).attr("data-selected");
 			var id = $(this).attr("data-id");
-			
+
 			$(this).children().each(function(){
 				// check selection
 				if(selectedClass) {
@@ -921,7 +949,7 @@
 					if(!$("input[name='"+name+"']", this).prop('checked'))
 						return;
 				}
-				
+
 				// get the "id"/object
 				var cobj = null;
 				// no id given - check the value of the checkbox
@@ -934,20 +962,20 @@
 						cobj = JSON.parse($(this).attr("data-obj"));
 					}
 				}
-				
+
 				// no object/data found
 				if(!cobj)
 					return;
-				
+
 				pojo[name].push(cobj);
-				
-				
+
+
 			});
 
 
 		});
 
-		
+
 		return result;
 	};
 
@@ -982,9 +1010,9 @@
 	 */
 	JsForm.prototype._fillSelectCollection = function (parent, data, prefix, idx) {
 		var that = this;
-		
+
 		var $parent = $(parent);
-		
+
 		// locate all "select collections"
 		$parent.find(".selectcollection").each(function() {
 			var selectedClass = $(this).attr("data-selected");
@@ -995,17 +1023,17 @@
 			if(!fieldname || fieldname.indexOf(prefix+".") !== 0) {
 				return;
 			}
-	
+
 			// data for the collection filling
 			var colData = null;
-			
+
 			var cname = fieldname;
 			// remove the prefix
 			if (prefix) {
 				cname = cname.substring(prefix.length + 1);
 			}
 			colData = that._get(data, cname);
-	
+
 			if(!colData || !$.isArray(colData)) {
 				colData = [];
 			}
@@ -1028,13 +1056,13 @@
 						$(this).toggleClass(selectedClass);
 						$(this).trigger("selected");
 					});
-					
+
 					// trigger "deselected"
 					$(this).trigger("selected");
 				});
 			}
 			$("input[name='"+fieldname+"']", this).prop('checked', false);
-			
+
 			// now go through each child and apply selection if appropriate
 			$(this).children().each(function(){
 				// get the "id"/object
@@ -1054,15 +1082,15 @@
 					// take the id field of the object
 					cid = obj[id];
 				}
-				
+
 				if(!cid)
 					return;
-				
+
 				for(var i = 0; i < colData.length; i++) {
 					var did = colData[i];
 					if(id)
 						did = did[id];
-					
+
 					// found it
 					if(cid == did){
 						if(selectedClass) {
@@ -1072,33 +1100,33 @@
 						return;
 					}
 				}
-				
-				
+
+
 			});
-		
+
 		});
 	};
 
-	
+
 	/**
-	* fill a dom subtree with data.
-	* <ul>
-	*  <li>&lt;span class="field"&gt;prefix.fieldname&lt;/span&gt;
-	*  <li>&lt;input name="prefix.fieldname"/&gt;
-	*  <li>&lt;input type="checkbox" name="prefix.fieldname"/&gt;
-	*  <li>&lt;a class="field" href="prefix.fieldname"&gt;linktest&lt;/a&gt;
-	*  <li>&lt;img class="field" src="prefix.fieldname"/&gt;
-	* </ul>
-	* @param parent the root of the subtree
-	* @param data the data
-	* @param prefix the prefix used to find fields
-	* @param idx the index - this is only used for collections
-	* @private
-	*/
+	 * fill a dom subtree with data.
+	 * <ul>
+	 *  <li>&lt;span class="field"&gt;prefix.fieldname&lt;/span&gt;
+	 *  <li>&lt;input name="prefix.fieldname"/&gt;
+	 *  <li>&lt;input type="checkbox" name="prefix.fieldname"/&gt;
+	 *  <li>&lt;a class="field" href="prefix.fieldname"&gt;linktest&lt;/a&gt;
+	 *  <li>&lt;img class="field" src="prefix.fieldname"/&gt;
+	 * </ul>
+	 * @param parent the root of the subtree
+	 * @param data the data
+	 * @param prefix the prefix used to find fields
+	 * @param idx the index - this is only used for collections
+	 * @private
+	 */
 	JsForm.prototype._fillData = function (parent, data, prefix, idx) {
 		var that = this;
 		var $parent = $(parent);
-		
+
 		// locate all "fields"
 		$parent.find(".field").each(function() {
 			var name = $(this).data("name");
@@ -1129,21 +1157,27 @@
 				if(!cdata && cdata !== 0 && cdata !== false) {
 					cdata = "";
 				}
-				
+
 				// check for currency
 				if($(this).hasClass("currency")) {
 					if (!cdata)
 						cdata = 0;
 				}
-				
+
 				// keep the original in the title
 				if($(this).hasClass("titleval")) {
 					$(this).attr("title", cdata);
 				}
-				
+
+				// we got the value - send it to the processor
+				if(that.options.dataHandler) {
+					cdata = that.options.dataHandler.deserialize(cdata, $(this), cname, data); 
+				}
+
 				// format the string
 				if($.jsFormControls)
 					cdata = $.jsFormControls.Format.format(this, cdata);
+				
 				
 				if(this.nodeName.toUpperCase() === 'A') {
 					$(this).attr("href", cdata);
@@ -1157,27 +1191,32 @@
 				}
 			}
 		});
-		
+
 		$("input, textarea", $parent).each(function() {
 			var name = $(this).attr("name");
 			if(!name) {
 				return;
 			}
 			that._enableTracking(this);
-			
+
 			// ignore file inputs - they cannot be "prefilled"
 			if($(this).attr("type") == "file") {
 				return;
 			}
-			 
+
 			if(!prefix || name.indexOf(prefix + ".") >= 0) {
 				var cname = name;
 				if (prefix) {
 					cname = cname.substring(prefix.length + 1);
 				}
-				
+
 				var cdata = that._get(data, cname, false, idx);
 				
+				// we got the value - send it to the processor
+				if(that.options.dataHandler) {
+					cdata = that.options.dataHandler.deserialize(cdata, $(this), cname, data); 
+				}
+
 				if ($(this).hasClass("object")) {
 					$(this).data().pojo = cdata;
 					$(this).addClass("POJO");
@@ -1196,7 +1235,7 @@
 						cdata = that._renderObject(cdata, $(this).attr("data-display"), $(this).attr("data-render"));
 					}
 				} 
-				
+
 
 				if($(this).attr("type") === "checkbox") {
 					// array in checkbox
@@ -1235,11 +1274,11 @@
 					if(!cdata && cdata !== 0 && cdata !== false) {
 						cdata = "";
 					}
-					
+
 					// format the string
 					if($.jsFormControls)
 						cdata = $.jsFormControls.Format.format(this, cdata);
-					
+
 					// array handling
 					if($(this).hasClass("array")) {
 						// fixed numbers
@@ -1253,10 +1292,12 @@
 						} else {
 							$(this).val("");
 						}
-					} else
+					} else if($(this).data().valclass && $(this)[$(this).data().valclass]){
+						$(this)[$(this).data().valclass]("val", cdata);
+					}else 
 						$(this).val(cdata);
 				}
-				
+
 				if(that.options.trackChanges)
 					$(this).data().orig = $(this).val();
 
@@ -1271,33 +1312,58 @@
 			if(!name) {
 				return;
 			}
-			
+
 			if(!prefix || name.indexOf(prefix + ".") >= 0) {
 				var cname = name;
 				if (prefix) {
 					cname = cname.substring(prefix.length + 1);
 				}
-				
+
 				that._enableTracking(this);
-				
+
 				// remove "old" selected options
 				$(this).children("option:selected").prop("selected", false);
 				var pk = $(this).attr("data-key");
 				if(!pk) {
 					pk = "id";
 				}
-				
+
 				var value = that._get(data, cname, false, idx);
+				
+				// we got the value - send it to the processor
+				if(that.options.dataHandler) {
+					value = that.options.dataHandler.deserialize(value, $(this), cname, data); 
+				}
+
 				// try selecting based on the id 
 				if (value[pk] || !isNaN(value[pk])) {
-					$(this).children("option[value='"+value[pk]+"']").prop("selected", true);
-					// actually set the value and trigger the change
-					$(this).val(value[pk]).change();
+					// find out which one to select
+					$(this).children("option").each(function(){
+						var obj = $(this).data().pojo;
+						if(!obj) {
+							obj = $(this).data().obj;
+						}
+						if(obj) {
+							if(value[pk] === obj[pk]) {
+								$(this).prop("selected", true);
+								return false;
+							}
+						} else {
+							// make sure to avoid string issues: use ==
+							if($(this).val() == value[pk]) {
+								$(this).attr("selected", true);
+								return false;
+							}
+						}
+					});
+					
+					// trigger the change
+					$(this).change();
 					return;
 				} else if($(this).hasClass("bool")) {
 					value = value ? "true" : "false";
 				}
-				
+
 				$(this).children("option[value='"+value+"']").prop("selected", true);
 				$(this).val(value);
 				if(that.options.trackChanges)
@@ -1306,7 +1372,7 @@
 			}
 		});
 	};
-	
+
 	/**
 	 * ceate a pojo from a form. Takes special data definition classes into account:
 	 * <ul>
@@ -1335,7 +1401,7 @@
 		$.each(this._getForm(), function(){
 			// fill the base
 			that._createPojoFromInput(this, prefix, pojo);
-		
+
 			if(!that.options.validateHidden) {
 				this.find(".invalid").filter(":visible").each(function(){
 					invalid = true;
@@ -1352,7 +1418,7 @@
 					return false;
 				});
 			}
-	
+
 			// get the collection
 			if(that._getCollection(this, prefix, pojo, ignoreInvalid)) {
 				invalid = true;
@@ -1365,7 +1431,7 @@
 
 		return pojo;
 	};
-	
+
 	/**
 	 * fill a pojo based on collections
 	 * @param form {DOMElement} the base element to start looking for collections
@@ -1378,7 +1444,7 @@
 		var that = this;
 		// check for invalid fields
 		var invalid = false;
-		
+
 		form.find(".collection").each(function() {
 			if(!ignoreInvalid && invalid) {
 				return;
@@ -1389,15 +1455,15 @@
 			if(!fieldname || fieldname.indexOf(prefix+".") !== 0) {
 				return;
 			}
-			
+
 			fieldname = fieldname.substring((prefix+".").length);
-			
+
 			var colParent = that._getParent(pojo, fieldname, true);
 			// get only the last part
 			if(fieldname.indexOf('.') !== -1) {
 				fieldname = fieldname.substring(fieldname.lastIndexOf('.') + 1);
 			}
-			
+
 			// clear the collection
 			colParent[fieldname] = [];
 
@@ -1410,7 +1476,7 @@
 					// also collect sub-collections
 					that._getCollection($(this), fieldname, ele, ignoreInvalid);
 				}
-				
+
 				// check if the pojo is empty
 				if(!that._isEmpty(ele) || result) {
 					if($(".invalid", this).length > 0) {
@@ -1427,10 +1493,10 @@
 				}
 			});
 		});
-		
+
 		return invalid;
 	};
-	
+
 	/**
 	 * Get the data object used as a base for get().
 	 * Note that modifying this directly might result into unwanted results
@@ -1458,13 +1524,13 @@
 		if(!field.data) {
 			field = $("input[name='"+field + "']", this.element);
 		}
-		
+
 		var viewClass = this.options.viewClass;
-		
+
 		if(mode) {
 			if (field.closest("span." + viewClass)[0])
 				return;
-			
+
 			var val = field.val();
 			if (val === "null" || val === null || field.attr("type") === "submit")
 				val = "";
@@ -1474,7 +1540,7 @@
 				else
 					val = '&#160;';
 			}
-			
+
 			// convert \n to brs - escape all other html
 			val = val.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
 			var thespan = $('<span class="'+viewClass+'">'+val+'</span>');
@@ -1491,7 +1557,7 @@
 		}
 
 	};
-	
+
 	/**
 	 * uses form element and replaces them with "spans" that contain the actual content.
 	 * the original "inputs" are hidden 
@@ -1501,7 +1567,7 @@
 	JsForm.prototype.preventEditing = function(prevent) {
 		var $this = $(this.element);
 		var viewClass = this.options.viewClass;
-		
+
 		if(typeof prevent === "undefined") {
 			// get the disable from the form itself 
 			prevent = $this.data("disabled")?false:true;
@@ -1511,7 +1577,7 @@
 				return;
 			}
 		}
-		
+
 		if (prevent)
 		{
 			$this.find("input, textarea").each(function() {
@@ -1528,7 +1594,7 @@
 					else
 						val = '&#160;';
 				}
-				
+
 				// convert \n to brs - escape all other html
 				val = val.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
 				var thespan = $('<span class="'+viewClass+'">'+val+'</span>');
@@ -1541,13 +1607,13 @@
 			$this.find("select").each(function() {
 				if ($(this).closest("span."+viewClass)[0])
 					return;
-				
+
 				var val = $(this).children(":selected").html();
 				if (val === "null" || val === null)
 					val = "";
 
 				var thespan = $('<span class="'+viewClass+'">'+val+'</span>');
-				
+
 				// toggle switches work a little different 
 				if($(this).hasClass("ui-toggle-switch")) {
 					$(this).prev().hide().wrap(thespan);
@@ -1566,10 +1632,10 @@
 				$(this).remove();
 			});
 		}
-		
+
 		$this.data("disabled", prevent);
 	};
-	
+
 	/**
 	 * validate a given form
 	 * @return true if the form has no invalid fields, false otherwise
@@ -1577,7 +1643,7 @@
 	JsForm.prototype.validate = function() {
 		// get the prefix from the form if not given
 		var valid = true;
-		
+
 		$.each(this._getForm(), function(){
 			// validation
 			$(".required,.regexp,.date,.mandatory,.number,.validate,.integer", this).change();
@@ -1586,10 +1652,10 @@
 				valid = false;
 			}
 		});
-		
+
 		return valid;
 	};
-	
+
 	/**
 	 * fill a form based on a pojo. 
 	 * @param noInput set true to not set any inputs
@@ -1605,7 +1671,7 @@
 			that._fillDom(this, noInput);
 		});
 	};
-	
+
 	/**
 	 * This is the actual worker function that fills the dom subtree
 	 * with data.
@@ -1620,6 +1686,7 @@
 			that._clear(ele, that.options.prefix);
 		}
 		
+
 		// fill base 
 		that._fillData(ele, that.options.data, that.options.prefix);
 		// fill select-collections
@@ -1629,7 +1696,7 @@
 		// (re-)evaluate all conditionals
 		that._evaluateConditionals(ele, that.options.data);
 	};
-	
+
 
 	/**
 	 * @param container the container element
@@ -1643,7 +1710,7 @@
 		// fill collections
 		$(".collection", container).each(function() {
 			var container = $(this),
-				fieldname = $(this).attr("data-field");
+			fieldname = $(this).attr("data-field");
 			// only collections with the correct prefix
 			if(!data || !fieldname || fieldname.indexOf(prefix+".") !== 0) {
 				return;
@@ -1651,7 +1718,7 @@
 
 			// data for the collection filling
 			var colData = null;
-			
+
 			var cname = fieldname;
 			// remove the prefix
 			if (prefix) {
@@ -1667,7 +1734,7 @@
 						if(cname.indexOf('.') !== -1) {
 							prefix = cname.substring(cname.lastIndexOf('.')+1);
 						}
-						
+
 						var line = $(container.children().get(i));
 						var cur = colData[i];
 						that._fillData(line, cur, cname, i+1);
@@ -1680,7 +1747,7 @@
 			}
 		});
 	};
-	
+
 	/**
 	 * @param container the container element
 	 * @param data an array containing the the data
@@ -1690,24 +1757,24 @@
 	 */
 	JsForm.prototype._fillList = function(container, data, prefix, lineFunc) {
 		var tmpl = container.data("template"),
-			that = this;
+		that = this;
 		if(!tmpl) {
 			return;
 		}
 		// clean out previous list
 		container.empty();
-		
+
 		// not an array
 		if(!$.isArray(data)) {
 			return;
 		}
-		
+
 		// cut away any prefixes - only the fieldname is used
 		if(prefix.indexOf('.') !== -1) {
 			prefix = prefix.substring(prefix.lastIndexOf('.')+1);
 		}
-		
-		
+
+
 		// check if we need to sort the array
 		if(container.hasClass("sort")) {
 			var sortField = container.attr("data-sort");
@@ -1740,29 +1807,29 @@
 				}
 			}
 		}
-		
+
 		if(!lineFunc) {
 			if($.isFunction(prefix)) {
 				lineFunc = prefix;
 				prefix = null;
 			}
 		}
-		
+
 		for(var i = 0; i < data.length; i++) {
 			var cur = data[i];
 			var line = tmpl.clone(true);
 			// save current line
 			line.data().pojo = cur;
 			line.addClass("POJO");
-			
+
 			if(lineFunc) {
 				if(lineFunc(line, cur) === false) {
 					continue;
 				}
 			}
-			
+
 			that._addCollectionControls(line);
-			
+
 			// trigger a callback
 			container.trigger("addCollection", [line, cur]);
 
@@ -1781,7 +1848,7 @@
 
 		}
 	};
-	
+
 	/**
 	 * add controls into a collection entry(i.e. delete)
 	 * @param line the new collection 
@@ -1794,7 +1861,7 @@
 		if($.jsFormControls) {
 			$(line).jsFormControls();
 		}
-		
+
 		// delete the current line
 		line.on("delete", function(){
 			var ele = $(this);
@@ -1831,8 +1898,8 @@
 			// reorder (if possible)
 			that._reorder(ele);
 		});
-		
-		
+
+
 		$(".delete", line).click(function(){
 			$(this).closest(".POJO").trigger("delete");
 		});
@@ -1842,14 +1909,14 @@
 		$(".sortDown", line).click(function(){
 			$(this).closest(".POJO").trigger("sortDown");
 		});
-		
+
 		// if collection is sortable: refresh it
 		var container = $(line).closest(".collection");
 		if(container.hasClass("sortable")&& $(container).sortable) {
 			container.sortable("refresh");
 		}
 	};
-	
+
 	/**
 	 * Reorder a collection (actually its fields)
 	 * @param ele one element of the collection or the collection itself
@@ -1863,10 +1930,10 @@
 		// get the field to use for sorting
 		var sortField = $(ele).attr("data-sort");
 		if(!sortField || ($(ele).attr("data-sorttype") && $(ele).attr("data-sorttype") !== "number") || 
-			($(ele).attr("data-sortdesc") && $(ele).attr("data-sortdesc") !== "false")) {
+				($(ele).attr("data-sortdesc") && $(ele).attr("data-sortdesc") !== "false")) {
 			return;
 		}
-		
+
 		// go through each child and get the pojo
 		var prio = 0;
 		$.each($(ele).children(), function(){
@@ -1876,11 +1943,11 @@
 				data = {};
 				$(this).data("pojo", data);
 			}
-			
+
 			data[sortField] = prio++;
 		});
 	};
-	
+
 	/**
 	 * render an object based on a string.
 	 * Note: comma is a special char and cannot be used!
@@ -1897,7 +1964,7 @@
 			this._debug("Unable to find renderer: " + renderer);
 			return "";
 		}
-		
+
 		var that = this;
 		var ret = "";
 		$.each(skin.split(","), function(){
@@ -1930,11 +1997,11 @@
 		// reference the object itself
 		if(expr === "")
 			return obj;
-		
+
 		// reference to the index
 		if(expr === "$idx")
 			return idx;
-			
+
 		ret = obj[expr];
 		if(!ret) {
 			try {
@@ -1966,35 +2033,35 @@
 		return ret;
 	};
 
-    /**
-     * Parse a dot notation that includes arrays
-     * http://stackoverflow.com/questions/13355278/javascript-how-to-convert-json-dot-string-into-object-reference
-     * @param obj
-     * @param path a dot notation path to search for.  Use format parent[1].child
-     */
+	/**
+	 * Parse a dot notation that includes arrays
+	 * http://stackoverflow.com/questions/13355278/javascript-how-to-convert-json-dot-string-into-object-reference
+	 * @param obj
+	 * @param path a dot notation path to search for.  Use format parent[1].child
+	 */
 	JsForm.prototype._getValueWithArrays = function(obj, path) {
 		if(obj === null) {
 			return null;
 		}
 
-        path = path.split('.');
-        var arrayPattern = /(.*)\[(\d+)\]/;
-        for (var i = 1; i < path.length; i++) {
-            var match = arrayPattern.exec(path[i]);
-            try {
-                if (match) {
-                    obj = obj[match[1]][parseInt(match[2], 10)];
-                } else {
-                    obj = obj[path[i]];
-                }
-            } catch(e) {
-                this._debug(path + " " + e);
-            }
-        }
+		path = path.split('.');
+		var arrayPattern = /(.*)\[(\d+)\]/;
+		for (var i = 1; i < path.length; i++) {
+			var match = arrayPattern.exec(path[i]);
+			try {
+				if (match) {
+					obj = obj[match[1]][parseInt(match[2], 10)];
+				} else {
+					obj = obj[path[i]];
+				}
+			} catch(e) {
+				this._debug(path + " " + e);
+			}
+		}
 
-        return obj;
-    }; 
-		
+		return obj;
+	}; 
+
 	/**
 	 * get the "parent" object of a given dot-notation. this will not return the actual 
 	 * element given in the dot notation but itws parent (i.e.: when using a.b.c -> it will return b)
@@ -2006,7 +2073,7 @@
 	JsForm.prototype._getParent = function(obj, expr, create) {
 		if(expr.indexOf('.') === -1)
 			return obj;
-		
+
 		expr = expr.substring(0, expr.lastIndexOf('.'));
 		return this._get(obj, expr, create);
 	};
@@ -2021,18 +2088,18 @@
 		if (!num) {
 			return null;
 		}
-		
+
 		// check if we have jsForm controls (internationalization)
 		if($.jsFormControls)
 			return $.jsFormControls.Format._getNumber(num);
-		
+
 		// remove thousand seperator...
 		if(num.indexOf(",") != -1)
 		{
 			num = num.replace(new RegExp(",", 'g'), "");
 		}
-		
-		
+
+
 		return Number(num);
 	};
 
@@ -2058,7 +2125,7 @@
 			if(pojo.length === 0) {
 				return true;
 			}
-			
+
 			// check each element
 			for(var i = 0; i < pojo.length; i++) {
 				if(!this._isEmpty()) {
@@ -2072,7 +2139,7 @@
 			if($.isEmptyObject(pojo)) {
 				return true;
 			}
-			
+
 			for(var f in pojo){
 				if(!this._isEmpty(pojo[f])) {
 					return false;
@@ -2080,7 +2147,7 @@
 			}
 			return true;
 		}
-		
+
 		// a number
 		if(!isNaN(pojo)) {
 			if (Number(pojo) === 0 || Number(pojo) === -1) {
@@ -2088,7 +2155,7 @@
 			}
 			return false;
 		}
-		
+
 		// a string
 		return (pojo === "" || pojo === " "); 
 	};
@@ -2122,7 +2189,7 @@
 					continue;
 				return false;
 			}
-			
+
 			if (a[p]) {
 				switch(typeof(a[p])) {
 				case 'object':
@@ -2142,24 +2209,24 @@
 					if(!a[p] && !b[p]) {
 						break;
 					}
-	
-					if((a === true || a === false) && a !== b) {
-						return false;
-					}
-					if(!isNaN(a[p]) || !isNaN(b[p])) {
-						if(Math.abs(Number(a[p]) - Number(b[p])) < 0.0000001) {
-							break;
-						}
-						return false;
-					}
 
-					if(("" + a[p]).length !== ("" +b[p]).length) {
-						return false;
+				if((a === true || a === false) && a !== b) {
+					return false;
+				}
+				if(!isNaN(a[p]) || !isNaN(b[p])) {
+					if(Math.abs(Number(a[p]) - Number(b[p])) < 0.0000001) {
+						break;
 					}
+					return false;
+				}
 
-					if (a[p] !== b[p] && Number(a[p]) !== Number(b[p])) {
-						return false;
-					}
+				if(("" + a[p]).length !== ("" +b[p]).length) {
+					return false;
+				}
+
+				if (a[p] !== b[p] && Number(a[p]) !== Number(b[p])) {
+					return false;
+				}
 				}
 			} else {
 				if (b[p]) {
@@ -2176,7 +2243,7 @@
 
 		return true;
 	};
-	
+
 	/**
 	 * Compares a pojo with the current generated object
 	 * @param pojo the pojo to compare with
@@ -2186,7 +2253,7 @@
 		var obj = this.get(false);
 		return this._equals(obj, pojo, idField);
 	};
-	
+
 	/**
 	 * Compares the current form with the last time the form was filled.
 	 * 
@@ -2195,7 +2262,7 @@
 	JsForm.prototype.changed = function() {
 		if(!this.options.trackChanges)
 			return false;
-		
+
 		var changed = false;
 		var that = this;
 		$.each(this._getForm(), function(){
@@ -2214,7 +2281,7 @@
 	JsForm.prototype.resetChanged = function() {
 		if(!this.options.trackChanges)
 			return false;
-		
+
 		var changed = false;
 		var that = this;
 		$.each(this._getForm(), function(){
@@ -2230,7 +2297,7 @@
 	JsForm.prototype._equalsCollection = function(form, prefix, pojo) {
 		var that = this;
 		var differs = false;
-		
+
 		$(".collection", form).each(function() {
 			if(differs) {
 				return;
@@ -2241,7 +2308,7 @@
 			if(!fieldname || fieldname.indexOf(prefix+".") !== 0) {
 				return;
 			}
-			
+
 			fieldname = fieldname.substring((prefix+".").length);
 			if(fieldname.length < 1) {
 				return;
@@ -2264,11 +2331,11 @@
 				if(that._pojoDifferFromInput($(this), fieldname, ele)) {
 					differs = true;
 				}
-				
+
 				if(!that._equalsCollection($(this), fieldname, ele))
 					differs = true;
 			});
-			
+
 			if(pojo[fieldname] && childCounter < pojo[fieldname].length) {
 				differs = true;
 			}
@@ -2311,7 +2378,7 @@
 		this._fill(true);
 	};
 
-	
+
 	/**
 	 * re-evaluate the conditionals in the form based on the given data.
 	 * if no data is given, the form is serialized
@@ -2321,7 +2388,7 @@
 		// set the new data
 		if(!pojo)
 			pojo = this.get(true);
-		
+
 		// evaluate everything
 		this._evaluateConditionals(this.element, pojo);
 	};
@@ -2351,7 +2418,7 @@
 	JsForm.prototype.destroy = function( ) {
 		return $(this.element).each(function(){
 			$(this).removeData('jsForm');
-			
+
 			if($.jsFormControls) {
 				// handle multiple form parts
 				$(this).jsFormControls("destroy");
@@ -2370,7 +2437,7 @@
 			});
 		} else {
 			var args = Array.prototype.slice.call( arguments, 1 ),
-				jsForm;
+			jsForm;
 			// none found
 			if(this.length === 0) {
 				return null;
@@ -2383,12 +2450,12 @@
 						var ret =  jsForm[method].apply(jsForm, args);
 						return ret;
 					}
-					
+
 					$.error( 'Method ' +  method + ' does not exist on jQuery.jsForm' );
 					return false;
 				}
 			}
-			
+
 			return this.each(function () {
 				jsForm = $.data(this, 'jsForm'); 
 				if (jsForm) {
@@ -2402,7 +2469,7 @@
 			});
 		}   
 	};
-		
+
 	/**
 	 * global jsForm function for intialisation
 	 */
@@ -2416,7 +2483,7 @@
 					initFunc(this, $(this.element));
 				});
 			}
-			
+
 			// remember for future initializations
 			JSFORM_INIT_FUNCTIONS[name] = initFunc;
 		} else {
@@ -2563,8 +2630,27 @@
 		// show datepicker for all inputs
 		location.find("input.date").each(function(){
 			var format = $(this).attr("data-format");
-			// only if jquery ui is available
-			if($(this).datepicker) {
+			if($(this).jqxDateTimeInput) {
+				$(this).data().valclass = "jqxDateTimeInput";
+				
+				// jqwidget
+				if(format)
+					$(this).jqxDateTimeInput({formatString: format});
+				else {
+					// get date format
+					var dateformat = null;
+					
+					if(typeof i18n !== "undefined")
+						dateformat = i18n.date;
+					else if($(document).data().i18n && $(document).data().i18n.date)
+						dateformat = $(document).data().i18n.date;
+
+					$(this).jqxDateTimeInput({formatString: dateformat.shortDateFormat});
+				}
+				
+			}
+			else if($(this).datepicker) {
+				// jquery ui
 				if(format)
 					$(this).datepicker({dateFormat: format});
 				else
@@ -2572,6 +2658,36 @@
 			}
 		});
 			
+		// date-time picker
+		location.find("input.dateTime").each(function(){
+			var format = $(this).attr("data-format");
+			if($(this).jqxDateTimeInput) {
+				$(this).data().valclass = "jqxDateTimeInput"; 
+				// jqwidget
+				if(format)
+					$(this).jqxDateTimeInput({formatString: format, showTimeButton:true});
+				else {
+					// get date format
+					var dateformat = null;
+					
+					if(typeof i18n !== "undefined")
+						dateformat = i18n.date;
+					else if($(document).data().i18n && $(document).data().i18n.date)
+						dateformat = $(document).data().i18n.date;
+					$(this).jqxDateTimeInput({formatString: dateformat.shortDateFormat + " HH:mm", showTimeButton: true});
+				}
+			}
+		});
+		
+		// show time
+		location.find("input.time").each(function(){
+			if($(this).jqxDateTimeInput) {
+				// jqwidget
+				$(this).jqxDateTimeInput({formatString: 'HH:mm', showTimeButton: true, showDateButton:false});
+				$(this).data().valclass = "jqxDateTimeInput"; 
+			}
+		});
+
 		
 		// input validation (number)
 		var numberRegexp =  new RegExp("^[0-9.,-]+$");
@@ -3094,13 +3210,17 @@
 					return value;
 				}
 				
+				var neg = value < 0;
+				if(neg)
+					value *= -1; 
+					
 				if(value < 1000) {
-					return $.jsFormControls.Format.decimal(value) + ' ' + unit;
+					return (neg?'-':'') + $.jsFormControls.Format.decimal(value) + ' ' + unit;
 				}
 				var un = 1000;
 				var exp = Math.floor(Math.log(value) / Math.log(un));
 				var pre = "kmgtpe".charAt(exp-1) + unit;
-				return $.jsFormControls.Format.decimal(Math.round(value*100 / Math.pow(un, exp))/100) + ' ' + pre;
+				return (neg?'-':'') + $.jsFormControls.Format.decimal(Math.round(value*100 / Math.pow(un, exp))/100) + ' ' + pre;
 			},
 			
 			/**
@@ -3279,7 +3399,7 @@
 					year += 1900;
 				}
 				
-				// default number format
+				// get date format
 				var dateformat = null;
 				
 				if(typeof i18n !== "undefined")
