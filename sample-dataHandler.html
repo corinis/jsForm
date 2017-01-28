@@ -1,0 +1,67 @@
+<html>
+<head>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="src/jquery.jsForm.js"></script>
+<script>
+$(function(){
+	// some json data
+	var jsonData = {
+		name: "emaNtsriF",	// standard inputs
+		links: [{href:'XXhttp://www.gargan.org',description:'Gargan.org'},{href:'XXhttp://www.github.com',description:'GitHub'}],	// lists
+	};
+
+	// initialize the form, prefix is optional and defaults to data
+	$("#details").jsForm({
+		data:jsonData,
+		dataHandler: {
+			serialize: function(val, field, obj) {
+				if(!val)
+					return null;
+				if(field.hasClass("prex")) {
+					return "XX" + val;
+				}
+				if(field.hasClass("rev")) {
+					return val.split("").reverse().join("");;
+				}
+				return val;
+			},
+			deserialize: function(val, field, obj) {
+				if(!val)
+					return null;
+				if(field.hasClass("prex")) {
+					if(val.substring(0,2) === "XX")
+						return val.substring(2);
+				}
+				if(field.hasClass("rev")) {
+					return val.split("").reverse().join("");;
+				}
+				return val;
+			}
+		}
+	});
+
+	$("#show").click(function() {
+		// show the json data
+		alert(JSON.stringify($("#details").jsForm("get"), null, " "));
+	});
+});
+</script>
+</head>
+<body>
+<h1>Simple Form Test</h1>
+<div id="details">
+	Name: <input class="rev" name="data.name"/><br/>
+	<br/>
+	<fieldset>
+		<legend>Links</legend>
+		<ul class="collection" data-field="data.links">
+			<li><span class="field">links.description</span> Link: <input class="prex" name="links.href"/> <button class="delete">x</button></li>
+		</ul>
+	</fieldset>
+	<button class="add" data-field="data.links">add a link</button><br/>
+	Additional field: <input name="data.addedField" class="rev"/>
+	
+</div>
+<button id="show">Show Object</button>
+</body>
+</html>

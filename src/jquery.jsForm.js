@@ -62,6 +62,19 @@
 			 */
 			processors: null,
 			/**
+			 * dataHandler will be called for each field filled. 
+			 */
+			dataHandler: null, /*{
+				serialize: function(val, field, obj) {
+					if(field.hasClass("reverse"))
+						return val.reverse();
+				},
+				deserialize: function(val, field, obj) {
+					if(field.hasClass("reverse"))
+						return val.reverse();
+				}
+			}*/
+			/**
 			 * optional array of elements that should be connected with the form. This
 			 * allows the splitting of the form into different parts of the dom.
 			 */
@@ -580,7 +593,7 @@
 	};
 
 	/**
-	 * generate the array with all dome elements that are conencted with 
+	 * generate the array with all DOM elements that are connected with 
 	 * the form.
 	 * @private
 	 */
@@ -842,6 +855,12 @@
 					val = ($(this).val() === "true");
 				}
 			}
+			
+			// we got the value - send it to the processor
+			if(that.options.dataHandler) {
+				val = that.options.dataHandler.serialize(val, $(this), pojo); 
+			}
+			
 			// handle simple collection
 			if(name.length < 1) {
 				// handle simple collection: we want the val as result
@@ -1150,10 +1169,16 @@
 					$(this).attr("title", cdata);
 				}
 
+				// we got the value - send it to the processor
+				if(that.options.dataHandler) {
+					cdata = that.options.dataHandler.deserialize(cdata, $(this), cname, data); 
+				}
+
 				// format the string
 				if($.jsFormControls)
 					cdata = $.jsFormControls.Format.format(this, cdata);
-
+				
+				
 				if(this.nodeName.toUpperCase() === 'A') {
 					$(this).attr("href", cdata);
 				} else if(this.nodeName.toUpperCase() === 'IMG') {
@@ -1186,6 +1211,11 @@
 				}
 
 				var cdata = that._get(data, cname, false, idx);
+				
+				// we got the value - send it to the processor
+				if(that.options.dataHandler) {
+					cdata = that.options.dataHandler.deserialize(cdata, $(this), cname, data); 
+				}
 
 				if ($(this).hasClass("object")) {
 					$(this).data().pojo = cdata;
@@ -1299,6 +1329,12 @@
 				}
 
 				var value = that._get(data, cname, false, idx);
+				
+				// we got the value - send it to the processor
+				if(that.options.dataHandler) {
+					value = that.options.dataHandler.deserialize(value, $(this), cname, data); 
+				}
+
 				// try selecting based on the id 
 				if (value[pk] || !isNaN(value[pk])) {
 					// find out which one to select
@@ -1649,6 +1685,7 @@
 		if(!noInput) {
 			that._clear(ele, that.options.prefix);
 		}
+		
 
 		// fill base 
 		that._fillData(ele, that.options.data, that.options.prefix);
