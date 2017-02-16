@@ -37,9 +37,9 @@ You can also check out some [Demos](http://www.gargan.org/jsform/index.jsp).
 
 # Download
 
-Current Version: 1.3.5
+Current Version: 1.3.6
 
-* [Minified](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.min.js) + [map](https://raw.github.com/corinis/jsForm/master/dist/jquery.jsForm.min.map)
+* [Minified](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.min.js)
 * [Combined Source](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.js)
  
 On bower.io:

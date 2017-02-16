@@ -1863,7 +1863,11 @@
 		}
 
 		// delete the current line
-		line.on("delete", function(){
+		line.on("delete", function(ev, target){
+			// avoid acting on events not meant for me
+			if(target && target[0] !== this) {
+				return;
+			}
 			var ele = $(this);
 			var pojo = $(ele).data().pojo;
 			var base = $(this).closest(".collection");
@@ -1873,6 +1877,10 @@
 		});
 
 		line.on("sortUp", function(){
+			// avoid acting on events not meant for me
+			if(target && target[0] !== this) {
+				return;
+			}
 			// check if there is an up
 			var ele = $(this);
 			var prev = ele.prev(".POJO");
@@ -1886,6 +1894,10 @@
 			that._reorder(ele);
 		});
 		line.on("sortDown", function(){
+			// avoid acting on events not meant for me
+			if(target && target[0] !== this) {
+				return;
+			}
 			// check if there is a down
 			var ele = $(this);
 			var next = ele.next(".POJO");
@@ -1901,13 +1913,16 @@
 
 
 		$(".delete", line).click(function(){
-			$(this).closest(".POJO").trigger("delete");
+			var ele = $(this).closest(".POJO");
+			ele.trigger("delete", [ele]);
 		});
 		$(".sortUp", line).click(function(){
-			$(this).closest(".POJO").trigger("sortUp");
+			var ele = $(this).closest(".POJO");
+			ele.trigger("sortUp", [ele]);
 		});
 		$(".sortDown", line).click(function(){
-			$(this).closest(".POJO").trigger("sortDown");
+			var ele = $(this).closest(".POJO");
+			ele.trigger("sortDown", [ele]);
 		});
 
 		// if collection is sortable: refresh it

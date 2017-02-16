@@ -52,7 +52,6 @@ module.exports = function( grunt ) {
 				},
 				options: {
 					banner: "/*!\n * jQuery.jsForm v<%= pkg.version %> | (c) 2015 <%=pkg.author.name%> <%=pkg.author.url%>\n * Usage: <%=pkg.homepage%>\n */\n",
-					sourceMap: "js/jquery.jsForm.min.map",
 					beautify: {
 						ascii_only: true
 					}
