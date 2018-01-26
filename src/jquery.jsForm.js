@@ -1374,27 +1374,6 @@
 	};
 
 	/**
-	 * Ceate a pojo from a form for serialization (i.e. through saving). 
-	 * Takes special data definition classes into account:
-	 * <ul>
-	 *  <li>number: the content will be transformed into a number (default string</li>
-	 *  <li>trueFalse: boolean
-	 *  <li>collection: existing collections are replaced if "class=collection" elements exist
-	 * </ul>
-	 * This will also adjust all "changed" field to unchanged. 
-	 * @param ignoreInvalid return a pojo, even if fields do not pass client side validation
-	 * @return {Object} a new pojo
-	 */
-	JsForm.prototype.save = function(ignoreInvalid) {
-		var data = this.get(ignoreInvalid);
-		// reset changes
-		$.each(this._getForm(), function(){
-			this.find("." + that.options.trackChanges).removeClass(that.options.trackChanges);
-		});
-		return data;
-	};
-	
-	/**
 	 * ceate a pojo from a form. Takes special data definition classes into account:
 	 * <ul>
 	 *  <li>number: the content will be transformed into a number (default string</li>
@@ -2312,7 +2291,18 @@
 	};
 
 	/**
-	 * Resets any changes and updates the dat abased on the input 
+	 * Clears all change information to avoid triggering change events
+	 */
+	JsForm.prototype.clearChanged = function() {
+		var that = this;
+		// reset changes
+		$.each(this._getForm(), function(){
+			this.find("." + that.options.trackChanges).removeClass(that.options.trackChanges);
+		});
+	}
+	
+	/**
+	 * Resets any changes and updates the data based on user input (revert) 
 	 */
 	JsForm.prototype.resetChanged = function() {
 		if(!this.options.trackChanges)
