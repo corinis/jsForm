@@ -651,7 +651,8 @@
 				$('option[selected="selected"]', this).prop('selected', false);
 				$('option:first', this).prop('selected', true);
 
-				$(this).val($("option:first", this).val()).change();
+				$(this).val($("option:first", this).val())
+				$(this).change();
 			}
 			// trigger change
 			$(this).change();
