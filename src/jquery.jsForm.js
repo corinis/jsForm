@@ -651,7 +651,7 @@
 				$('option[selected="selected"]', this).prop('selected', false);
 				$('option:first', this).prop('selected', true);
 
-				$(this).val($("option:first", this).val())
+				$(this).val($("option:first", this).val());
 				$(this).change();
 			}
 			// trigger change
@@ -777,7 +777,7 @@
 
 			// jsobject use the pojo data directly - ignore the rest
 			if($(this).hasClass("jsobject")) {
-				val = $(this).data("pojo");
+				val = $(this).data().pojo;
 			}
 			else {
 				// ignore empty values when skipEmpty is set
@@ -795,7 +795,7 @@
 							val = JSON.parse($("option:selected", this).attr("data-obj"));
 
 					} else {
-						val = $(this).data("pojo");
+						val = $(this).data().pojo;
 					}
 					// object can also have a processor
 					if($.isFunction($(this).data().processor)) {
@@ -1178,7 +1178,6 @@
 				// format the string
 				if($.jsFormControls)
 					cdata = $.jsFormControls.Format.format(this, cdata);
-				
 				
 				if(this.nodeName.toUpperCase() === 'A') {
 					$(this).attr("href", cdata);
@@ -1686,7 +1685,6 @@
 		if(!noInput) {
 			that._clear(ele, that.options.prefix);
 		}
-		
 
 		// fill base 
 		that._fillData(ele, that.options.data, that.options.prefix);
