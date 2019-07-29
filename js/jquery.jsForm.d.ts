@@ -70,7 +70,7 @@ interface JsFormConfig {
      * The class used when calling preventEditing. This will replace all
      * inputs with a span with the given field
      */
-    viewClass: string = "value";
+    viewClass: string = "jsfValue";
 }
 
 interface JsFormDataHandler {

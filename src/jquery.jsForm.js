@@ -768,7 +768,7 @@
 				current[prev] = val;
 			}
 		}
-	}
+	};
 	
 	/**
 	 * ceate a pojo from a form. Takes special data definition classes into account:
@@ -2388,7 +2388,7 @@
 		$.each(this._getForm(), function(){
 			this.find("." + that.options.trackChanges).removeClass(that.options.trackChanges);
 		});
-	}
+	};
 	
 	/**
 	 * Resets any changes and updates the data based on user input (revert) 

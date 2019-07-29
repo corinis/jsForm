@@ -127,7 +127,9 @@
 		
 		// show datepicker for all inputs
 		location.find("input.date").each(function(){
+			var dateformat = null;
 			var format = $(this).attr("data-format");
+			
 			if(window.flatpickr) {
 				var $this = $(this);
 				window.flatpickr($(this)[0], {
@@ -151,7 +153,6 @@
 					$(this).jqxDateTimeInput({formatString: format});
 				else {
 					// get date format
-					var dateformat = null;
 					
 					if(typeof i18n !== "undefined")
 						dateformat = i18n.date;
@@ -167,11 +168,11 @@
 			}
 			else if($(this).datepicker) {
 				// get date format
-				var dateformat = null;
-				if(format)
-					dateformat = format
-				else if(typeof i18n !== "undefined")
+				if(format) {
+					dateformat = format;
+				} else if(typeof i18n !== "undefined") {
 					dateformat = i18n.jqdate;
+				}
 				
 				// jquery ui
 				if(dateformat)
@@ -203,12 +204,11 @@
 					}]
 				});
 			} else if($this.datetimepicker && $this.hasClass("form-control")) {
-				// get date format
-				var dateformat = null;
-				if(format)
-					dateformat = format
-				else if(typeof i18n !== "undefined")
+				if(format) {
+					dateformat = format;
+				} else if(typeof i18n !== "undefined") {
 					dateformat = i18n.momentDate;
+				}
 				
 				// convert to group
 				var id = "DTID_" + $(this).attr("name").replace('.', '_');
@@ -220,7 +220,7 @@
 					.attr("data-target", "#" + id);
 				var addendum = $('<div class="input-group-append" data-toggle="datetimepicker">' +
 						'<div class="input-group-text"><i class="fa fa-calendar"></i></div>' + 
-                	'</div>');
+						'</div>');
 				group.append($this);
 				group.append(addendum);
 				addendum.attr("data-target", "#" + id);
@@ -262,10 +262,10 @@
 		
 		// show time
 		location.find("input.time").each(function(){
-			 if($(this).datetimepicker) {
-					$(this).datetimepicker();
-			 }
-			 else if($(this).jqxDateTimeInput) {
+			if($(this).datetimepicker) {
+				$(this).datetimepicker();
+			}
+			else if($(this).jqxDateTimeInput) {
 				// jqwidget
 				$(this).jqxDateTimeInput({formatString: 'HH:mm', showTimeButton: true, showDateButton:false});
 				$(this).data().valclass = "jqxDateTimeInput"; 
