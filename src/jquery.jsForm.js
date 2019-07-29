@@ -83,7 +83,7 @@
 			 * The class used when calling preventEditing. This will replace all
 			 * inputs with a span with the given field
 			 */
-			viewClass: "value"
+			viewClass: "jsfValue"
 		}, options);
 
 		// read prefix from dom
@@ -389,6 +389,9 @@
 					// the new entry has as index the count of all "lines"
 					var idx = $(this).children(".POJO").length;
 
+					// fill read only fields
+					that._fillFieldData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
+					
 					// "fill data"
 					that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
 
@@ -400,7 +403,7 @@
 
 		$(".add", form).each(function(){
 			var fieldName = $(this).attr("data-field"); 
-			if(!fieldName) {
+			if (!fieldName || fieldName.indexOf(prefix + ".") !== 0) {
 				return;
 			}
 
@@ -427,18 +430,18 @@
 		// insert: similar to add - but works with events
 		$(".insert", form).each(function(){
 			var fieldName = $(this).attr("data-field"); 
-			if(!fieldName) {
+			if (!fieldName || fieldName.indexOf(prefix + ".") !== 0) {
 				return;
 			}
 
 			// only init once
-			if($(this).data("collections")) {
+			if($(this).data().isCollection) {
 				return;
 			}
+			$(this).data().isCollection = true;
 
 			// remember the collections
 			$(this).data("collections", collectionMap[$(this).attr("data-field")]);
-
 			$(this).on("insert", function(ev, pojo){
 				if(!pojo)
 					pojo = $(this).data().pojo;
@@ -479,6 +482,7 @@
 						var idx = $(this).children(".POJO").length;
 
 						// fill the "information"
+						that._fillFieldData(line, pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
 						that._fillData(line, pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
 
 						$(this).append(line);
@@ -716,6 +720,57 @@
 	};
 
 	/**
+	 * set a value in a pojo 
+	 * @param pojo the data pojo
+	 * @param name the name of the field to set (allows . syntax)
+	 * @param val the value to set
+	 * @param $this the object the val comes from for array check
+	 */
+	JsForm.prototype._setPojoVal = function(pojo, name, val, $this) {
+		var that = this;
+		
+		// check if we have a . - if so split
+		if (name.indexOf(".") === -1)
+		{
+			// handle arrays
+			if($this && $this.hasClass("array")) {
+				that._handleArrayInPojo($this, pojo, name, val);
+			}
+			else
+				pojo[name] = val;
+		}
+		else
+		{
+			var parts = name.split(".");
+			var prev;
+			var current = pojo[parts[0]];
+			if (!current || !$.isPlainObject(current)) {
+				pojo[parts[0]] = {};
+				current = pojo[parts[0]]; 
+			}
+
+			for(var i = 1; i < parts.length - 1; i++) {
+				prev = current;
+				current = prev[parts[i]];
+				if(current === undefined || current === null) {
+					current = {};
+					prev[parts[i]] = current;
+				}
+			}
+
+			// set prev as the name
+			prev = parts[parts.length - 1];
+
+			// handle arrays 
+			if($this && $this.hasClass("array")) { 
+				that._handleArrayInPojo($(this), current, prev, val);
+			} else {
+				current[prev] = val;
+			}
+		}
+	}
+	
+	/**
 	 * ceate a pojo from a form. Takes special data definition classes into account:
 	 * <ul>
 	 *  <li>number|currency: the content will be transformed into a number (default string</li>
@@ -744,7 +799,7 @@
 			$.extend(true, pojo, startObj);
 		}
 
-		$(start).find("input,select,textarea,.jsobject").each(function(){
+		$(start).find("input,select,textarea,button,.jsobject").each(function(){
 			var name = $(this).attr("data-name");
 			if(!name) {
 				name = $(this).attr("name");
@@ -869,45 +924,7 @@
 				return false;
 			}
 
-			// check if we have a . - if so split
-			if (name.indexOf(".") === -1)
-			{
-				// handle arrays
-				if($(this).hasClass("array")) {
-					that._handleArrayInPojo($(this), pojo, name, val);
-				}
-				else
-					pojo[name] = val;
-			}
-			else
-			{
-				var parts = name.split(".");
-				var prev;
-				var current = pojo[parts[0]];
-				if (!current || !$.isPlainObject(current)) {
-					pojo[parts[0]] = {};
-					current = pojo[parts[0]]; 
-				}
-
-				for(var i = 1; i < parts.length - 1; i++) {
-					prev = current;
-					current = prev[parts[i]];
-					if(current === undefined || current === null) {
-						current = {};
-						prev[parts[i]] = current;
-					}
-				}
-
-				// set prev as the name
-				prev = parts[parts.length - 1];
-
-				// handle arrays 
-				if($(this).hasClass("array")) { 
-					that._handleArrayInPojo($(this), current, prev, val);
-				} else {
-					current[prev] = val;
-				}
-			}
+			that._setPojoVal(pojo, name, val, $(this));
 		});
 
 		// for "selection" collection
@@ -935,7 +952,7 @@
 			name = name.substring((prefix+".").length);
 
 			// always an array (reset current data)
-			pojo[name] = [];
+			var arrVal = [];
 
 			// see if we go by checkbox or by css class (if both -> class wins)
 			var selectedClass = $(this).attr("data-selected");
@@ -954,7 +971,7 @@
 				// get the "id"/object
 				var cobj = null;
 				// no id given - check the value of the checkbox
-				if(!id) {
+				if(!id && ! $("input[name='"+name+"']", this).hasClass("obj")) {
 					cobj = $("input[name='"+name+"']", this).val();
 				} else {
 					// get the object
@@ -968,12 +985,10 @@
 				if(!cobj)
 					return;
 
-				pojo[name].push(cobj);
-
-
+				arrVal.push(cobj);
 			});
 
-
+			that._setPojoVal(pojo, name, arrVal);
 		});
 
 
@@ -1039,11 +1054,6 @@
 				colData = [];
 			}
 
-			// cut away any prefixes - only the fieldname is used
-			if(fieldname.indexOf('.') !== -1) {
-				fieldname = fieldname.substring(fieldname.lastIndexOf('.')+1);
-			}
-
 			// reset selection
 			if(selectedClass) {
 				$(this).children("." + selectedClass).removeClass(selectedClass);
@@ -1062,7 +1072,9 @@
 					$(this).trigger("selected");
 				});
 			}
-			$("input[name='"+fieldname+"']", this).prop('checked', false);
+			
+			// remove ALL checkboxes
+			$("input[name='"+cname+"']", this).prop('checked', false);
 
 			// now go through each child and apply selection if appropriate
 			$(this).children().each(function(){
@@ -1070,7 +1082,7 @@
 				var cid = "";
 				// no id given - check the value of the checkbox
 				if(!id) {
-					cid = $("input[name='"+fieldname+"']", this).val();
+					cid = $("input[name='"+cname+"']", this).val();
 				} else {
 					// get the object
 					var obj = $(this).data("obj");
@@ -1097,7 +1109,7 @@
 						if(selectedClass) {
 							$(this).addClass(selectedClass).trigger("selected");
 						}
-						$("input[name='"+fieldname+"']", this).prop('checked', true);
+						$("input[name='"+cname+"']", this).prop('checked', true);
 						return;
 					}
 				}
@@ -1108,13 +1120,11 @@
 		});
 	};
 
-
 	/**
-	 * fill a dom subtree with data.
+	 * fill all non-editable values with data.
 	 * <ul>
-	 *  <li>&lt;span class="field"&gt;prefix.fieldname&lt;/span&gt;
-	 *  <li>&lt;input name="prefix.fieldname"/&gt;
-	 *  <li>&lt;input type="checkbox" name="prefix.fieldname"/&gt;
+	 *  <li>&lt;span class="field"&gt;prefix.fieldname&lt;/span&gt; -> escapes html (add class=noescape to avoid)
+	 *  <li>&lt;div class="field"&gt;prefix.fieldname&lt;/div&gt; -> allows html
 	 *  <li>&lt;a class="field" href="prefix.fieldname"&gt;linktest&lt;/a&gt;
 	 *  <li>&lt;img class="field" src="prefix.fieldname"/&gt;
 	 * </ul>
@@ -1124,13 +1134,28 @@
 	 * @param idx the index - this is only used for collections
 	 * @private
 	 */
-	JsForm.prototype._fillData = function (parent, data, prefix, idx) {
+	JsForm.prototype._fillFieldData = function (parent, data, prefix, idx) {
 		var that = this;
 		var $parent = $(parent);
 
 		// locate all "fields"
 		$parent.find(".field").each(function() {
-			var name = $(this).data("name");
+			var name = $(this).data().name;
+			if(!name) {
+				name = $(this).data().field;
+			}
+						
+			// add optional prefix
+			var dataprefix = $(this).attr("data-prefix");
+			if(!dataprefix) {
+				dataprefix = "";
+			}
+			// and postfix
+			var datapostfix = $(this).attr("data-postfix");
+			if(!datapostfix) {
+				datapostfix = "";
+			}
+						
 			if(!name) {
 				if(this.nodeName.toUpperCase() === 'A') {
 					name = $(this).attr("href");
@@ -1157,6 +1182,13 @@
 
 				if(!cdata && cdata !== 0 && cdata !== false) {
 					cdata = "";
+				} else if(cdata !== "") {
+					if(dataprefix !== "") {
+						cdata = dataprefix + cdata;
+					}
+					if(datapostfix !== "") {
+						cdata = cdata + datapostfix;
+					}
 				}
 
 				// check for currency
@@ -1170,29 +1202,66 @@
 					$(this).attr("title", cdata);
 				}
 
-				// we got the value - send it to the processor
-				if(that.options.dataHandler) {
-					cdata = that.options.dataHandler.deserialize(cdata, $(this), cname, data); 
-				}
-
-				// format the string
-				if($.jsFormControls)
-					cdata = $.jsFormControls.Format.format(this, cdata);
-				
-				if(this.nodeName.toUpperCase() === 'A') {
-					$(this).attr("href", cdata);
-				} else if(this.nodeName.toUpperCase() === 'IMG') {
-					$(this).attr("src", cdata);
-				}
-				else if(this.nodeName.toUpperCase() === "DIV"){
-					$(this).html(cdata);
+				if($(this).hasClass("setObj")) {
+					// keep the data object
+					$(this).data().pojo = cdata;
+					$(this).addClass("POJO");
 				} else {
-					$(this).text(cdata);
+					// we got the value - send it to the processor
+					if(that.options.dataHandler) {
+						cdata = that.options.dataHandler.deserialize(cdata, $(this), cname, data); 
+					}
+	
+					// format the string
+					if($.jsFormControls) {
+						cdata = $.jsFormControls.Format.format(this, cdata);
+					}
+					
+					if(this.nodeName.toUpperCase() === 'A') {
+						$(this).attr("href", cdata);
+					} else if(this.nodeName.toUpperCase() === 'IMG') {
+						$(this).attr("src", cdata);
+					}
+					else if(this.nodeName.toUpperCase() === "DIV" || $(this).hasClass("noescape")){
+						$(this).html(cdata);
+					} else {
+						$(this).text(cdata);
+					}
 				}
 			}
 		});
+	},
 
-		$("input, textarea", $parent).each(function() {
+	/**
+	 * fill a dom subtree with data.
+	 * <ul>
+	 *  <li>&lt;input name="prefix.fieldname"/&gt;
+	 *  <li>&lt;select name="prefix.fieldname"&gt;...
+	 *  <li>&lt;input type="checkbox" name="prefix.fieldname"/&gt;
+	 *  <li>&lt;textarea name="prefix.fieldname"/&gt;
+	 * </ul>
+	 * @param parent the root of the subtree
+	 * @param data the data
+	 * @param prefix the prefix used to find fields
+	 * @param idx the index - this is only used for collections
+	 * @private
+	 */
+	JsForm.prototype._fillData = function (parent, data, prefix, idx) {
+		var that = this;
+		var $parent = $(parent);
+
+		// allow repainting of this subtree
+		if(!$parent.data().refresh) {
+			$parent.data().refresh = true;
+			$parent.on("refresh", function(){
+				var curData = $(this).data().pojo;
+				if(!curData)
+					return;
+				that._fillData($(this), curData, prefix, idx);
+			});
+		}
+
+		$("input,textarea,button", $parent).each(function() {
 			var name = $(this).attr("name");
 			if(!name) {
 				return;
@@ -1293,7 +1362,10 @@
 							$(this).val("");
 						}
 					} else if($(this).data().valclass && $(this)[$(this).data().valclass]){
-						$(this)[$(this).data().valclass]("val", cdata);
+						if(cdata.toDate)
+							$(this)[$(this).data().valclass]("val", cdata.toDate());
+						else
+							$(this)[$(this).data().valclass]("val", cdata);
 					}else 
 						$(this).val(cdata);
 				}
@@ -1595,13 +1667,21 @@
 						val = '&#160;';
 				}
 
-				// convert \n to brs - escape all other html
-				val = val.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
-				var thespan = $('<span class="'+viewClass+'">'+val+'</span>');
-				if($(this).parent().hasClass("ui-wrapper"))
-					$(this).parent().hide().wrap(thespan);
-				else
-					$(this).hide().wrap(thespan);
+				var thespan;
+				if($(this).hasClass("noescape")) {
+					thespan = $('<div class="'+viewClass+'">'+val+'</div>');
+					thespan.html(val);
+				} else {
+					// convert \n to brs - escape all other html
+					val = val.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
+					thespan = $('<span class="'+viewClass+'">'+val+'</span>');
+				}
+				
+				if($(this).parent().hasClass("ui-wrapper")) {
+					$(this).parent().hide().before(thespan);
+				} else {
+					$(this).hide().before(thespan);
+				}
 			});
 			// selects are handled slightly different
 			$this.find("select").each(function() {
@@ -1616,19 +1696,18 @@
 
 				// toggle switches work a little different 
 				if($(this).hasClass("ui-toggle-switch")) {
-					$(this).prev().hide().wrap(thespan);
+					$(this).prev().hide().before(thespan);
 				}
 				else {
-					$(this).hide().wrap(thespan);
+					$(this).hide().before(thespan);
 				}
 			});
 		}
 		else
 		{
-			$this.find("span." + viewClass).each(function() {
+			$this.find("span." + viewClass +",div." + viewClass).each(function() {
 				// remove text and then unwrap
-				var ele = $(this).children("input,select,textarea,.ui-wrapper,.ui-toggle-switch").show().detach();
-				$(this).before(ele);
+				var ele = $(this).next("input,select,textarea,.ui-wrapper,.ui-toggle-switch").show();
 				$(this).remove();
 			});
 		}
@@ -1670,6 +1749,8 @@
 		$.each(this._getForm(), function(){
 			that._fillDom(this, noInput);
 		});
+		
+		$(this.element).trigger("filled");
 	};
 
 	/**
@@ -1685,11 +1766,17 @@
 		if(!noInput) {
 			that._clear(ele, that.options.prefix);
 		}
+		
+		// fill read-only fields
+		that._fillFieldData(ele, that.options.data, that.options.prefix);
 
-		// fill base 
-		that._fillData(ele, that.options.data, that.options.prefix);
-		// fill select-collections
-		that._fillSelectCollection(ele, that.options.data, that.options.prefix);
+		if(!noInput) {
+			// fill base 
+			that._fillData(ele, that.options.data, that.options.prefix);
+			// fill select-collections
+			that._fillSelectCollection(ele, that.options.data, that.options.prefix);
+		}
+		
 		// fill normal collection forms
 		that._fillCollection(ele, that.options.data, that.options.prefix, noInput);
 		// (re-)evaluate all conditionals
@@ -1736,7 +1823,8 @@
 
 						var line = $(container.children().get(i));
 						var cur = colData[i];
-						that._fillData(line, cur, cname, i+1);
+						// only fill read only fields
+						that._fillFieldData(line, cur, cname, i+1);
 						// fill with data
 						that._fillCollection(line, cur, cname, noInput);
 					}
@@ -1833,6 +1921,8 @@
 			container.trigger("addCollection", [line, cur]);
 
 			if(prefix) {
+				// fill read-only fields
+				that._fillFieldData(line, cur, prefix, i+1);
 				// fill data - including the index
 				that._fillData(line, cur, prefix, i+1);
 				// enable collection controls
@@ -1875,7 +1965,7 @@
 			$(base).trigger("deleteCollection", [ele, pojo]);
 		});
 
-		line.on("sortUp", function(){
+		line.on("sortUp", function(ev, target){
 			// avoid acting on events not meant for me
 			if(target && target[0] !== this) {
 				return;
@@ -1892,7 +1982,7 @@
 			// reorder (if possible)
 			that._reorder(ele);
 		});
-		line.on("sortDown", function(){
+		line.on("sortDown", function(ev, target){
 			// avoid acting on events not meant for me
 			if(target && target[0] !== this) {
 				return;

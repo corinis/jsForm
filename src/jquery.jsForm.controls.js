@@ -128,7 +128,22 @@
 		// show datepicker for all inputs
 		location.find("input.date").each(function(){
 			var format = $(this).attr("data-format");
-			if($(this).jqxDateTimeInput) {
+			if(window.flatpickr) {
+				var $this = $(this);
+				window.flatpickr($(this)[0], {
+					enableTime: false,
+					allowInput: true,
+					time_24hr: false,
+					dateFormat: i18n.flatpickrDate,
+					onOpen: [function(a,b,inst){
+						var d = new Date();
+						if($this.val() === '')
+							d = moment($this.val(), i18n.momentDateTime).toDate();
+						inst.jumpToDate(new Date());
+						inst.setDate(new Date());
+					}]
+				});
+			} else if($(this).jqxDateTimeInput) {
 				$(this).data().valclass = "jqxDateTimeInput";
 				
 				// jqwidget
@@ -143,14 +158,24 @@
 					else if($(document).data().i18n && $(document).data().i18n.date)
 						dateformat = $(document).data().i18n.date;
 
-					$(this).jqxDateTimeInput({formatString: dateformat.shortDateFormat});
+					$(this).jqxDateTimeInput({
+						formatString: dateformat.shortDateFormat,
+						width: $(this).width() 
+						});
 				}
 				
 			}
 			else if($(this).datepicker) {
-				// jquery ui
+				// get date format
+				var dateformat = null;
 				if(format)
-					$(this).datepicker({dateFormat: format});
+					dateformat = format
+				else if(typeof i18n !== "undefined")
+					dateformat = i18n.jqdate;
+				
+				// jquery ui
+				if(dateformat)
+					$(this).datepicker({dateFormat: dateformat});
 				else
 					$(this).datepicker();
 			}
@@ -158,12 +183,69 @@
 			
 		// date-time picker
 		location.find("input.dateTime").each(function(){
+
 			var format = $(this).attr("data-format");
-			if($(this).jqxDateTimeInput) {
-				$(this).data().valclass = "jqxDateTimeInput"; 
+			var $this = $(this);
+			if(window.flatpickr) {
+				window.flatpickr($(this)[0], {
+					enableTime: true,
+					time_24hr: true,
+					allowInput: true,
+					dateFormat: i18n.flatpickrDateTime,
+					onOpen: [function(a,b,inst){
+						if($this.val() === '')
+							inst.jumpToDate(new Date());
+						else {
+							var curDate = moment($this.val(), i18n.momentDateTime);
+							inst.jumpToDate(curDate.toDate());
+							inst.setDate(curDate.toDate(), true);
+						}
+					}]
+				});
+			} else if($this.datetimepicker && $this.hasClass("form-control")) {
+				// get date format
+				var dateformat = null;
+				if(format)
+					dateformat = format
+				else if(typeof i18n !== "undefined")
+					dateformat = i18n.momentDate;
+				
+				// convert to group
+				var id = "DTID_" + $(this).attr("name").replace('.', '_');
+				var group = $('<div class="input-group date" data-target-input="nearest"/>');
+				group.attr("id", id);
+				$this.parent().append(group);
+				
+				$this.addClass("datetimepicker-input")
+					.attr("data-target", "#" + id);
+				var addendum = $('<div class="input-group-append" data-toggle="datetimepicker">' +
+						'<div class="input-group-text"><i class="fa fa-calendar"></i></div>' + 
+                	'</div>');
+				group.append($this);
+				group.append(addendum);
+				addendum.attr("data-target", "#" + id);
+
+				// jquery ui
+				if(dateformat)
+					$(this).datetimepicker({format: "DD.MM.YYYY " + " HH:mm"});
+				else {
+					$(this).datetimepicker();
+				}
+			}
+			else if($(this).jqxDateTimeInput) {
+				$(this).data().valclass = "jqxDateTimeInput";
+				var options = {
+						showTimeButton:true
+				};
+				if($(this).attr("data-width")) {
+					options.width = Number($(this).attr("data-width"));
+				} else {
+					options.width = $(this).width();
+				}
+
 				// jqwidget
 				if(format)
-					$(this).jqxDateTimeInput({formatString: format, showTimeButton:true});
+					options.formatString = format;
 				else {
 					// get date format
 					var dateformat = null;
@@ -172,14 +254,18 @@
 						dateformat = i18n.date;
 					else if($(document).data().i18n && $(document).data().i18n.date)
 						dateformat = $(document).data().i18n.date;
-					$(this).jqxDateTimeInput({formatString: dateformat.shortDateFormat + " HH:mm", showTimeButton: true});
+					options.formatString = dateformat.shortDateFormat + " HH:mm";
 				}
+				$(this).jqxDateTimeInput(options);
 			}
 		});
 		
 		// show time
 		location.find("input.time").each(function(){
-			if($(this).jqxDateTimeInput) {
+			 if($(this).datetimepicker) {
+					$(this).datetimepicker();
+			 }
+			 else if($(this).jqxDateTimeInput) {
 				// jqwidget
 				$(this).jqxDateTimeInput({formatString: 'HH:mm', showTimeButton: true, showDateButton:false});
 				$(this).data().valclass = "jqxDateTimeInput"; 
@@ -474,7 +560,7 @@
 	};
 	
 	/**
-	 * global jsForm function for intialisation
+	 * global jsForm function for intialization
 	 */
 	$.jsFormControls = function ( name, initFunc ) {
 		var jsForms;
@@ -517,6 +603,10 @@
 					if(isNaN(cdata))
 						return cdata;
 					return $.jsFormControls.Format.date(cdata);
+				}  else if($(ele).hasClass("time")) {
+					if(isNaN(cdata))
+						return cdata;
+					return $.jsFormControls.Format.time(cdata);
 				} else if($(ele).hasClass("currency")) {
 					return $.jsFormControls.Format.currency(cdata);
 				} else if($(ele).hasClass("byte")) {
@@ -887,6 +977,7 @@
 					}
 					return "";
 				}
+				
 				if(isNaN(value))
 					return value;
 				
@@ -905,9 +996,11 @@
 				else if($(document).data().i18n && $(document).data().i18n.date)
 					dateformat = $(document).data().i18n.date;
 
-				if($.format)
+				
+
+				if($.format) {
 					return $.format.date(d, dateformat.shortDateFormat);
-				else
+				} else
 					return this._pad(d.getDate()) + "." + this._pad((d.getMonth()+1)) + "." + this._pad(year);
 			},
 
@@ -956,6 +1049,7 @@
 					value = "0";
 
 				var tokens = value.split(":");
+				var allowkomma = false;
 				// check each token
 				for(var i=0; i<tokens.length; i++) {
 					var nt = Number(tokens[i]);
