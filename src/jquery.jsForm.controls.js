@@ -129,7 +129,7 @@
 		location.find("input.date").each(function(){
 			var dateformat = null;
 			var format = $(this).attr("data-format");
-			
+			console.log("format", $(document).data().i18n.date);
 			if(window.flatpickr) {
 				var $this = $(this);
 				window.flatpickr($(this)[0], {
@@ -262,7 +262,13 @@
 		
 		// show time
 		location.find("input.time").each(function(){
-			if($(this).datetimepicker) {
+			if($(this).clockpicker && $(this).parent().hasClass("clockpicker")) {
+				$(this).attr("type", "text");
+				$(this).parent().clockpicker({ 
+						autoclose: true
+					});
+			}
+			else if($(this).datetimepicker) {
 				$(this).datetimepicker();
 			}
 			else if($(this).jqxDateTimeInput) {
