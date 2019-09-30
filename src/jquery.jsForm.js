@@ -1930,15 +1930,11 @@
 
 			// trigger a callback
 			container.trigger("addCollection", [line, cur]);
+			
+			that._addLineRefresh(prefix, line, i+1);
 
 			if(prefix) {
-				$(line).on("refresh", function(){
-					// fill read only fields
-					that._fillFieldData($(this), $(this).data().pojo, prefix, i+1);
-					
-					// "fill data"
-					that._fillData($(this), $(this).data().pojo, prefix, i+1);
-				}).trigger("refresh");
+				$(line).trigger("refresh");
 				
 				// enable collection controls
 				that._initCollection(line, prefix);
@@ -1950,8 +1946,24 @@
 
 			// trigger a callback
 			container.trigger("postAddCollection", [line, $(line).data().pojo]);
-
 		}
+	};
+	
+	/**
+	 * Add a frefresh event on a newly created line.
+	 * @parm prefix the data-prefix for this line. only matching form fields will be filled
+	 * @param line the line sub-dom
+	 * @param counter the current counter 
+	 */
+	JsForm.prototype._addLineRefresh = function(prefix, line, counter) {
+		var that = this;
+		$(line).on("refresh", function(){
+			// fill read only fields
+			that._fillFieldData($(this), $(this).data().pojo, prefix, counter);
+			
+			// "fill data"
+			that._fillData($(this), $(this).data().pojo, prefix, counter);
+		});
 	};
 
 	/**
