@@ -31,7 +31,13 @@ You can also check out some [Demos](http://www.gargan.org/jsform/index.jsp).
 * [jQuery](http://jquery.com/) 1.9 or higher
 
 ## Optional
+
+Optional Libraries are used with jquery.jsForm.controls.js to allow various input methods:
+
 * [jQuery Format Plugin](http://www.asual.com/jquery/format/) 1.2 or higher- used when working with date/number formats
+* [clockpicker](https://weareoutman.github.io/clockpicker/) used to display a clock input using input class="time"
+* [flatpickr](https://flatpickr.js.org) date and dateTime control (class="date" or class="dateTime") 
+* [datetimepicker](https://eonasdan.github.io/bootstrap-datetimepicker/) alternative datetime picker (class="date" or class="dateTime")
 * [Moment.js](http://momentjs.com/) allows for finer grained international date support
 * [jQWidgets](http://www.jqwidgets.com/) support
 

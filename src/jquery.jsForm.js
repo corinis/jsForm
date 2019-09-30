@@ -370,7 +370,6 @@
 							$(line).data().pojo = prefill;
 
 					}
-					$(this).append(line);
 
 					// init controls
 					that._enableTracking($("input,textarea,select", line));
@@ -389,11 +388,15 @@
 					// the new entry has as index the count of all "lines"
 					var idx = $(this).children(".POJO").length;
 
-					// fill read only fields
-					that._fillFieldData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
-					
-					// "fill data"
-					that._fillData(line, $(line).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
+					$(line).on("refresh", function(){
+						// fill read only fields
+						that._fillFieldData($(this), $(this).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
+						
+						// "fill data"
+						that._fillData($(this), $(this).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
+					}).trigger("refresh");
+
+					$(this).append(line);
 
 					// trigger a callback after the data has been rendered)
 					$(this).trigger("postAddCollection", [line, $(line).data().pojo]);
@@ -480,11 +483,16 @@
 
 						// the new entry has as index the count of all "lines"
 						var idx = $(this).children(".POJO").length;
-
+						
 						// fill the "information"
-						that._fillFieldData(line, pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
-						that._fillData(line, pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
-
+						$(line).on("refresh", function(){
+							// fill read only fields
+							that._fillFieldData($(this), $(this).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
+							
+							// "fill data"
+							that._fillData($(this), $(this).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
+						}).trigger("refresh");
+						
 						$(this).append(line);
 
 						// trigger a callback after the data has been rendered)
@@ -1429,8 +1437,8 @@
 						}
 					});
 					
-					// trigger the change
-					$(this).change();
+					// trigger the change (but dont mark it)
+					$(this).change().removeClass("changed");
 					return;
 				} else if($(this).hasClass("bool")) {
 					value = value ? "true" : "false";
@@ -1440,7 +1448,8 @@
 				$(this).val(value);
 				if(that.options.trackChanges)
 					$(this).data().orig = $(this).val();
-				$(this).change().trigger("fill");
+				// trigger the change (but dont mark it)
+				$(this).change().trigger("fill").removeClass("changed");
 			}
 		});
 	};
@@ -1476,6 +1485,7 @@
 
 			if(!that.options.validateHidden) {
 				this.find(".invalid").filter(":visible").each(function(){
+					console.log("Invalid: " + $(this).attr("name"));
 					invalid = true;
 					$(this).focus();
 					if(!ignoreInvalid) {
@@ -1485,6 +1495,7 @@
 				});
 			} else {
 				this.find(".invalid").each(function(){
+					console.log("Invalid: " + $(this).attr("name"));
 					invalid = true;
 					$(this).focus();
 					return false;
@@ -1921,14 +1932,19 @@
 			container.trigger("addCollection", [line, cur]);
 
 			if(prefix) {
-				// fill read-only fields
-				that._fillFieldData(line, cur, prefix, i+1);
-				// fill data - including the index
-				that._fillData(line, cur, prefix, i+1);
+				$(line).on("refresh", function(){
+					// fill read only fields
+					that._fillFieldData($(this), $(this).data().pojo, prefix, i+1);
+					
+					// "fill data"
+					that._fillData($(this), $(this).data().pojo, prefix, i+1);
+				}).trigger("refresh");
+				
 				// enable collection controls
 				that._initCollection(line, prefix);
 				// fill with data
 				that._fillCollection(line, cur, prefix);
+
 			}
 			container.append(line);
 
@@ -1945,7 +1961,8 @@
 	 */
 	JsForm.prototype._addCollectionControls = function(line) {
 		var that = this;
-
+		var container = $(line).closest(".collection");
+		
 		// enable controls on the line
 		if($.jsFormControls) {
 			$(line).jsFormControls();
@@ -1999,8 +2016,7 @@
 			// reorder (if possible)
 			that._reorder(ele);
 		});
-
-
+		
 		$(".delete", line).click(function(){
 			var ele = $(this).closest(".POJO");
 			ele.trigger("delete", [ele]);
@@ -2015,7 +2031,6 @@
 		});
 
 		// if collection is sortable: refresh it
-		var container = $(line).closest(".collection");
 		if(container.hasClass("sortable")&& $(container).sortable) {
 			container.sortable("refresh");
 		}
