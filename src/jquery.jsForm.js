@@ -856,7 +856,6 @@
 							val = $("option:selected", this).data().pojo;
 						else if($("option:selected", this).attr("data-obj"))
 							val = JSON.parse($("option:selected", this).attr("data-obj"));
-
 					} else {
 						val = $(this).data().pojo;
 					}
@@ -1109,7 +1108,7 @@
 
 				for(var i = 0; i < colData.length; i++) {
 					var did = colData[i];
-					if(id)
+					if(id && did)
 						did = did[id];
 
 					// found it
@@ -1353,8 +1352,9 @@
 					}
 
 					// format the string
-					if($.jsFormControls)
+					if($.jsFormControls) {
 						cdata = $.jsFormControls.Format.format(this, cdata);
+					}
 
 					// array handling
 					if($(this).hasClass("array")) {
@@ -1378,8 +1378,9 @@
 						$(this).val(cdata);
 				}
 
-				if(that.options.trackChanges)
+				if(that.options.trackChanges) {
 					$(this).data().orig = $(this).val();
+				}
 
 				// make sure fill comes before change to allow setting of values
 				$(this).trigger("fill");
@@ -1930,11 +1931,15 @@
 
 			// trigger a callback
 			container.trigger("addCollection", [line, cur]);
-			
-			that._addLineRefresh(prefix, line, i+1);
 
 			if(prefix) {
-				$(line).trigger("refresh");
+				$(line).on("refresh", function(){
+					// fill read only fields
+					that._fillFieldData($(this), $(this).data().pojo, prefix, i+1);
+					
+					// "fill data"
+					that._fillData($(this), $(this).data().pojo, prefix, i+1);
+				}).trigger("refresh");
 				
 				// enable collection controls
 				that._initCollection(line, prefix);
@@ -1946,24 +1951,8 @@
 
 			// trigger a callback
 			container.trigger("postAddCollection", [line, $(line).data().pojo]);
+
 		}
-	};
-	
-	/**
-	 * Add a frefresh event on a newly created line.
-	 * @parm prefix the data-prefix for this line. only matching form fields will be filled
-	 * @param line the line sub-dom
-	 * @param counter the current counter 
-	 */
-	JsForm.prototype._addLineRefresh = function(prefix, line, counter) {
-		var that = this;
-		$(line).on("refresh", function(){
-			// fill read only fields
-			that._fillFieldData($(this), $(this).data().pojo, prefix, counter);
-			
-			// "fill data"
-			that._fillData($(this), $(this).data().pojo, prefix, counter);
-		});
 	};
 
 	/**

@@ -129,7 +129,7 @@
 		location.find("input.date").each(function(){
 			var dateformat = null;
 			var format = $(this).attr("data-format");
-			console.log("format", $(document).data().i18n.date);
+			
 			if(window.flatpickr) {
 				var $this = $(this);
 				window.flatpickr($(this)[0], {
