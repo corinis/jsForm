@@ -1134,6 +1134,7 @@
 	 *  <li>&lt;div class="field"&gt;prefix.fieldname&lt;/div&gt; -> allows html
 	 *  <li>&lt;a class="field" href="prefix.fieldname"&gt;linktest&lt;/a&gt;
 	 *  <li>&lt;img class="field" src="prefix.fieldname"/&gt;
+	 *  <li>&lt;x class="templatefield" data-attr="href" data-template="some/{{prefix.id}}/{{cur.fieldname}}/whatever"&gt;...&lt;/a&gt;
 	 * </ul>
 	 * @param parent the root of the subtree
 	 * @param data the data
@@ -1144,6 +1145,36 @@
 	JsForm.prototype._fillFieldData = function (parent, data, prefix, idx) {
 		var that = this;
 		var $parent = $(parent);
+
+		if(prefix.indexOf(".") > 0) {
+			prefix = prefix.substring(prefix.indexOf(".")+1);
+		}
+
+		// locate all "mustache templates"
+		$parent.find(".templatefield").each(function() {
+			var attr = $(this).data().attr;
+			var mustache = $(this).data().mustache;
+			if(!mustache) {
+				if(typeof Hogan !== "undefined") {
+					mustache = Hogan.compile($(this).data().template.replace(/\[\[/g, "{{").replace(/]]/g, "}}"));
+				} else if(typeof Handlebars !== "undefined") {
+					mustache = {
+						render: Handlebars.compile($(this).data().template.replace(/\[\[/g, "{{").replace(/]]/g, "}}"))
+					};
+				} else {
+					console.error("No mustache renderer found. templating not available (include Handlebars.js or Hogan.js)")
+				}
+				
+				// save for next
+				$(this).data().mustache = mustache;
+			}
+			var params =  {
+				data: that.options.data,
+				cur: data
+			};
+			console.log("rendering " + $(this).data().template + " to " + mustache.render(params), params);
+			$(this).attr(attr, mustache.render(params));
+		});
 
 		// locate all "fields"
 		$parent.find(".field").each(function() {
@@ -1162,7 +1193,7 @@
 			if(!datapostfix) {
 				datapostfix = "";
 			}
-						
+			
 			if(!name) {
 				if(this.nodeName.toUpperCase() === 'A') {
 					name = $(this).attr("href");
@@ -1256,7 +1287,11 @@
 	JsForm.prototype._fillData = function (parent, data, prefix, idx) {
 		var that = this;
 		var $parent = $(parent);
-
+		
+		if(prefix.indexOf(".") > 0) {
+			prefix = prefix.substring(prefix.indexOf(".")+1);
+		}
+		
 		// allow repainting of this subtree
 		if(!$parent.data().refresh) {
 			$parent.data().refresh = true;
@@ -1275,11 +1310,6 @@
 			}
 			that._enableTracking(this);
 
-			// ignore file inputs - they cannot be "prefilled"
-			if($(this).attr("type") == "file") {
-				return;
-			}
-
 			if(!prefix || name.indexOf(prefix + ".") >= 0) {
 				var cname = name;
 				if (prefix) {
@@ -1291,6 +1321,13 @@
 				// we got the value - send it to the processor
 				if(that.options.dataHandler) {
 					cdata = that.options.dataHandler.deserialize(cdata, $(this), cname, data); 
+				}
+
+				// ignore file inputs - they have no value
+				if($(this).attr("type") == "file") {
+					$(this).data().pojo = cdata;
+					$(this).addClass("POJO");
+					return;
 				}
 
 				if ($(this).hasClass("object")) {
@@ -2214,11 +2251,15 @@
 			return $.jsFormControls.Format._getNumber(num);
 
 		// remove thousand seperator...
-		if(num.indexOf(",") != -1)
+		if(num.indexOf(",") !== -1 && num.indexOf(".") !== -1)
 		{
 			num = num.replace(new RegExp(",", 'g'), "");
 		}
-
+		else
+		if(num.indexOf(",") !== -1 && num.indexOf(".") === -1)
+		{
+			num = num.replace(new RegExp(",", 'g'), ".");
+		}
 
 		return Number(num);
 	};
