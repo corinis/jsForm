@@ -17,7 +17,7 @@ The main features of this library are:
 * handle binaries (blobs) within json by converting them to data url
 * provides helper methods to handle array manipulation (add new entry/remove an entry) using only html markup
 * Can be used in connection with an autocomplete function to add new array objects
-* Compatible with [jQuery UI](http://jqueryui.com/) and [jQuery Mobile](http://jquerymobile.com/) and [Bootstrap](https://getbootstrap.com/)
+* Compatible with [bootstrap](https://getbootstrap.com/), [jQuery UI](http://jqueryui.com/) and [jQuery Mobile](http://jquerymobile.com/) and [Bootstrap](https://getbootstrap.com/)
 * addon library for form controls and layouting (comes bundled in the minified version), internationalisation
 * unit tested using [QUnit](http://www.gargan.org/jsform/test/test.jquery.jsForm.html)
 * jslint clean
@@ -43,7 +43,7 @@ Optional Libraries are used with jquery.jsForm.controls.js to allow various inpu
 
 # Download
 
-Current Version: 1.4.0
+Current Version: 1.5.0
 
 * [Minified](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.min.js)
 * [Combined Source](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.js)
