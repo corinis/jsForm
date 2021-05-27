@@ -22,7 +22,7 @@
     }
   ],
   "dependencies": {
-    "grunt": "^0.4.1",
+    "grunt": "^1.4.1",
     "grunt-compare-size": "^0.4.2",
     "grunt-contrib-concat": "^1.0.1",
     "grunt-contrib-jshint": "^3.0.0",
