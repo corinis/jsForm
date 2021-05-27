@@ -190,8 +190,9 @@
 			var p = null;
 			if($.isPlainObject(param)) {
 				p = JSON.stringify(param, null, " ");
-			} else 
+			} else {
 				p = param;
+			}
 
 			if(!p) {
 				p = "";
@@ -220,8 +221,11 @@
 			var show = false;
 			$.each(fields, function(){
 				var value = that._getValueWithArrays(data, this);
-				if(!value || value === "" || value === 0 || value === -1)
+				if($(that).data().condition && value !== $(that).data().condition)
 					return;
+				else if(!value || value === "" || value === 0 || value === -1)
+					return;
+				 
 				show = true;
 				// skip processing
 				return false;
@@ -235,8 +239,11 @@
 			var show = false;
 			$.each(fields, function(){
 				var value = that._getValueWithArrays(data, this);
-				if(!value || value === "" || value === 0 || value === -1)
+				if($(that).data().condition && value !== $(that).data().condition)
 					return;
+				else if(!value || value === "" || value === 0 || value === -1)
+					return;
+					
 				show = true;
 				// skip processing
 				return false;
@@ -913,6 +920,10 @@
 					if(!$(this).is(':checked')) {
 						return;
 					}
+					
+					if($(this).hasClass("bool")) {
+						val = $(this).val() === "true";
+					}
 				}
 				else if($(this).hasClass("bool")) {
 					val = ($(this).val() === "true");
@@ -1162,7 +1173,7 @@
 						render: Handlebars.compile($(this).data().template.replace(/\[\[/g, "{{").replace(/]]/g, "}}"))
 					};
 				} else {
-					console.error("No mustache renderer found. templating not available (include Handlebars.js or Hogan.js)")
+					console.error("No mustache renderer found. templating not available (include Handlebars.js or Hogan.js)");
 				}
 				
 				// save for next
@@ -1172,7 +1183,6 @@
 				data: that.options.data,
 				cur: data
 			};
-			console.log("rendering " + $(this).data().template + " to " + mustache.render(params), params);
 			$(this).attr(attr, mustache.render(params));
 		});
 
@@ -1268,8 +1278,8 @@
 				}
 			}
 		});
-	},
-
+	};
+  
 	/**
 	 * fill a dom subtree with data.
 	 * <ul>
@@ -1382,7 +1392,12 @@
 					} else
 						$(this).prop("checked", (cdata === true || cdata === "true"));
 				} else if($(this).attr("type") === "radio") {
-					$(this).prop("checked", cdata == $(this).val());
+					if($(this).hasClass("bool")) {
+						$(this).prop("checked", cdata + "" === $(this).val());
+					}
+					else {
+						$(this).prop("checked", cdata == $(this).val());
+					}
 				} else {
 					if(!cdata && cdata !== 0 && cdata !== false) {
 						cdata = "";
@@ -1567,7 +1582,7 @@
 		var invalid = false;
 
 		form.find(".collection").each(function() {
-			if(!ignoreInvalid && invalid) {
+			if((!ignoreInvalid && invalid) || $(this).hasClass("transient")) {
 				return;
 			}
 
@@ -1796,7 +1811,11 @@
 
 		// handle multiple form parts
 		$.each(this._getForm(), function(){
-			that._fillDom(this, noInput);
+			try {
+				that._fillDom(this, noInput);
+			} catch (ex) {
+				console.log("Exception while filling form", ex);
+			}
 		});
 		
 		$(this.element).trigger("filled");
@@ -1892,11 +1911,13 @@
 	 * @private
 	 */
 	JsForm.prototype._fillList = function(container, data, prefix, lineFunc) {
-		var tmpl = container.data("template"),
-		that = this;
+		var tmpl = container.data("template");
+		var that = this;
+
 		if(!tmpl) {
 			return;
 		}
+
 		// clean out previous list
 		container.empty();
 
@@ -1950,7 +1971,7 @@
 				prefix = null;
 			}
 		}
-
+		
 		for(var i = 0; i < data.length; i++) {
 			var cur = data[i];
 			var line = tmpl.clone(true);
@@ -1964,32 +1985,45 @@
 				}
 			}
 
-			that._addCollectionControls(line);
+			that._fillLine(cur, line, prefix, i);
 
-			// trigger a callback
-			container.trigger("addCollection", [line, cur]);
-
-			if(prefix) {
-				$(line).on("refresh", function(){
-					// fill read only fields
-					that._fillFieldData($(this), $(this).data().pojo, prefix, i+1);
-					
-					// "fill data"
-					that._fillData($(this), $(this).data().pojo, prefix, i+1);
-				}).trigger("refresh");
-				
-				// enable collection controls
-				that._initCollection(line, prefix);
-				// fill with data
-				that._fillCollection(line, cur, prefix);
-
-			}
 			container.append(line);
 
 			// trigger a callback
 			container.trigger("postAddCollection", [line, $(line).data().pojo]);
 
 		}
+	};
+	
+
+	/**
+	 * add controls into a collection entry(i.e. delete)
+	 * @param line the new collection 
+	 * @private
+	 */
+	JsForm.prototype._fillLine = function(cur, line, prefix, i) {
+		var that = this;
+		that._addCollectionControls(line);
+
+		// trigger a callback
+		container.trigger("addCollection", [line, cur]);
+
+		if(prefix) {
+			$(line).on("refresh", function(){
+				// fill read only fields
+				that._fillFieldData($(this), $(this).data().pojo, prefix, i+1);
+				
+				// "fill data"
+				that._fillData($(this), $(this).data().pojo, prefix, i+1);
+			}).trigger("refresh");
+			
+			// enable collection controls
+			that._initCollection(line, prefix);
+			// fill with data
+			that._fillCollection(line, cur, prefix);
+
+		}
+
 	};
 
 	/**

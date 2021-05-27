@@ -168,7 +168,7 @@
 			}
 			else if($(this).datepicker) {
 				// get date format
-				if(format) {
+				if(typeof format !== "undefined") {
 					dateformat = format;
 				} else if(typeof i18n !== "undefined") {
 					dateformat = i18n.jqdate;
@@ -184,7 +184,7 @@
 			
 		// date-time picker
 		location.find("input.dateTime").each(function(){
-
+			var dateformat = null;
 			var format = $(this).attr("data-format");
 			var $this = $(this);
 			if(window.flatpickr) {
@@ -247,9 +247,6 @@
 				if(format)
 					options.formatString = format;
 				else {
-					// get date format
-					var dateformat = null;
-					
 					if(typeof i18n !== "undefined")
 						dateformat = i18n.date;
 					else if($(document).data().i18n && $(document).data().i18n.date)
@@ -725,14 +722,24 @@
 				}
 				
 				num = $.trim(num);
+				// first check: only grouping and 2 positions afterwards
+				var gs = num.indexOf(numberformat.groupingSeparator); 
+				
 				// get rid of the grouping seperator (if any exist)
-				if(num.indexOf(numberformat.groupingSeparator) !== -1)
-					num = num.replace(new RegExp("\\" +numberformat.groupingSeparator, 'g'), "");
+				if(gs !== -1) {
+					if(gs >= num.length - 3) {
+						console.log("gs looks like decimal: ");						
+						if(numberformat.groupingSeparator !== ".")
+							num = num.replace(new RegExp(numberformat.groupingSeparator, 'g'), ".");
+					} else {
+						num = num.replace(new RegExp("\\" +numberformat.groupingSeparator, 'g'), "");
+					}
+				}
 				// now convert the decimal seperator into a "real" decimal
 				if(numberformat.decimalSeparator !== '.' && num.indexOf(numberformat.decimalSeparator) !== -1) {
-					num = num.replace(new RegExp(numberformat.decimalSeparator, 'g'), ".");
+					if(numberformat.decimalSeparator !== ".")
+						num = num.replace(new RegExp(numberformat.decimalSeparator, 'g'), ".");
 				}
-				
 				return Number(num);
 			},
 
@@ -783,7 +790,9 @@
 			asNumber: function(value) {
 				return $.jsFormControls.Format._getNumber(value);
 			},
-			
+			/**
+			 * convert a number to a byte
+			 */
 			byte: function(bytes) {
 				if (bytes === "" || !bytes || isNaN(bytes)) {
 					return bytes;

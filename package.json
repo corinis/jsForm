@@ -2,7 +2,7 @@
   "name": "jquery.jsForm",
   "title": "jQuery JSON Form - jsForm",
   "description": "jQuery based form library that allows you to handle data within a js object (i.e. JSON) with html forms.\nYou can modify all fields/properties by simply creating a html form with the correct naming schema (MVVM Pattern).\n\nThe main features of this library are:\n    Full standard html with data available in a js object\n    Update an existing js object with changes done within a form\n    Fully internationalizable with number format, currency and date formatting\n    Provide basic functions for formatting (i.e. date/time, money) using html markup\n    Provide form validation functionality\n    handle collections (arrays) with subobjects\n provides helper methods to handle array manipulation (add new entry/remove an entry, sorting) using only html markup\n Can be used in connection with an autocomplete function to add new array objects",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "homepage": "https://github.com/corinis/jsForm",
   "author": {
     "name": "Niko Berger",
@@ -21,13 +21,13 @@
       "url": "https://github.com/jquery/jquery/blob/master/MIT-LICENSE.txt"
     }
   ],
-  "dependencies": {},
-  "devDependencies": {
-    "grunt-compare-size": "~0.4.0",
-    "grunt-contrib-watch": "0.3.1",
-    "grunt-contrib-jshint": "0.3.0",
-    "grunt-contrib-uglify": "0.1.2",
-    "grunt": "~0.4.1"
+  "dependencies": {
+    "grunt": "^0.4.1",
+    "grunt-compare-size": "^0.4.2",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-jshint": "^3.0.0",
+    "grunt-contrib-uglify": "^5.0.1",
+    "grunt-contrib-watch": "^1.1.0"
   },
   "keywords": []
 }
