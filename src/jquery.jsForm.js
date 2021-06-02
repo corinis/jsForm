@@ -1985,7 +1985,7 @@
 				}
 			}
 
-			that._fillLine(cur, line, prefix, i);
+			that._fillLine(container, cur, line, prefix, i);
 
 			container.append(line);
 
@@ -2001,7 +2001,7 @@
 	 * @param line the new collection 
 	 * @private
 	 */
-	JsForm.prototype._fillLine = function(cur, line, prefix, i) {
+	JsForm.prototype._fillLine = function(container, cur, line, prefix, i) {
 		var that = this;
 		that._addCollectionControls(line);
 

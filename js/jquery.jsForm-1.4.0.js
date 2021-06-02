@@ -190,8 +190,9 @@
 			var p = null;
 			if($.isPlainObject(param)) {
 				p = JSON.stringify(param, null, " ");
-			} else 
+			} else {
 				p = param;
+			}
 
 			if(!p) {
 				p = "";
@@ -220,8 +221,11 @@
 			var show = false;
 			$.each(fields, function(){
 				var value = that._getValueWithArrays(data, this);
-				if(!value || value === "" || value === 0 || value === -1)
+				if($(that).data().condition && value !== $(that).data().condition)
 					return;
+				else if(!value || value === "" || value === 0 || value === -1)
+					return;
+				 
 				show = true;
 				// skip processing
 				return false;
@@ -235,8 +239,11 @@
 			var show = false;
 			$.each(fields, function(){
 				var value = that._getValueWithArrays(data, this);
-				if(!value || value === "" || value === 0 || value === -1)
+				if($(that).data().condition && value !== $(that).data().condition)
 					return;
+				else if(!value || value === "" || value === 0 || value === -1)
+					return;
+					
 				show = true;
 				// skip processing
 				return false;
@@ -856,7 +863,6 @@
 							val = $("option:selected", this).data().pojo;
 						else if($("option:selected", this).attr("data-obj"))
 							val = JSON.parse($("option:selected", this).attr("data-obj"));
-
 					} else {
 						val = $(this).data().pojo;
 					}
@@ -913,6 +919,10 @@
 				else if($(this).attr("type") === "radio" || $(this).attr("type") === "RADIO") {
 					if(!$(this).is(':checked')) {
 						return;
+					}
+					
+					if($(this).hasClass("bool")) {
+						val = $(this).val() === "true";
 					}
 				}
 				else if($(this).hasClass("bool")) {
@@ -1109,7 +1119,7 @@
 
 				for(var i = 0; i < colData.length; i++) {
 					var did = colData[i];
-					if(id)
+					if(id && did)
 						did = did[id];
 
 					// found it
@@ -1135,6 +1145,7 @@
 	 *  <li>&lt;div class="field"&gt;prefix.fieldname&lt;/div&gt; -> allows html
 	 *  <li>&lt;a class="field" href="prefix.fieldname"&gt;linktest&lt;/a&gt;
 	 *  <li>&lt;img class="field" src="prefix.fieldname"/&gt;
+	 *  <li>&lt;x class="templatefield" data-attr="href" data-template="some/{{prefix.id}}/{{cur.fieldname}}/whatever"&gt;...&lt;/a&gt;
 	 * </ul>
 	 * @param parent the root of the subtree
 	 * @param data the data
@@ -1145,6 +1156,35 @@
 	JsForm.prototype._fillFieldData = function (parent, data, prefix, idx) {
 		var that = this;
 		var $parent = $(parent);
+
+		if(prefix.indexOf(".") > 0) {
+			prefix = prefix.substring(prefix.indexOf(".")+1);
+		}
+
+		// locate all "mustache templates"
+		$parent.find(".templatefield").each(function() {
+			var attr = $(this).data().attr;
+			var mustache = $(this).data().mustache;
+			if(!mustache) {
+				if(typeof Hogan !== "undefined") {
+					mustache = Hogan.compile($(this).data().template.replace(/\[\[/g, "{{").replace(/]]/g, "}}"));
+				} else if(typeof Handlebars !== "undefined") {
+					mustache = {
+						render: Handlebars.compile($(this).data().template.replace(/\[\[/g, "{{").replace(/]]/g, "}}"))
+					};
+				} else {
+					console.error("No mustache renderer found. templating not available (include Handlebars.js or Hogan.js)");
+				}
+				
+				// save for next
+				$(this).data().mustache = mustache;
+			}
+			var params =  {
+				data: that.options.data,
+				cur: data
+			};
+			$(this).attr(attr, mustache.render(params));
+		});
 
 		// locate all "fields"
 		$parent.find(".field").each(function() {
@@ -1163,7 +1203,7 @@
 			if(!datapostfix) {
 				datapostfix = "";
 			}
-						
+			
 			if(!name) {
 				if(this.nodeName.toUpperCase() === 'A') {
 					name = $(this).attr("href");
@@ -1238,8 +1278,8 @@
 				}
 			}
 		});
-	},
-
+	};
+  
 	/**
 	 * fill a dom subtree with data.
 	 * <ul>
@@ -1257,7 +1297,11 @@
 	JsForm.prototype._fillData = function (parent, data, prefix, idx) {
 		var that = this;
 		var $parent = $(parent);
-
+		
+		if(prefix.indexOf(".") > 0) {
+			prefix = prefix.substring(prefix.indexOf(".")+1);
+		}
+		
 		// allow repainting of this subtree
 		if(!$parent.data().refresh) {
 			$parent.data().refresh = true;
@@ -1276,11 +1320,6 @@
 			}
 			that._enableTracking(this);
 
-			// ignore file inputs - they cannot be "prefilled"
-			if($(this).attr("type") == "file") {
-				return;
-			}
-
 			if(!prefix || name.indexOf(prefix + ".") >= 0) {
 				var cname = name;
 				if (prefix) {
@@ -1292,6 +1331,13 @@
 				// we got the value - send it to the processor
 				if(that.options.dataHandler) {
 					cdata = that.options.dataHandler.deserialize(cdata, $(this), cname, data); 
+				}
+
+				// ignore file inputs - they have no value
+				if($(this).attr("type") == "file") {
+					$(this).data().pojo = cdata;
+					$(this).addClass("POJO");
+					return;
 				}
 
 				if ($(this).hasClass("object")) {
@@ -1346,15 +1392,21 @@
 					} else
 						$(this).prop("checked", (cdata === true || cdata === "true"));
 				} else if($(this).attr("type") === "radio") {
-					$(this).prop("checked", cdata == $(this).val());
+					if($(this).hasClass("bool")) {
+						$(this).prop("checked", cdata + "" === $(this).val());
+					}
+					else {
+						$(this).prop("checked", cdata == $(this).val());
+					}
 				} else {
 					if(!cdata && cdata !== 0 && cdata !== false) {
 						cdata = "";
 					}
 
 					// format the string
-					if($.jsFormControls)
+					if($.jsFormControls) {
 						cdata = $.jsFormControls.Format.format(this, cdata);
+					}
 
 					// array handling
 					if($(this).hasClass("array")) {
@@ -1378,8 +1430,9 @@
 						$(this).val(cdata);
 				}
 
-				if(that.options.trackChanges)
+				if(that.options.trackChanges) {
 					$(this).data().orig = $(this).val();
+				}
 
 				// make sure fill comes before change to allow setting of values
 				$(this).trigger("fill");
@@ -1529,7 +1582,7 @@
 		var invalid = false;
 
 		form.find(".collection").each(function() {
-			if(!ignoreInvalid && invalid) {
+			if((!ignoreInvalid && invalid) || $(this).hasClass("transient")) {
 				return;
 			}
 
@@ -1758,7 +1811,11 @@
 
 		// handle multiple form parts
 		$.each(this._getForm(), function(){
-			that._fillDom(this, noInput);
+			try {
+				that._fillDom(this, noInput);
+			} catch (ex) {
+				console.log("Exception while filling form", ex);
+			}
 		});
 		
 		$(this.element).trigger("filled");
@@ -1854,11 +1911,13 @@
 	 * @private
 	 */
 	JsForm.prototype._fillList = function(container, data, prefix, lineFunc) {
-		var tmpl = container.data("template"),
-		that = this;
+		var tmpl = container.data("template");
+		var that = this;
+
 		if(!tmpl) {
 			return;
 		}
+
 		// clean out previous list
 		container.empty();
 
@@ -1912,7 +1971,7 @@
 				prefix = null;
 			}
 		}
-
+		
 		for(var i = 0; i < data.length; i++) {
 			var cur = data[i];
 			var line = tmpl.clone(true);
@@ -1926,44 +1985,45 @@
 				}
 			}
 
-			that._addCollectionControls(line);
+			that._fillLine(cur, line, prefix, i);
 
-			// trigger a callback
-			container.trigger("addCollection", [line, cur]);
-			
-			that._addLineRefresh(prefix, line, i+1);
-
-			if(prefix) {
-				$(line).trigger("refresh");
-				
-				// enable collection controls
-				that._initCollection(line, prefix);
-				// fill with data
-				that._fillCollection(line, cur, prefix);
-
-			}
 			container.append(line);
 
 			// trigger a callback
 			container.trigger("postAddCollection", [line, $(line).data().pojo]);
+
 		}
 	};
 	
+
 	/**
-	 * Add a frefresh event on a newly created line.
-	 * @parm prefix the data-prefix for this line. only matching form fields will be filled
-	 * @param line the line sub-dom
-	 * @param counter the current counter 
+	 * add controls into a collection entry(i.e. delete)
+	 * @param line the new collection 
+	 * @private
 	 */
-	JsForm.prototype._addLineRefresh = function(prefix, line, counter) {
+	JsForm.prototype._fillLine = function(cur, line, prefix, i) {
 		var that = this;
-		$(line).on("refresh", function(){
-			// fill read only fields
-			that._fillFieldData($(this), $(this).data().pojo, prefix, counter);
+		that._addCollectionControls(line);
+
+		// trigger a callback
+		container.trigger("addCollection", [line, cur]);
+
+		if(prefix) {
+			$(line).on("refresh", function(){
+				// fill read only fields
+				that._fillFieldData($(this), $(this).data().pojo, prefix, i+1);
+				
+				// "fill data"
+				that._fillData($(this), $(this).data().pojo, prefix, i+1);
+			}).trigger("refresh");
 			
-			// "fill data"
-			that._fillData($(this), $(this).data().pojo, prefix, counter);
-		});
+			// enable collection controls
+			that._initCollection(line, prefix);
+			// fill with data
+			that._fillCollection(line, cur, prefix);
+
+		}
+
 	};
 
 	/**
@@ -2225,11 +2285,15 @@
 			return $.jsFormControls.Format._getNumber(num);
 
 		// remove thousand seperator...
-		if(num.indexOf(",") != -1)
+		if(num.indexOf(",") !== -1 && num.indexOf(".") !== -1)
 		{
 			num = num.replace(new RegExp(",", 'g'), "");
 		}
-
+		else
+		if(num.indexOf(",") !== -1 && num.indexOf(".") === -1)
+		{
+			num = num.replace(new RegExp(",", 'g'), ".");
+		}
 
 		return Number(num);
 	};
@@ -2773,7 +2837,7 @@
 		location.find("input.date").each(function(){
 			var dateformat = null;
 			var format = $(this).attr("data-format");
-			console.log("format", $(document).data().i18n.date);
+			
 			if(window.flatpickr) {
 				var $this = $(this);
 				window.flatpickr($(this)[0], {
@@ -2812,7 +2876,7 @@
 			}
 			else if($(this).datepicker) {
 				// get date format
-				if(format) {
+				if(typeof format !== "undefined") {
 					dateformat = format;
 				} else if(typeof i18n !== "undefined") {
 					dateformat = i18n.jqdate;
@@ -2828,7 +2892,7 @@
 			
 		// date-time picker
 		location.find("input.dateTime").each(function(){
-
+			var dateformat = null;
 			var format = $(this).attr("data-format");
 			var $this = $(this);
 			if(window.flatpickr) {
@@ -2891,9 +2955,6 @@
 				if(format)
 					options.formatString = format;
 				else {
-					// get date format
-					var dateformat = null;
-					
 					if(typeof i18n !== "undefined")
 						dateformat = i18n.date;
 					else if($(document).data().i18n && $(document).data().i18n.date)
@@ -3369,14 +3430,24 @@
 				}
 				
 				num = $.trim(num);
+				// first check: only grouping and 2 positions afterwards
+				var gs = num.indexOf(numberformat.groupingSeparator); 
+				
 				// get rid of the grouping seperator (if any exist)
-				if(num.indexOf(numberformat.groupingSeparator) !== -1)
-					num = num.replace(new RegExp("\\" +numberformat.groupingSeparator, 'g'), "");
+				if(gs !== -1) {
+					if(gs >= num.length - 3) {
+						console.log("gs looks like decimal: ");						
+						if(numberformat.groupingSeparator !== ".")
+							num = num.replace(new RegExp(numberformat.groupingSeparator, 'g'), ".");
+					} else {
+						num = num.replace(new RegExp("\\" +numberformat.groupingSeparator, 'g'), "");
+					}
+				}
 				// now convert the decimal seperator into a "real" decimal
 				if(numberformat.decimalSeparator !== '.' && num.indexOf(numberformat.decimalSeparator) !== -1) {
-					num = num.replace(new RegExp(numberformat.decimalSeparator, 'g'), ".");
+					if(numberformat.decimalSeparator !== ".")
+						num = num.replace(new RegExp(numberformat.decimalSeparator, 'g'), ".");
 				}
-				
 				return Number(num);
 			},
 
@@ -3427,7 +3498,9 @@
 			asNumber: function(value) {
 				return $.jsFormControls.Format._getNumber(value);
 			},
-			
+			/**
+			 * convert a number to a byte
+			 */
 			byte: function(bytes) {
 				if (bytes === "" || !bytes || isNaN(bytes)) {
 					return bytes;
