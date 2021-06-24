@@ -913,20 +913,29 @@
 						if($(this).attr("data-obj")) {
 							val = JSON.parse($(this).attr("data-obj"));
 						}
-					} else
+					} else {
 						val = $(this).is(':checked');
+					}
 				}
 				else if($(this).attr("type") === "radio" || $(this).attr("type") === "RADIO") {
 					if(!$(this).is(':checked')) {
 						return;
 					}
 					
-					if($(this).hasClass("bool")) {
+					if($(this).hasClass("bool") || $(this).hasClass("boolean")) {
 						val = $(this).val() === "true";
 					}
 				}
 				else if($(this).hasClass("bool")) {
 					val = ($(this).val() === "true");
+				}
+				else if($(this).hasClass("boolean")) {
+					switch($(this).val()) {
+						case "true": val = true; break;
+						case "false": val = false; break;
+						default: 
+						val = null;
+					}
 				}
 			}
 			
@@ -1389,8 +1398,9 @@
 						}
 						// select
 						$(this).prop("checked", found);
-					} else
+					} else {
 						$(this).prop("checked", (cdata === true || cdata === "true"));
+					}
 				} else if($(this).attr("type") === "radio") {
 					if($(this).hasClass("bool")) {
 						$(this).prop("checked", cdata + "" === $(this).val());
@@ -1471,7 +1481,7 @@
 				// try selecting based on the id 
 				if (value[pk] || !isNaN(value[pk])) {
 					// find out which one to select
-					$(this).children("option").each(function(){
+					$(this).find("option").each(function(){
 						var obj = $(this).data().pojo;
 						if(!obj) {
 							obj = $(this).data().obj;
@@ -1495,9 +1505,16 @@
 					return;
 				} else if($(this).hasClass("bool")) {
 					value = value ? "true" : "false";
+				}  else if($(this).hasClass("boolean")) {
+					if(value === false)
+						value = "false";
+					else if(value)
+						value = "true";
+					else
+						value = "";
 				}
 
-				$(this).children("option[value='"+value+"']").prop("selected", true);
+				$(this).find("option[value='"+value+"']").prop("selected", true);
 				$(this).val(value);
 				if(that.options.trackChanges)
 					$(this).data().orig = $(this).val();
