@@ -138,34 +138,11 @@
 					time_24hr: false,
 					dateFormat: i18n.flatpickrDate,
 					onOpen: [function(a,b,inst){
-						var d = new Date();
-						if($this.val() === '')
-							d = moment($this.val(), i18n.momentDateTime).toDate();
 						inst.jumpToDate(new Date());
 						inst.setDate(new Date());
 					}]
 				});
-			} else if($(this).jqxDateTimeInput) {
-				$(this).data().valclass = "jqxDateTimeInput";
-				
-				// jqwidget
-				if(format)
-					$(this).jqxDateTimeInput({formatString: format});
-				else {
-					// get date format
-					
-					if(typeof i18n !== "undefined")
-						dateformat = i18n.date;
-					else if($(document).data().i18n && $(document).data().i18n.date)
-						dateformat = $(document).data().i18n.date;
-
-					$(this).jqxDateTimeInput({
-						formatString: dateformat.shortDateFormat,
-						width: $(this).width() 
-						});
-				}
-				
-			}
+			} 
 			else if($(this).datepicker) {
 				// get date format
 				if(typeof format !== "undefined") {
@@ -197,9 +174,9 @@
 						if($this.val() === '')
 							inst.jumpToDate(new Date());
 						else {
-							var curDate = moment($this.val(), i18n.momentDateTime);
-							inst.jumpToDate(curDate.toDate());
-							inst.setDate(curDate.toDate(), true);
+							var curDate = $.jsFormControls.Format.asDate($this.val());
+							inst.jumpToDate(curDate);
+							inst.setDate(curDate, true);
 						}
 					}]
 				});
@@ -247,6 +224,7 @@
 				if(format)
 					options.formatString = format;
 				else {
+					// get date format
 					if(typeof i18n !== "undefined")
 						dateformat = i18n.date;
 					else if($(document).data().i18n && $(document).data().i18n.date)
@@ -754,36 +732,92 @@
 			},
 			
 			/**
-			 * use moment.js to parse a datestring.
+			 * try parsing a string to date using i18n and libraries such as moment or luxon
+			 */
+			asDate: function(value) {
+				var d = $.jsFormControls.Format.asMoment(value);
+				// null
+				if(!d)
+					return null;
+				// luxon
+				if(d.toJSDate)
+					return d.toJSDate();
+				// moment.js
+				if(d.toDate)
+					return d.toDate;
+				// already date
+				return d;
+			},
+			
+			/**
+			 * use luxon or moment.js to parse a datestring.
 			 * this will use:
 			 * - predefined i18n formats (strict mode)
 			 * - default momentjs (non-strict)
 			 * 
 			 */
 			asMoment: function(value) {
+				var m = null;
+				var formats = [i18n.date.format + " " + i18n.date.timeFormat, i18n.date.dateTimeFormat, 
+					i18n.date.format,
+					i18n.date.longDateFormat, 
+					i18n.date.timeFormat];
+				
+				if(value.toFormat)
+					return value;
+				
+				// luxon parsing
+				if(typeof luxon !== "undefined") {
+					//console.log("parsing ", value, formats, i18n.date)
+					if(!isNaN(value))
+						return luxon.DateTime.fromMillis(value);
+						
+					formats.forEach(function(format){
+						if(m)
+							return false;
+						try {
+							var cur = luxon.DateTime.fromFormat(value, format);
+							if(cur.isValid) {
+								m = cur;
+								return false;
+							}
+						} catch (ex) {
+							// ignore
+						}
+					});
+					
+					if(!m) {
+						m = luxon.DateTime.fromISO(value);
+					}
+					return m;
+				}
+				
+				// moment.js parsing
+				if(typeof moment !== "undefined") {
+					for(var i = 0; i < formats.length; i++)
+						formats[i] = moment().toMomentFormatString(formats[i]);
+						
+					$.each(formats, function(){
+						if(m)
+							return false;
+						var cur = moment(value, this, true);
+						if(cur.isValid()) {
+							m = cur;
+							return false;
+						}
+					});
+					
+					if(!m) {
+						m = moment(value);
+					}
+				}
+				
 				// try date
-				if(typeof moment === "undefined") {
+				if(!m) {
 					return new Date(value);
 				}
 				
-				var dformat = moment().toMomentFormatString(i18n.date.format);
-				var tformat = moment().toMomentFormatString(i18n.date.timeFormat);
-				var formats = [dformat + " " + tformat, dformat, tformat];
-				
-				var m = null;
-				$.each(formats, function(){
-					if(m)
-						return false;
-					var cur = moment(value, this, true);
-					if(cur.isValid()) {
-						m = cur;
-						return false;
-					}
-				});
-				
-				if(!m) {
-					m = moment(value);
-				}
+				m.toFormat = m.format;
 				return m;
 			},
 
@@ -920,7 +954,7 @@
 			},
 
 			getPercent: function(val) {
-				if (val === "") {
+				if (!val || val === "") {
 					return 0;
 				}
 				

@@ -397,10 +397,10 @@
 
 					$(line).on("refresh", function(){
 						// fill read only fields
-						that._fillFieldData($(this), $(this).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
+						that._fillFieldData($(this), $(this).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx+1);
 						
 						// "fill data"
-						that._fillData($(this), $(this).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
+						that._fillData($(this), $(this).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx+1);
 					}).trigger("refresh");
 
 					$(this).append(line);
@@ -791,6 +791,7 @@
 	 *  <li>number|currency: the content will be transformed into a number (default string</li>
 	 *  <li>transient: will be ignored</li>
 	 *  <li>prefix.fieldname.value: will create the whole object subtree</li> 
+	 *  <li>onlyfield: this will take only one field (i.e. id) and remove the rest of the object</li> 
 	 * </ul> 
 	 * @param start the element to start from (ie. the form or tr)
 	 * @param pojo the pojo to write everything to
@@ -865,6 +866,12 @@
 							val = JSON.parse($("option:selected", this).attr("data-obj"));
 					} else {
 						val = $(this).data().pojo;
+					}
+					// limit to only one field
+					if(val && $(this).data().onylfield) {
+						var objlimit = val[$(this).data().onylfield];
+						val = {  };
+						val[$(this).data().onylfield] = objlimit;
 					}
 					// object can also have a processor
 					if($.isFunction($(this).data().processor)) {
