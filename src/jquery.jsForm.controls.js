@@ -91,6 +91,9 @@
 		// validation
 		// check required (this is the first check)
 		location.find("input.mandatory,textarea.mandatory").on("keyup", function(){
+			if(!$(this).hasClass("mandatory")) {
+				return;
+			}
 			// check for "null" as value as well 
 			if($(this).val().length > 0 && $(this).val() !== "null") {
 				$(this).addClass("valid").removeClass("invalid");
@@ -100,6 +103,10 @@
 		});
 		
 		location.find("input.mandatory,textarea.mandatory").on("change", function(){
+			if(!$(this).hasClass("mandatory")) {
+				return;
+			}
+			
 			if($(this).hasClass("object")) {
 				if($(this).data().pojo) {
 					$(this).addClass("valid").removeClass("invalid");
@@ -117,6 +124,10 @@
 		}).change();
 
 		location.find("select.mandatory").change(function(){
+			if(!$(this).hasClass("mandatory")) {
+				return;
+			}
+
 			// check for "null" as value as well 
 			if($(this).val() !== null && $(this).val() !== "null" && $(this).val().length > 0) {
 				$(this).addClass("valid").removeClass("invalid");
@@ -379,6 +390,44 @@
 			});
 		});
 		
+		/* mardown wysiwyg */
+		location.find("textarea.markdownedit").each(function(){
+			// create div
+			let $text = $(this);
+			let editContainer = $('<div />');
+			editContainer.insertBefore($text);
+			editContainer.css('height', $text.css('height'));
+		     
+		     // if fullEdit = true -> show all otherwise just simple formatting
+			$text.data().editor = new toastui.Editor({
+		      el: editContainer.get(0),
+		      toolbarItems: $text.data().fullEdit ? [
+		        ['heading', 'bold', 'italic', 'quote'],
+		        ['ul', 'ol', 'task', 'indent', 'outdent'],
+		        ['table'] 
+		      ] : [
+		        ['bold', 'italic', 'quote'],
+		        ['ul', 'ol']
+		     ],
+		      height: $text.height() + "px",
+		      //height: "450px",
+		      initialEditType: 'wysiwyg',
+		      initialValue: $('#PsychTextArea').val(),
+		      events: {
+		          change: function() {
+		        	  $text.val($text.data().editor.getMarkdown());
+		        	  $text.change();
+		          }
+	          }
+		    });
+		    // hide textarea
+		    $(this).hide();  
+		    $text.on("fill", function(){
+			console.log("filling", $text.val());
+				$text.data().editor.setMarkdown($text.val());
+			});
+		});
+		
 		/* rotatestate stontrol */
 		location.find("input.rotatestate").each(function(){
 			var states = $(this).attr("data-state-values");
@@ -576,40 +625,57 @@
 			 * This will also set a proccessor to "revert" the data
 			 */
 			format: function(ele, cdata) {
-				if($(ele).hasClass("dateTime") || $(ele).hasClass("datetime")) {
+				let $ele = $(ele);
+				if($ele.hasClass("dateTime") || $ele.hasClass("datetime")) {
 					if(isNaN(cdata))
 						return cdata;
 					return $.jsFormControls.Format.dateTime(cdata);
-				}  else if($(ele).hasClass("date")) {
+				}  else if($ele.hasClass("date")) {
 					if(isNaN(cdata))
 						return cdata;
 					return $.jsFormControls.Format.date(cdata);
-				}  else if($(ele).hasClass("time")) {
+				}  else if($ele.hasClass("time")) {
 					if(isNaN(cdata))
 						return cdata;
 					return $.jsFormControls.Format.time(cdata);
-				} else if($(ele).hasClass("currency")) {
+				} else if($ele.hasClass("currency")) {
 					return $.jsFormControls.Format.currency(cdata);
-				} else if($(ele).hasClass("byte")) {
+				} else if($ele.hasClass("bool")) {
+					if(!cdata)
+						return $ele.data().false || '';
+					return $ele.data().true || (i18n ? i18n.label.yes : 'X');
+				} else if($ele.hasClass("byte")) {
 					if(isNaN(cdata))
 						return cdata;
 					return $.jsFormControls.Format.byte(cdata);
-				} else if($(ele).hasClass("decimal")) {
-					$(ele).data().processor = $.jsFormControls.Format.getDecimal;
+				} else if($ele.hasClass("decimal")) {
+					$ele.data().processor = $.jsFormControls.Format.getDecimal;
 					return $.jsFormControls.Format.decimal(cdata);
-				} else if($(ele).hasClass("vunit")) {
+				} else if($ele.hasClass("vunit")) {
 					// save the actual data
 					$(this).data().val = cdata;
-					$(ele).data().processor = $.jsFormControls.Format.getVunit;
-					return $.jsFormControls.Format.vunit(cdata, $(ele).attr("data-unit"));
-				} else if($(ele).hasClass("percent")) {
-					$(ele).data().processor = $.jsFormControls.Format.getPercent;
+					$ele.data().processor = $.jsFormControls.Format.getVunit;
+					return $.jsFormControls.Format.vunit(cdata, $ele.attr("data-unit"));
+				} else if($ele.hasClass("percent")) {
+					$ele.data().processor = $.jsFormControls.Format.getPercent;
 					return $.jsFormControls.Format.percent(cdata);
-				} else if($(ele).hasClass("humantime")) {
-					$(ele).data().processor = $.jsFormControls.Format.getHumanTime;
+				} else if($ele.hasClass("percentage")) {
+					$ele.data().processor = $.jsFormControls.Format.getPercent;
+					return $.jsFormControls.Format.percent(cdata) + "%";
+				} else if($ele.hasClass("humantime")) {
+					$ele.data().processor = $.jsFormControls.Format.getHumanTime;
 					return $.jsFormControls.Format.humanTime(cdata);
-				} else if($(ele).hasClass("timespan")) {
+				} else if($ele.hasClass("timespan")) {
 					return $.jsFormControls.Format.timespan(cdata);
+				} else if($ele.hasClass("timeday")) {
+					if(!cdata)
+						return cdata
+					return $.jsFormControls.Format.time(Number(cdata*24*3600000));
+				} else if($ele.hasClass("humantimeday")) {
+					if(!cdata)
+						return cdata
+					$ele.data().processor = $.jsFormControls.Format.getHumanTime;
+					return $.jsFormControls.Format.humanTime(Number(cdata*24*3600000));
 				}
 				
 				return cdata;
@@ -761,16 +827,30 @@
 				var formats = [i18n.date.format + " " + i18n.date.timeFormat, i18n.date.dateTimeFormat, 
 					i18n.date.format,
 					i18n.date.longDateFormat, 
-					i18n.date.timeFormat];
+					i18n.date.timeFormat,
+					// add common formats:
+					"d.M.y H:m",
+					"d.M.y",
+					"d/M/y H:m",
+					"d/M/y"];
 				
 				if(value.toFormat)
 					return value;
 				
 				// luxon parsing
 				if(typeof luxon !== "undefined") {
+					if(luxon.DateTime.isDateTime(value))
+						return value;
+					
 					//console.log("parsing ", value, formats, i18n.date)
-					if(!isNaN(value))
+					if(!isNaN(value)) {
+						if(value.getTime)
+							return luxon.DateTime.fromJSDate(value);
 						return luxon.DateTime.fromMillis(value);
+					}
+			
+					if(value.year)
+						return luxon.DateTime.formObject(value);
 						
 					formats.forEach(function(format){
 						if(m)
@@ -787,6 +867,7 @@
 					});
 					
 					if(!m) {
+						console.log("unable to parse " + value, formats);
 						m = luxon.DateTime.fromISO(value);
 					}
 					return m;
@@ -881,7 +962,7 @@
 					numberformat = $(document).data().i18n.number;
 
 				var comma = 0;
-				if (Math.abs(num - Math.floor(num)) > 0.001) {
+				if (Math.abs(num - Math.floor(num)) > 0.005) {
 					comma = 2;
 				}
 				// convert to a nice number for display
@@ -929,11 +1010,11 @@
 			},
 			
 			getDecimal: function(val) {
-				if (num === "") {
+				if (val === "") {
 					return 0;
 				}
 				
-				return Number(val);
+				return $.jsFormControls.Format.asNumber(val);
 				
 			},
 
@@ -958,10 +1039,14 @@
 					return 0;
 				}
 				
+				
 				if(val.indexOf("%") !== -1)
 					val = val.substring(0, val.length-1);
 				
-				return Number(val) / 100;
+				var num =  $.jsFormControls.Format.getDecimal(val);
+				console.log("Percent", val, num);
+				
+				return Number(num) / 100;
 			},
 
 			/**
@@ -1139,6 +1224,10 @@
 					return value;
 				}
 				
+				var neg = value < 0;
+				if(neg)
+					value *= -1;
+				
 				var h = Math.floor(value/3600000);
 				value -= h * 3600000;
 				var m = Math.floor(value/60000);
@@ -1146,7 +1235,7 @@
 				var s = Math.floor(value/1000);
 				value -= s * 1000;
 				
-				var out = "";
+				var out = neg?"-":"";
 				if (h > 0) {
 					out += h + "h ";
 					// ignore seconds and milliseconds if we have hours
@@ -1185,7 +1274,8 @@
 				var result = 0;
 				var num = "";
 				var tu = "";
-				
+				var mult = val.charAt(0) === '-' ? -1 : 1;
+				 
 				var convert = function(){
 					if(num === "") {
 						return;
@@ -1258,7 +1348,7 @@
 				
 				// one more convert - just in case we missed something
 				convert();
-				return result;
+				return result*mult;
 			}
 	};
 })( jQuery, window );
