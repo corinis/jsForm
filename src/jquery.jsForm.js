@@ -10,7 +10,7 @@
 ;(function( $, window, undefined ){
 	"use strict";
 
-	var JSFORM_INIT_FUNCTIONS = {},	// remember initialization functions
+	let JSFORM_INIT_FUNCTIONS = {},	// remember initialization functions
 	JSFORM_MAP = {};	// remember all forms
 
 
@@ -20,7 +20,7 @@
 	 * @constructor
 	 */
 	function JsForm (element, options) {
-		var $this = $(element);
+		let $this = $(element);
 
 		// create the options
 		this.options = $.extend({}, {
@@ -165,7 +165,7 @@
 	 * @private 
 	 */
 	JsForm.prototype._domInit = function() {
-		var that = this;
+		let that = this;
 
 		// handle multiple form parts
 		$.each(this._getForm(), function(){
@@ -183,11 +183,11 @@
 	 */
 	JsForm.prototype._debug = function(msg, param) {
 		try {
-			var cons = console || (window?window.console:null);
+			let cons = console || (window?window.console:null);
 			if (!cons || !cons.log)
 				return;
 
-			var p = null;
+			let p = null;
 			if($.isPlainObject(param)) {
 				p = JSON.stringify(param, null, " ");
 			} else {
@@ -215,12 +215,12 @@
 	 * @private
 	 */
 	JsForm.prototype._initConditional = function(form, prefix, options) {
-		var that = this;
-		var showEvaluator = function(ele, data, fields) {
+		let that = this;
+		let showEvaluator = function(ele, data, fields) {
 			// if any field has a value -> show
-			var show = false;
+			let show = false;
 			$.each(fields, function(){
-				var value = that._getValueWithArrays(data, this);
+				let value = that._getValueWithArrays(data, this);
 				if($(that).data().condition && value !== $(that).data().condition)
 					return;
 				else if(!value || value === "" || value === 0 || value === -1)
@@ -236,9 +236,9 @@
 				ele.hide();
 		}, hideEvaluator = function(ele, data, fields) {
 			// if any field has a value -> hide
-			var show = false;
+			let show = false;
 			$.each(fields, function(){
-				var value = that._getValueWithArrays(data, this);
+				let value = that._getValueWithArrays(data, this);
 				if($(that).data().condition && value !== $(that).data().condition)
 					return;
 				else if(!value || value === "" || value === 0 || value === -1)
@@ -259,7 +259,7 @@
 
 		this.conditionals.each(function(){
 			$(this).data().conditionalEval = [];
-			var fields = $(this).attr("data-show");
+			let fields = $(this).attr("data-show");
 			if(fields && fields.length > 0) {
 				$(this).data().conditionalEval.push({
 					func: showEvaluator,
@@ -291,7 +291,7 @@
 	 */
 	JsForm.prototype._evaluateConditionals = function(form, data) {
 		this.conditionals.each(function(){
-			var ele = $(this);
+			let ele = $(this);
 			// go throguh all evaluation functions
 			$.each(ele.data().conditionalEval, function() {
 				this.func(ele, data, this.field);
@@ -307,21 +307,21 @@
 	 */
 	JsForm.prototype._initCollection = function(form, prefix) {
 		// all collections
-		var collectionMap = {},
-		that = this;
+		let collectionMap = {};
+		let that = this;
 		$(form).data().collections = collectionMap; 
 
 		$(".collection", form).each(function() {
-			var colName = $(this).attr("data-field");
+			let colName = $(this).attr("data-field");
 			// skip collections without a data-field mapping
 			if (!colName || colName.indexOf(prefix + ".") !== 0) {
 				return;
 			}
 
-			var container = $(this);
+			let container = $(this);
 
 			// remember the collection
-			var cols = collectionMap[colName];
+			let cols = collectionMap[colName];
 			if(cols) {
 				cols.push(container);
 			} else {
@@ -334,7 +334,7 @@
 			// after adding: check if we want reorder control
 			if(!container.hasClass("ui-sortable") && container.hasClass("sortable") && container.sortable) {
 				// get the config object
-				var config = container.attr("data-sortable");
+				let config = container.attr("data-sortable");
 				if(!config) {
 					config = {};
 				} else {
@@ -348,23 +348,25 @@
 			} 
 
 			$(this).on("add", function(ev, pojo, fn){
-				var fieldName = $(this).attr("data-field"); 
+				if(ev.target !== this)
+					return;
+				let fieldName = $(this).attr("data-field"); 
 				// skip if fieldName doest match
 				if(fn && fieldName != fn)
 					return;
 				
-				var tmpl = $(this).data("template");
+				let tmpl = $(this).data("template");
 				if(!pojo) {
 					pojo = {};
 				}
 
 				// and has a template
 				if(tmpl) {
-					var line = tmpl.clone(true);
+					let line = tmpl.clone(true);
 					$(line).addClass("POJO");
 					$(line).data().pojo = pojo;
 
-					var prefill = $(this).data("prefill");
+					let prefill = $(this).data("prefill");
 					if(!prefill)
 						prefill = $(this).val("data-prefill");
 					// allow prefill
@@ -393,7 +395,7 @@
 					$(this).trigger("addCollection", [line, $(line).data().pojo]);
 
 					// the new entry has as index the count of all "lines"
-					var idx = $(this).children(".POJO").length;
+					let idx = $(this).children(".POJO").length;
 
 					$(line).on("refresh", function(){
 						// fill read only fields
@@ -406,13 +408,13 @@
 					$(this).append(line);
 
 					// trigger a callback after the data has been rendered)
-					$(this).trigger("postAddCollection", [line, $(line).data().pojo]);
+					$(this).trigger("postAddCollection", [line, $(line).data().pojo, fieldName]);
 				}
 			});
 		});
 
 		$(".add", form).each(function(){
-			var fieldName = $(this).attr("data-field"); 
+			let fieldName = $(this).attr("data-field"); 
 			if (!fieldName || fieldName.indexOf(prefix + ".") !== 0) {
 				return;
 			}
@@ -437,9 +439,22 @@
 			});
 		});
 
+		$(".clear", form).each(function(){
+			let fieldname = $(this).attr("data-field"); 
+			if (!fieldname) {
+				return;
+			}
+			
+			$(this).on("click", function(){
+				$(this).closest(".POJO").find("input[name='"+fieldname+"']").data().pojo = null;
+				$(this).closest(".POJO").find("input[name='"+fieldname+"']").val("").change();
+			});
+		});
+		
+		
 		// insert: similar to add - but works with events
 		$(".insert", form).each(function(){
-			var fieldName = $(this).attr("data-field"); 
+			let fieldName = $(this).attr("data-field"); 
 			if (!fieldName || fieldName.indexOf(prefix + ".") !== 0) {
 				return;
 			}
@@ -459,7 +474,7 @@
 				if(!pojo) {
 					return;
 				}
-				var beforeInsertCallback = $(this).data("beforeInsert");
+				let beforeInsertCallback = $(this).data("beforeInsert");
 				if(beforeInsertCallback && $.isFunction(beforeInsertCallback)) {
 					pojo = beforeInsertCallback(pojo);
 
@@ -471,10 +486,10 @@
 
 				// search for a collection with that name
 				$.each($(this).data("collections"), function() {
-					var tmpl = $(this).data("template");
+					let tmpl = $(this).data("template");
 					// and has a template
 					if(tmpl) {
-						var line = tmpl.clone(true);
+						let line = tmpl.clone(true);
 						// mark that this is a pojo
 						line.addClass("POJO");
 						// add the pojo
@@ -489,7 +504,7 @@
 						$(this).trigger("addCollection", [line, pojo]);
 
 						// the new entry has as index the count of all "lines"
-						var idx = $(this).children(".POJO").length;
+						let idx = $(this).children(".POJO").length;
 						
 						// fill the "information"
 						$(line).on("refresh", function(){
@@ -516,7 +531,7 @@
 
 		// insert: helper button (triggers insert)
 		$(".insertAction", form).each(function(){
-			var fieldName = $(this).attr("data-field"); 
+			let fieldName = $(this).attr("data-field"); 
 			if(!fieldName) {
 				return;
 			}
@@ -527,7 +542,7 @@
 			}
 
 			// find the insert element for this data-field
-			var inserter = $(this).parent().find(".insert");
+			let inserter = $(this).parent().find(".insert");
 			if(!inserter) {
 				return;
 			}
@@ -545,7 +560,7 @@
 
 		$("input.object", form).each(function(){
 			$(this).on("update", function(evt){
-				var pojo = $(this).data().pojo;
+				let pojo = $(this).data().pojo;
 				if($(this).attr("data-display") || $(this).attr("data-render")) {
 					$(this).val(that._renderObject(pojo, $(this).attr("data-display"), $(this).attr("data-render")));
 				} 
@@ -559,20 +574,20 @@
 				return;
 			}
 
-			var blobInput = $(this);
+			let blobInput = $(this);
 
 			// bind on change
 			$(this).on("change", function(evt){
 
 				//get file name
-				var fileName = $(this).val().split(/\\/).pop();
+				let fileName = $(this).val().split(/\\/).pop();
 				blobInput.data("name", fileName);
 
-				var files = evt.target.files; // FileList object
+				let files = evt.target.files; // FileList object
 				// Loop through the FileList (and render image files as thumbnails.(skip for ie < 9)
 				if(files && files.length) {
 					$.each(files, function() {
-						var reader = new FileReader();
+						let reader = new FileReader();
 
 						// closure to capture the file information
 						reader.onload = function(e) {
@@ -604,7 +619,7 @@
 		}
 
 		// get all children
-		var tmpl = container.children().detach();
+		let tmpl = container.children().detach();
 
 		// remove an id if there is one
 		tmpl.removeAttr("id");
@@ -617,7 +632,7 @@
 	 * @private
 	 */
 	JsForm.prototype._getForm = function() {
-		var form = [$(this.element)];
+		let form = [$(this.element)];
 		if(this.options.connect)
 			$.each(this.options.connect, function(){
 				form.push($(this));
@@ -638,7 +653,7 @@
 
 		$(form).removeData("pojo");
 		$("input,select,textarea", form).each(function(){
-			var name = $(this).attr("name");
+			let name = $(this).attr("name");
 			// empty name - ignore
 			if (!name || name.indexOf(prefix + ".") !== 0) {
 				return;
@@ -678,7 +693,7 @@
 		});
 
 		$(".collection", form).each(function() {
-			var fieldname = $(this).attr("data-field");
+			let fieldname = $(this).attr("data-field");
 			// only collections with the correct prefix
 			if(!fieldname || fieldname.indexOf(prefix+".") !== 0) {
 				return;
@@ -705,8 +720,8 @@
 
 		if(ele.attr("type") === "checkbox" || ele.attr("type") === "CHECKBOX") {
 			// do we want the value of not
-			var use = ele.is(":checked");
-			var pushVal = true;
+			let use = ele.is(":checked");
+			let pushVal = true;
 			$.each(pojo[name], function(data, index){
 				if(this == val) {
 					// dont need to push
@@ -720,7 +735,7 @@
 			if(pushVal && use)
 				pojo[name].push(val);
 		} else {
-			var num = ele.attr("data-array");
+			let num = ele.attr("data-array");
 			if(!num || isNaN(num)) {
 				num = null;
 			} else
@@ -742,7 +757,7 @@
 	 * @param $this the object the val comes from for array check
 	 */
 	JsForm.prototype._setPojoVal = function(pojo, name, val, $this) {
-		var that = this;
+		let that = this;
 		
 		// check if we have a . - if so split
 		if (name.indexOf(".") === -1)
@@ -756,15 +771,15 @@
 		}
 		else
 		{
-			var parts = name.split(".");
-			var prev;
-			var current = pojo[parts[0]];
+			let parts = name.split(".");
+			let prev;
+			let current = pojo[parts[0]];
 			if (!current || !$.isPlainObject(current)) {
 				pojo[parts[0]] = {};
 				current = pojo[parts[0]]; 
 			}
 
-			for(var i = 1; i < parts.length - 1; i++) {
+			for(let i = 1; i < parts.length - 1; i++) {
 				prev = current;
 				current = prev[parts[i]];
 				if(current === undefined || current === null) {
@@ -800,10 +815,10 @@
 	 */
 	JsForm.prototype._createPojoFromInput = function (start, prefix, pojo) {
 		// check if we have an "original" pojo
-		var startObj = null;
-		var that = this;
+		let startObj = null;
+		let that = this;
 		// normally we edit the pojo on ourselves - so result is null
-		var result = null;
+		let result = null;
 
 		// get it from the starting dom element
 		if($(start).data("pojo")) {
@@ -816,7 +831,7 @@
 		}
 
 		$(start).find("input,select,textarea,button,.jsobject").each(function(){
-			var name = $(this).attr("data-name");
+			let name = $(this).attr("data-name");
 			if(!name) {
 				name = $(this).attr("name");
 			}
@@ -841,7 +856,7 @@
 			// cut away the prefix
 			name = name.substring((prefix+".").length);
 
-			var val = $(this).val();
+			let val = $(this).val();
 			if($(this).data().valclass && $(this)[$(this).data().valclass]){
 				val = $(this)[$(this).data().valclass]("val");
 			} 
@@ -869,7 +884,7 @@
 					}
 					// limit to only one field
 					if(val && $(this).data().onylfield) {
-						var objlimit = val[$(this).data().onylfield];
+						let objlimit = val[$(this).data().onylfield];
 						val = {  };
 						val[$(this).data().onylfield] = objlimit;
 					}
@@ -877,7 +892,7 @@
 					if($.isFunction($(this).data().processor)) {
 						val = $(this).data().processor(val);
 					} else {
-						var processor = $(this).attr("data-processor");
+						let processor = $(this).attr("data-processor");
 						if(processor && that.options.processors[processor]) {
 							val = that.options.processors[processor](val);
 						}
@@ -893,23 +908,6 @@
 				// we might have a value processor on this: this is added by the jsForm.controls
 				if($(this).data().processor) {
 					val = $(this).data().processor(val);
-				}
-				else if ($(this).hasClass("number") || $(this).hasClass("integer")) {
-					if($(this).hasClass("date") && isNaN(val)) {
-						if($.format) {
-							var d = $.format.date(val);
-							d.setHours(0);
-							d.setMinutes(0);
-							d.setSeconds(0);
-							d.setMilliseconds(0);
-							val = d.getTime();
-						} else
-							val = new Date(val).getTime();
-					} else
-						val = that._getNumber(val);
-					if(isNaN(val)) {
-						val = 0;
-					}
 				}
 				else if($(this).attr("type") === "checkbox" || $(this).attr("type") === "CHECKBOX") {
 
@@ -931,6 +929,25 @@
 					
 					if($(this).hasClass("bool") || $(this).hasClass("boolean")) {
 						val = $(this).val() === "true";
+					} else if($(this).hasClass("number")) {
+						val = Number($(this).val())
+					}
+				}
+				else if ($(this).hasClass("number") || $(this).hasClass("integer")) {
+					if($(this).hasClass("date") && isNaN(val)) {
+						if($.format) {
+							let d = $.format.date(val);
+							d.setHours(0);
+							d.setMinutes(0);
+							d.setSeconds(0);
+							d.setMilliseconds(0);
+							val = d.getTime();
+						} else
+							val = new Date(val).getTime();
+					} else
+						val = that._getNumber(val);
+					if(isNaN(val)) {
+						val = 0;
 					}
 				}
 				else if($(this).hasClass("bool")) {
@@ -963,7 +980,7 @@
 
 		// for "selection" collection
 		$(start).find(".selectcollection").each(function(){
-			var name = $(this).attr("data-field");
+			let name = $(this).attr("data-field");
 
 			// empty name - ignore
 			if (!name) {
@@ -986,11 +1003,11 @@
 			name = name.substring((prefix+".").length);
 
 			// always an array (reset current data)
-			var arrVal = [];
+			let arrVal = [];
 
 			// see if we go by checkbox or by css class (if both -> class wins)
-			var selectedClass = $(this).attr("data-selected");
-			var id = $(this).attr("data-id");
+			let selectedClass = $(this).attr("data-selected");
+			let id = $(this).attr("data-id");
 
 			$(this).children().each(function(){
 				// check selection
@@ -1003,7 +1020,7 @@
 				}
 
 				// get the "id"/object
-				var cobj = null;
+				let cobj = null;
 				// no id given - check the value of the checkbox
 				if(!id && ! $("input[name='"+name+"']", this).hasClass("obj")) {
 					cobj = $("input[name='"+name+"']", this).val();
@@ -1037,7 +1054,7 @@
 		if(!ele || ele.length === 0) {
 			return;
 		}
-		var that = this;
+		let that = this;
 		if(that.options.trackChanges && !$(ele).data().track) {
 			$(ele).data().track = true;
 			$(ele).change(function(){
@@ -1059,15 +1076,15 @@
 	 * @private
 	 */
 	JsForm.prototype._fillSelectCollection = function (parent, data, prefix, idx) {
-		var that = this;
+		let that = this;
 
-		var $parent = $(parent);
+		let $parent = $(parent);
 
 		// locate all "select collections"
 		$parent.find(".selectcollection").each(function() {
-			var selectedClass = $(this).attr("data-selected");
-			var id = $(this).attr("data-id");
-			var fieldname = $(this).attr("data-field");
+			let selectedClass = $(this).attr("data-selected");
+			let id = $(this).attr("data-id");
+			let fieldname = $(this).attr("data-field");
 
 			// only collections with the correct prefix
 			if(!fieldname || fieldname.indexOf(prefix+".") !== 0) {
@@ -1075,9 +1092,9 @@
 			}
 
 			// data for the collection filling
-			var colData = null;
+			let colData = null;
 
-			var cname = fieldname;
+			let cname = fieldname;
 			// remove the prefix
 			if (prefix) {
 				cname = cname.substring(prefix.length + 1);
@@ -1113,13 +1130,13 @@
 			// now go through each child and apply selection if appropriate
 			$(this).children().each(function(){
 				// get the "id"/object
-				var cid = "";
+				let cid = "";
 				// no id given - check the value of the checkbox
 				if(!id) {
 					cid = $("input[name='"+cname+"']", this).val();
 				} else {
 					// get the object
-					var obj = $(this).data("obj");
+					let obj = $(this).data("obj");
 					if(!obj && $(this).attr("data-obj")) {
 						obj = JSON.parse($(this).attr("data-obj"));
 					}
@@ -1133,8 +1150,8 @@
 				if(!cid)
 					return;
 
-				for(var i = 0; i < colData.length; i++) {
-					var did = colData[i];
+				for(let i = 0; i < colData.length; i++) {
+					let did = colData[i];
 					if(id && did)
 						did = did[id];
 
@@ -1170,8 +1187,8 @@
 	 * @private
 	 */
 	JsForm.prototype._fillFieldData = function (parent, data, prefix, idx) {
-		var that = this;
-		var $parent = $(parent);
+		const that = this;
+		const $parent = $(parent);
 
 		if(prefix.indexOf(".") > 0) {
 			prefix = prefix.substring(prefix.indexOf(".")+1);
@@ -1179,8 +1196,8 @@
 
 		// locate all "mustache templates"
 		$parent.find(".templatefield").each(function() {
-			var attr = $(this).data().attr;
-			var mustache = $(this).data().mustache;
+			const attr = $(this).data().attr;
+			const mustache = $(this).data().mustache;
 			if(!mustache) {
 				if(typeof Hogan !== "undefined") {
 					mustache = Hogan.compile($(this).data().template.replace(/\[\[/g, "{{").replace(/]]/g, "}}"));
@@ -1195,7 +1212,7 @@
 				// save for next
 				$(this).data().mustache = mustache;
 			}
-			var params =  {
+			const params =  {
 				data: that.options.data,
 				cur: data
 			};
@@ -1204,18 +1221,18 @@
 
 		// locate all "fields"
 		$parent.find(".field").each(function() {
-			var name = $(this).data().name;
+			let name = $(this).data().name;
 			if(!name) {
 				name = $(this).data().field;
 			}
 						
 			// add optional prefix
-			var dataprefix = $(this).attr("data-prefix");
+			let dataprefix = $(this).attr("data-prefix");
 			if(!dataprefix) {
 				dataprefix = "";
 			}
 			// and postfix
-			var datapostfix = $(this).attr("data-postfix");
+			let datapostfix = $(this).attr("data-postfix");
 			if(!datapostfix) {
 				datapostfix = "";
 			}
@@ -1238,11 +1255,11 @@
 			}
 
 			if(!prefix || name.indexOf(prefix + ".") >= 0) {
-				var cname = name;
+				let cname = name;
 				if (prefix) {
 					cname = cname.substring(prefix.length + 1);
 				}
-				var cdata = that._get(data, cname, false, idx);
+				let cdata = that._get(data, cname, false, idx);
 
 				if(!cdata && cdata !== 0 && cdata !== false) {
 					cdata = "";
@@ -1311,8 +1328,8 @@
 	 * @private
 	 */
 	JsForm.prototype._fillData = function (parent, data, prefix, idx) {
-		var that = this;
-		var $parent = $(parent);
+		let that = this;
+		let $parent = $(parent);
 		
 		if(prefix.indexOf(".") > 0) {
 			prefix = prefix.substring(prefix.indexOf(".")+1);
@@ -1322,7 +1339,7 @@
 		if(!$parent.data().refresh) {
 			$parent.data().refresh = true;
 			$parent.on("refresh", function(){
-				var curData = $(this).data().pojo;
+				let curData = $(this).data().pojo;
 				if(!curData)
 					return;
 				that._fillData($(this), curData, prefix, idx);
@@ -1330,19 +1347,19 @@
 		}
 
 		$("input,textarea,button", $parent).each(function() {
-			var name = $(this).attr("name");
+			let name = $(this).attr("name");
 			if(!name) {
 				return;
 			}
 			that._enableTracking(this);
 
 			if(!prefix || name.indexOf(prefix + ".") >= 0) {
-				var cname = name;
+				let cname = name;
 				if (prefix) {
 					cname = cname.substring(prefix.length + 1);
 				}
 
-				var cdata = that._get(data, cname, false, idx);
+				let cdata = that._get(data, cname, false, idx);
 				
 				// we got the value - send it to the processor
 				if(that.options.dataHandler) {
@@ -1380,8 +1397,8 @@
 					// array in checkbox
 					if($(this).hasClass("array")) {
 						// checkbox: set if any part of the array matches
-						var cbVal = $(this).val();
-						var cbId = null;
+						let cbVal = $(this).val();
+						let cbId = null;
 						if($(this).attr("data-obj")) {
 							cbVal = JSON.parse($(this).attr("data-obj"));
 						}
@@ -1391,10 +1408,10 @@
 							cbVal = cbVal[cbId];
 						}
 
-						var found = false;
+						let found = false;
 						if(cdata) {
 							$.each(cdata, function(){
-								var cid = this;
+								let cid = this;
 								if(cbId)
 									cid = cid[cbId];
 								if(cid == cbVal) {
@@ -1410,9 +1427,16 @@
 					}
 				} else if($(this).attr("type") === "radio") {
 					if($(this).hasClass("bool")) {
-						$(this).prop("checked", cdata + "" === $(this).val());
+						if(cdata && $(this).val() === "true")
+							$(this).prop("checked",  true);
+						else if(!cdata && $(this).val() === "false")
+							$(this).prop("checked",  true);
+						else
+							$(this).prop("checked",  false);
 					}
-					else {
+					else if($(this).hasClass("number")) {
+						$(this).prop("checked", cdata == $(this).val());
+					} else {
 						$(this).prop("checked", cdata == $(this).val());
 					}
 				} else {
@@ -1428,7 +1452,7 @@
 					// array handling
 					if($(this).hasClass("array")) {
 						// fixed numbers
-						var num = $(this).attr("data-array");
+						let num = $(this).attr("data-array");
 						if(!num || isNaN(num)) {
 							num = null;
 						} else
@@ -1458,13 +1482,13 @@
 		});
 
 		$("select", $parent).each(function() {
-			var name = $(this).attr("name");
+			let name = $(this).attr("name");
 			if(!name) {
 				return;
 			}
 
 			if(!prefix || name.indexOf(prefix + ".") >= 0) {
-				var cname = name;
+				let cname = name;
 				if (prefix) {
 					cname = cname.substring(prefix.length + 1);
 				}
@@ -1473,12 +1497,12 @@
 
 				// remove "old" selected options
 				$(this).children("option:selected").prop("selected", false);
-				var pk = $(this).attr("data-key");
+				let pk = $(this).attr("data-key");
 				if(!pk) {
 					pk = "id";
 				}
 
-				var value = that._get(data, cname, false, idx);
+				let value = that._get(data, cname, false, idx);
 				
 				// we got the value - send it to the processor
 				if(that.options.dataHandler) {
@@ -1489,7 +1513,7 @@
 				if (value[pk] || !isNaN(value[pk])) {
 					// find out which one to select
 					$(this).find("option").each(function(){
-						var obj = $(this).data().pojo;
+						let obj = $(this).data().pojo;
 						if(!obj) {
 							obj = $(this).data().obj;
 						}
@@ -1542,18 +1566,18 @@
 	 * @return {Object} a new pojo
 	 */
 	JsForm.prototype.get = function(ignoreInvalid) {
-		var that = this;
-		var originalPojo = this.options.data;
-		var prefix = this.options.prefix;
+		let that = this;
+		let originalPojo = this.options.data;
+		let prefix = this.options.prefix;
 
 		// get the pojo
-		var pojo = {};
+		let pojo = {};
 		if(originalPojo && $.isPlainObject(originalPojo)) {
 			pojo = $.extend({}, originalPojo); 
 		}
 
 		// check for invalid fields
-		var invalid = false;
+		let invalid = false;
 
 		// go through all form parts
 		$.each(this._getForm(), function(){
@@ -1601,16 +1625,16 @@
 	 * @return true if the colelction encountered an invalid field
 	 */
 	JsForm.prototype._getCollection = function(form, prefix, pojo, ignoreInvalid) {
-		var that = this;
+		const that = this;
 		// check for invalid fields
-		var invalid = false;
+		let invalid = false;
 
 		form.find(".collection").each(function() {
 			if((!ignoreInvalid && invalid) || $(this).hasClass("transient")) {
 				return;
 			}
 
-			var fieldname = $(this).attr("data-field");
+			let fieldname = $(this).attr("data-field");
 			// only collections with the correct prefix
 			if(!fieldname || fieldname.indexOf(prefix+".") !== 0) {
 				return;
@@ -1618,7 +1642,7 @@
 
 			fieldname = fieldname.substring((prefix+".").length);
 
-			var colParent = that._getParent(pojo, fieldname, true);
+			let colParent = that._getParent(pojo, fieldname, true);
 			// get only the last part
 			if(fieldname.indexOf('.') !== -1) {
 				fieldname = fieldname.substring(fieldname.lastIndexOf('.') + 1);
@@ -1629,7 +1653,7 @@
 
 			// go through all direct childs - each one is an element
 			$(this).children().each(function(){
-				var ele = {}, result;
+				let ele = {}, result;
 				result = that._createPojoFromInput($(this), fieldname, ele);
 				if(!result) {
 					//that._debug("no string result - get subcollection");
@@ -1685,16 +1709,16 @@
 			field = $("input[name='"+field + "']", this.element);
 		}
 
-		var viewClass = this.options.viewClass;
+		let viewClass = this.options.viewClass;
 
 		if(mode) {
 			if (field.closest("span." + viewClass)[0])
 				return;
 
-			var val = field.val();
+			let val = field.val();
 			if (val === "null" || val === null || field.attr("type") === "submit")
 				val = "";
-			if(field.hasClass("trueFalse")) {
+			if(field.hasClass("trueFalse") || field.hasClass("bool") || field.hasClass("boolean")) {
 				if(field.is(':checked'))
 					val = 'X';
 				else
@@ -1703,15 +1727,15 @@
 
 			// convert \n to brs - escape all other html
 			val = val.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
-			var thespan = $('<span class="'+viewClass+'">'+val+'</span>');
+			let thespan = $('<span class="'+viewClass+'">'+val+'</span>');
 			if(field.parent().hasClass("ui-wrapper"))
 				field.parent().hide().wrap(thespan);
 			else
 				field.hide().wrap(thespan);
 		} else {
 			// remove text and then unwrap
-			var span = field.closest("span." + viewClass);
-			var ele = field.show().detach();
+			let span = field.closest("span." + viewClass);
+			let ele = field.show().detach();
 			span.before(ele);
 			span.remove();
 		}
@@ -1725,8 +1749,8 @@
 	 * @param enable true: switch inputs with spans, false: switch spans back, undefined: toggle
 	 */
 	JsForm.prototype.preventEditing = function(prevent) {
-		var $this = $(this.element);
-		var viewClass = this.options.viewClass;
+		let $this = $(this.element);
+		let viewClass = this.options.viewClass;
 
 		if(typeof prevent === "undefined") {
 			// get the disable from the form itself 
@@ -1745,17 +1769,17 @@
 					return;
 				if($(this).attr("type") == "hidden")
 					return;
-				var val = $(this).val();
+				let val = $(this).val();
 				if (val === "null" || val === null || $(this).attr("type") === "submit")
 					val = "";
-				if($(this).hasClass("trueFalse")) {
+				if($(this).hasClass("trueFalse")  || $(this).hasClass("bool")  || $(this).hasClass("boolean")) {
 					if($(this).is(':checked'))
 						val = 'X';
 					else
 						val = '&#160;';
 				}
 
-				var thespan;
+				let thespan;
 				if($(this).hasClass("noescape")) {
 					thespan = $('<div class="'+viewClass+'">'+val+'</div>');
 					thespan.html(val);
@@ -1776,11 +1800,11 @@
 				if ($(this).closest("span."+viewClass)[0])
 					return;
 
-				var val = $(this).children(":selected").html();
+				let val = $(this).children(":selected").html();
 				if (val === "null" || val === null)
 					val = "";
 
-				var thespan = $('<span class="'+viewClass+'">'+val+'</span>');
+				let thespan = $('<span class="'+viewClass+'">'+val+'</span>');
 
 				// toggle switches work a little different 
 				if($(this).hasClass("ui-toggle-switch")) {
@@ -1795,7 +1819,7 @@
 		{
 			$this.find("span." + viewClass +",div." + viewClass).each(function() {
 				// remove text and then unwrap
-				var ele = $(this).next("input,select,textarea,.ui-wrapper,.ui-toggle-switch").show();
+				let ele = $(this).next("input,select,textarea,.ui-wrapper,.ui-toggle-switch").show();
 				$(this).remove();
 			});
 		}
@@ -1809,7 +1833,7 @@
 	 */
 	JsForm.prototype.validate = function() {
 		// get the prefix from the form if not given
-		var valid = true;
+		let valid = true;
 
 		$.each(this._getForm(), function(){
 			// validation
@@ -1829,7 +1853,7 @@
 	 * @private
 	 */
 	JsForm.prototype._fill = function(noInput) {
-		var that = this;
+		let that = this;
 		$(this.element).addClass("POJO");
 		$(this.element).data("pojo", this.options.data);
 
@@ -1838,11 +1862,9 @@
 			try {
 				that._fillDom(this, noInput);
 			} catch (ex) {
-				console.log("Exception while filling form", ex);
+				console.log("Exception while filling form", ex, new Error().stack);
 			}
 		});
-		
-		$(this.element).trigger("filled");
 	};
 
 	/**
@@ -1853,7 +1875,7 @@
 	 * @private
 	 */
 	JsForm.prototype._fillDom = function(ele, noInput) {
-		var that = this;
+		const that = this;
 		// dont clear if we only fill the inputs
 		if(!noInput) {
 			that._clear(ele, that.options.prefix);
@@ -1884,10 +1906,10 @@
 	 * @private
 	 */
 	JsForm.prototype._fillCollection = function(container, data, prefix, noInput) {
-		var that = this;
+		let that = this;
 		// fill collections
 		$(".collection", container).each(function() {
-			var container = $(this),
+			let container = $(this),
 			fieldname = $(this).attr("data-field");
 			// only collections with the correct prefix
 			if(!data || !fieldname || fieldname.indexOf(prefix+".") !== 0) {
@@ -1895,9 +1917,9 @@
 			}
 
 			// data for the collection filling
-			var colData = null;
+			let colData = null;
 
-			var cname = fieldname;
+			let cname = fieldname;
 			// remove the prefix
 			if (prefix) {
 				cname = cname.substring(prefix.length + 1);
@@ -1907,14 +1929,14 @@
 			if(colData) {
 				// fill the collection
 				if(noInput) {
-					for(var i = 0; i < colData.length; i++) {
+					for(let i = 0; i < colData.length; i++) {
 						// cut away any prefixes - only the fieldname is used
 						if(cname.indexOf('.') !== -1) {
 							prefix = cname.substring(cname.lastIndexOf('.')+1);
 						}
 
-						var line = $(container.children().get(i));
-						var cur = colData[i];
+						let line = $(container.children().get(i));
+						let cur = colData[i];
 						// only fill read only fields
 						that._fillFieldData(line, cur, cname, i+1);
 						// fill with data
@@ -1935,8 +1957,8 @@
 	 * @private
 	 */
 	JsForm.prototype._fillList = function(container, data, prefix, lineFunc) {
-		var tmpl = container.data("template");
-		var that = this;
+		let tmpl = container.data("template");
+		let that = this;
 
 		if(!tmpl) {
 			return;
@@ -1958,7 +1980,7 @@
 
 		// check if we need to sort the array
 		if(container.hasClass("sort")) {
-			var sortField = container.attr("data-sort");
+			let sortField = container.attr("data-sort");
 			if(sortField) {
 				switch(container.attr("data-sorttype")) {
 				case 'alpha':
@@ -1996,9 +2018,9 @@
 			}
 		}
 		
-		for(var i = 0; i < data.length; i++) {
-			var cur = data[i];
-			var line = tmpl.clone(true);
+		for(let i = 0; i < data.length; i++) {
+			let cur = data[i];
+			let line = tmpl.clone(true);
 			// save current line
 			line.data().pojo = cur;
 			line.addClass("POJO");
@@ -2014,7 +2036,7 @@
 			container.append(line);
 
 			// trigger a callback
-			container.trigger("postAddCollection", [line, $(line).data().pojo]);
+			container.trigger("postAddCollection", [line, $(line).data().pojo, prefix]);
 
 		}
 	};
@@ -2026,7 +2048,7 @@
 	 * @private
 	 */
 	JsForm.prototype._fillLine = function(container, cur, line, prefix, i) {
-		var that = this;
+		let that = this;
 		that._addCollectionControls(line);
 
 		// trigger a callback
@@ -2056,8 +2078,8 @@
 	 * @private
 	 */
 	JsForm.prototype._addCollectionControls = function(line) {
-		var that = this;
-		var container = $(line).closest(".collection");
+		let that = this;
+		let container = $(line).closest(".collection");
 		
 		// enable controls on the line
 		if($.jsFormControls) {
@@ -2070,9 +2092,9 @@
 			if(target && target[0] !== this) {
 				return;
 			}
-			var ele = $(this);
-			var pojo = $(ele).data().pojo;
-			var base = $(this).closest(".collection");
+			let ele = $(this);
+			let pojo = $(ele).data().pojo;
+			let base = $(this).closest(".collection");
 			ele.detach();
 			// trigger a callback
 			$(base).trigger("deleteCollection", [ele, pojo]);
@@ -2084,8 +2106,8 @@
 				return;
 			}
 			// check if there is an up
-			var ele = $(this);
-			var prev = ele.prev(".POJO");
+			let ele = $(this);
+			let prev = ele.prev(".POJO");
 			if(prev.size() === 0) {
 				// no previous element - return
 				return;
@@ -2101,8 +2123,8 @@
 				return;
 			}
 			// check if there is a down
-			var ele = $(this);
-			var next = ele.next(".POJO");
+			let ele = $(this);
+			let next = ele.next(".POJO");
 			if(next.size() === 0) {
 				// no next element - return
 				return;
@@ -2114,15 +2136,15 @@
 		});
 		
 		$(".delete", line).click(function(){
-			var ele = $(this).closest(".POJO");
+			let ele = $(this).closest(".POJO");
 			ele.trigger("delete", [ele]);
 		});
 		$(".sortUp", line).click(function(){
-			var ele = $(this).closest(".POJO");
+			let ele = $(this).closest(".POJO");
 			ele.trigger("sortUp", [ele]);
 		});
 		$(".sortDown", line).click(function(){
-			var ele = $(this).closest(".POJO");
+			let ele = $(this).closest(".POJO");
 			ele.trigger("sortDown", [ele]);
 		});
 
@@ -2143,16 +2165,16 @@
 		}
 
 		// get the field to use for sorting
-		var sortField = $(ele).attr("data-sort");
+		let sortField = $(ele).attr("data-sort");
 		if(!sortField || ($(ele).attr("data-sorttype") && $(ele).attr("data-sorttype") !== "number") || 
 				($(ele).attr("data-sortdesc") && $(ele).attr("data-sortdesc") !== "false")) {
 			return;
 		}
 
 		// go through each child and get the pojo
-		var prio = 0;
+		let prio = 0;
 		$.each($(ele).children(), function(){
-			var data = $(this).data("pojo");
+			let data = $(this).data("pojo");
 			// no data yet - add one
 			if(!data) {
 				data = {};
@@ -2180,10 +2202,10 @@
 			return "";
 		}
 
-		var that = this;
-		var ret = "";
+		let that = this;
+		let ret = "";
 		$.each(skin.split(","), function(){
-			var val = this.trim();
+			let val = this.trim();
 			if(val.indexOf("'") === 0 || val.indexOf('"') === 0) {
 				ret += val.substring(1, val.length - 1);
 			} else {
@@ -2202,7 +2224,7 @@
 	 * @private
 	 */
 	JsForm.prototype._get = function(obj, expr, create, idx) {
-		var ret, p, prm = "", i;
+		let ret, p, prm = "", i;
 		if(typeof expr === "function") {
 			return expr(obj); 
 		}
@@ -2260,9 +2282,9 @@
 		}
 
 		path = path.split('.');
-		var arrayPattern = /(.*)\[(\d+)\]/;
-		for (var i = 1; i < path.length; i++) {
-			var match = arrayPattern.exec(path[i]);
+		let arrayPattern = /(.*)\[(\d+)\]/;
+		for (let i = 1; i < path.length; i++) {
+			let match = arrayPattern.exec(path[i]);
 			try {
 				if (match) {
 					obj = obj[match[1]][parseInt(match[2], 10)];
@@ -2323,7 +2345,7 @@
 	};
 
 	/**
-	 * checks if a variable is empty. This will check array, and whole objects. If a json object
+	 * checks if a letiable is empty. This will check array, and whole objects. If a json object
 	 * only contains empty "elements" then it is considered as empty.
 	 * Empty for a number is 0/-1
 	 * Empty for a boolena is false
@@ -2346,8 +2368,8 @@
 			}
 
 			// check each element
-			for(var i = 0; i < pojo.length; i++) {
-				if(!this._isEmpty()) {
+			for(const element of pojo) {
+				if(!this._isEmpty(element)) {
 					return false;
 				}
 			}
@@ -2359,7 +2381,7 @@
 				return true;
 			}
 
-			for(var f in pojo){
+			for(let f in pojo){
 				if(!this._isEmpty(pojo[f])) {
 					return false;
 				}
@@ -2369,10 +2391,7 @@
 
 		// a number
 		if(!isNaN(pojo)) {
-			if (Number(pojo) === 0 || Number(pojo) === -1) {
-				return true;
-			}
-			return false;
+			return Number(pojo) === 0 || Number(pojo) === -1;
 		}
 
 		// a string
@@ -2400,7 +2419,7 @@
 			return true;
 		}
 
-		var p = null;
+		let p = null;
 		for(p in a) {
 			if(typeof(b[p]) === 'undefined' && a[p] !== null && a[p] !== "" && a[p].length !== 0) {
 				// 0 == undefined
@@ -2469,7 +2488,7 @@
 	 * @return true if any change between formfields and the pojo is found
 	 */
 	JsForm.prototype.equals = function(pojo, idField) {
-		var obj = this.get(false);
+		let obj = this.get(false);
 		return this._equals(obj, pojo, idField);
 	};
 
@@ -2482,8 +2501,8 @@
 		if(!this.options.trackChanges)
 			return false;
 
-		var changed = false;
-		var that = this;
+		let changed = false;
+		let that = this;
 		$.each(this._getForm(), function(){
 			if($("." + that.options.trackChanges, this).size() > 0) {
 				changed = true;
@@ -2498,7 +2517,7 @@
 	 * Clears all change information to avoid triggering change events
 	 */
 	JsForm.prototype.clearChanged = function() {
-		var that = this;
+		let that = this;
 		// reset changes
 		$.each(this._getForm(), function(){
 			this.find("." + that.options.trackChanges).removeClass(that.options.trackChanges);
@@ -2512,8 +2531,8 @@
 		if(!this.options.trackChanges)
 			return false;
 
-		var changed = false;
-		var that = this;
+		let changed = false;
+		let that = this;
 		$.each(this._getForm(), function(){
 			$("." + that.options.trackChanges, this).each(function(){
 				$(this).removeClass(that.options.trackChanges);
@@ -2525,15 +2544,15 @@
 	};
 
 	JsForm.prototype._equalsCollection = function(form, prefix, pojo) {
-		var that = this;
-		var differs = false;
+		let that = this;
+		let differs = false;
 
 		$(".collection", form).each(function() {
 			if(differs) {
 				return;
 			}
 
-			var fieldname = $(this).attr("data-field");
+			let fieldname = $(this).attr("data-field");
 			// only collections with the correct prefix
 			if(!fieldname || fieldname.indexOf(prefix+".") !== 0) {
 				return;
@@ -2544,7 +2563,7 @@
 				return;
 			}
 
-			var childCounter = 0;
+			let childCounter = 0;
 			// go through all direct childs - each one is an element
 			$(this).children().each(function(){
 				if(differs) {
@@ -2557,7 +2576,7 @@
 					return;
 				}
 
-				var ele = pojo[fieldname][childCounter++];
+				let ele = pojo[fieldname][childCounter++];
 				if(that._pojoDifferFromInput($(this), fieldname, ele)) {
 					differs = true;
 				}
@@ -2590,6 +2609,8 @@
 		this.options.data = $.extend({}, pojo);
 		// fill everything
 		this._fill();
+		
+		$(this.element).trigger("filled", this, pojo);
 	};
 
 	/**
@@ -2635,7 +2656,7 @@
 	 * Clear all fields in a form
 	 */
 	JsForm.prototype.clear = function() {
-		var that = this;
+		let that = this;
 		$.each(this._getForm(), function(){
 			that._clear(this, that.options.prefix);
 		});
@@ -2666,7 +2687,7 @@
 				}
 			});
 		} else {
-			var args = Array.prototype.slice.call( arguments, 1 ),
+			let args = Array.prototype.slice.call( arguments, 1 ),
 			jsForm;
 			// none found
 			if(this.length === 0) {
@@ -2677,7 +2698,7 @@
 				jsForm = $(this).data('jsForm');
 				if (jsForm) {
 					if(method.indexOf("_") !== 0 && jsForm[method]) {
-						var ret =  jsForm[method].apply(jsForm, args);
+						let ret =  jsForm[method].apply(jsForm, args);
 						return ret;
 					}
 
@@ -2704,7 +2725,7 @@
 	 * global jsForm function for intialisation
 	 */
 	$.jsForm = function ( name, initFunc ) {
-		var jsForms = JSFORM_MAP[name];
+		let jsForms = JSFORM_MAP[name];
 		// initFunc is a function -> initialize
 		if($.isFunction(initFunc)) {
 			// call init if already initialized
@@ -2719,8 +2740,8 @@
 		} else {
 			// call init if already initialized
 			if(jsForms) {
-				var method = initFunc;
-				var args = Array.prototype.slice.call( arguments, 2 );
+				let method = initFunc;
+				let args = Array.prototype.slice.call( arguments, 2 );
 				$.each(portlets, function(){
 					this[method].apply(this, args);
 				});

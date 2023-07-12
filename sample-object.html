@@ -22,8 +22,22 @@ $(function(){
                 "name": "asdf"
             }
         }
-        
-    ]
+    ],
+    "subObject": {
+		"title": "subObjectTitle",
+		"groups": [{
+			"name": "test1",
+            "props": [
+            	{"name": "a1"}
+            ]
+		}, {
+			"name": "test2",
+            "props": [
+            	{"name": "b1"},
+            	{"name": "b2"}
+            ]
+		}]
+	}
 };
 
     $("textarea.object[name='objects.']").on("fill", function(){
@@ -67,9 +81,18 @@ $(function(){
         <li>
             <label for="objects.id">id:</label>
             <input name="objects.id" title=''/> <br />
-            <textarea class="object" name="objects." ></textarea>
+            <textarea class="object" name="objects." ></textarea><br/>
         </li>
     </ul>
+    
+    <ul class="collection" data-field="data.subObject.groups">
+        props: <span class="add" data-field="groups.props">+</span>
+        <div class="collection" data-field="groups.props">
+			<div>
+				<input name="props.name"><span class="delete">-</span>
+			</div>
+		</div>
+	</ul>
 </div>
 <button id="show">Show Object</button>
 </body>

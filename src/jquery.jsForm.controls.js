@@ -413,6 +413,7 @@
 		      //height: "450px",
 		      initialEditType: 'wysiwyg',
 		      initialValue: $('#PsychTextArea').val(),
+		      hideModeSwitch:true,
 		      events: {
 		          change: function() {
 		        	  $text.val($text.data().editor.getMarkdown());
