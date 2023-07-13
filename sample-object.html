@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js"></script>
@@ -13,7 +14,8 @@ $(function(){
             "enable": true,
             "find": {
                 "name": "asdf"
-            }
+            },
+            "props": [{"name": "test", "value": "yes"}]
         },
         {
             "id": 2,
@@ -28,13 +30,13 @@ $(function(){
 		"groups": [{
 			"name": "test1",
             "props": [
-            	{"name": "a1"}
+            	{"name": "a1", "value":"hi"}
             ]
 		}, {
 			"name": "test2",
             "props": [
-            	{"name": "b1"},
-            	{"name": "b2"}
+            	{"name": "b1", "value":"no"},
+            	{"name": "b2", "value":"maybe"}
             ]
 		}]
 	}
@@ -82,17 +84,25 @@ $(function(){
             <label for="objects.id">id:</label>
             <input name="objects.id" title=''/> <br />
             <textarea class="object" name="objects." ></textarea><br/>
+                props: <span class="add" data-field="objects.props">+</span><br/>
+		        <div class="collection" data-field="objects.props">
+					<div>
+						<input name="props.name"/>=<span class="field">props.value</span> <span class="delete">-</span>
+					</div>
+				</div>
+
         </li>
     </ul>
     
-    <ul class="collection" data-field="data.subObject.groups">
+    <div class="collection" data-field="data.subObject.groups">
+        <span class="field">groups.name</span><br/>
         props: <span class="add" data-field="groups.props">+</span>
         <div class="collection" data-field="groups.props">
 			<div>
 				<input name="props.name"><span class="delete">-</span>
 			</div>
 		</div>
-	</ul>
+	</div>
 </div>
 <button id="show">Show Object</button>
 </body>

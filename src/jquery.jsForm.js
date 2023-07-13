@@ -165,7 +165,7 @@
 	 * @private 
 	 */
 	JsForm.prototype._domInit = function() {
-		let that = this;
+		const that = this;
 
 		// handle multiple form parts
 		$.each(this._getForm(), function(){
@@ -183,7 +183,7 @@
 	 */
 	JsForm.prototype._debug = function(msg, param) {
 		try {
-			let cons = console || (window?window.console:null);
+			const cons = console || (window?window.console:null);
 			if (!cons || !cons.log)
 				return;
 
@@ -215,7 +215,7 @@
 	 * @private
 	 */
 	JsForm.prototype._initConditional = function(form, prefix, options) {
-		let that = this;
+		const that = this;
 		let showEvaluator = function(ele, data, fields) {
 			// if any field has a value -> show
 			let show = false;
@@ -307,8 +307,8 @@
 	 */
 	JsForm.prototype._initCollection = function(form, prefix) {
 		// all collections
-		let collectionMap = {};
-		let that = this;
+		const collectionMap = {};
+		const that = this;
 		$(form).data().collections = collectionMap; 
 
 		$(".collection", form).each(function() {
@@ -328,7 +328,7 @@
 				collectionMap[colName] = [container];
 			}
 
-			//init the collection
+			// take the container out
 			that._initList(container);
 
 			// after adding: check if we want reorder control
@@ -350,12 +350,14 @@
 			$(this).on("add", function(ev, pojo, fn){
 				if(ev.target !== this)
 					return;
-				let fieldName = $(this).attr("data-field"); 
+				const fieldName = $(this).attr("data-field"); 
 				// skip if fieldName doest match
 				if(fn && fieldName != fn)
 					return;
+		
+				const subPrefix = fieldName.substring(fieldName.indexOf('.')+1);
 				
-				let tmpl = $(this).data("template");
+				const tmpl = $(this).data("template");
 				if(!pojo) {
 					pojo = {};
 				}
@@ -387,9 +389,9 @@
 						$("input,textarea,select", line).addClass(that.options.trackChanges);
 
 					that._addCollectionControls(line);
-
+					
 					// its possible to have "sub" collections
-					that._initCollection(line, fieldName.substring(fieldName.indexOf('.')+1));
+					that._initCollection(line, subPrefix);
 
 					// trigger a callback
 					$(this).trigger("addCollection", [line, $(line).data().pojo]);
@@ -399,10 +401,10 @@
 
 					$(line).on("refresh", function(){
 						// fill read only fields
-						that._fillFieldData($(this), $(this).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx+1);
+						that._fillFieldData($(this), $(this).data().pojo, subPrefix, idx+1);
 						
 						// "fill data"
-						that._fillData($(this), $(this).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx+1);
+						that._fillData($(this), $(this).data().pojo, subPrefix, idx+1);
 					}).trigger("refresh");
 
 					$(this).append(line);
@@ -414,7 +416,7 @@
 		});
 
 		$(".add", form).each(function(){
-			let fieldName = $(this).attr("data-field"); 
+			const fieldName = $(this).attr("data-field"); 
 			if (!fieldName || fieldName.indexOf(prefix + ".") !== 0) {
 				return;
 			}
@@ -451,13 +453,15 @@
 			});
 		});
 		
-		
 		// insert: similar to add - but works with events
 		$(".insert", form).each(function(){
-			let fieldName = $(this).attr("data-field"); 
+			const fieldName = $(this).attr("data-field"); 
 			if (!fieldName || fieldName.indexOf(prefix + ".") !== 0) {
 				return;
 			}
+			
+			const subPrefix = fieldName.substring(fieldName.indexOf('.')+1);
+			console.log("prefix", subPrefix)
 
 			// only init once
 			if($(this).data().isCollection) {
@@ -508,6 +512,7 @@
 						
 						// fill the "information"
 						$(line).on("refresh", function(){
+
 							// fill read only fields
 							that._fillFieldData($(this), $(this).data().pojo, fieldName.substring(fieldName.indexOf('.')+1), idx);
 							
@@ -619,7 +624,7 @@
 		}
 
 		// get all children
-		let tmpl = container.children().detach();
+		const tmpl = container.children().detach();
 
 		// remove an id if there is one
 		tmpl.removeAttr("id");
@@ -632,7 +637,7 @@
 	 * @private
 	 */
 	JsForm.prototype._getForm = function() {
-		let form = [$(this.element)];
+		const form = [$(this.element)];
 		if(this.options.connect)
 			$.each(this.options.connect, function(){
 				form.push($(this));
@@ -757,7 +762,7 @@
 	 * @param $this the object the val comes from for array check
 	 */
 	JsForm.prototype._setPojoVal = function(pojo, name, val, $this) {
-		let that = this;
+		const that = this;
 		
 		// check if we have a . - if so split
 		if (name.indexOf(".") === -1)
@@ -816,7 +821,7 @@
 	JsForm.prototype._createPojoFromInput = function (start, prefix, pojo) {
 		// check if we have an "original" pojo
 		let startObj = null;
-		let that = this;
+		const that = this;
 		// normally we edit the pojo on ourselves - so result is null
 		let result = null;
 
@@ -1054,7 +1059,7 @@
 		if(!ele || ele.length === 0) {
 			return;
 		}
-		let that = this;
+		const that = this;
 		if(that.options.trackChanges && !$(ele).data().track) {
 			$(ele).data().track = true;
 			$(ele).change(function(){
@@ -1076,7 +1081,7 @@
 	 * @private
 	 */
 	JsForm.prototype._fillSelectCollection = function (parent, data, prefix, idx) {
-		let that = this;
+		const that = this;
 
 		let $parent = $(parent);
 
@@ -1225,6 +1230,9 @@
 			if(!name) {
 				name = $(this).data().field;
 			}
+			
+			console.log("fixx field  " + name, data);
+
 						
 			// add optional prefix
 			let dataprefix = $(this).attr("data-prefix");
@@ -1328,8 +1336,8 @@
 	 * @private
 	 */
 	JsForm.prototype._fillData = function (parent, data, prefix, idx) {
-		let that = this;
-		let $parent = $(parent);
+		const that = this;
+		const $parent = $(parent);
 		
 		if(prefix.indexOf(".") > 0) {
 			prefix = prefix.substring(prefix.indexOf(".")+1);
@@ -1566,9 +1574,9 @@
 	 * @return {Object} a new pojo
 	 */
 	JsForm.prototype.get = function(ignoreInvalid) {
-		let that = this;
-		let originalPojo = this.options.data;
-		let prefix = this.options.prefix;
+		const that = this;
+		const originalPojo = this.options.data;
+		const prefix = this.options.prefix;
 
 		// get the pojo
 		let pojo = {};
@@ -1709,7 +1717,7 @@
 			field = $("input[name='"+field + "']", this.element);
 		}
 
-		let viewClass = this.options.viewClass;
+		const viewClass = this.options.viewClass;
 
 		if(mode) {
 			if (field.closest("span." + viewClass)[0])
@@ -1749,8 +1757,8 @@
 	 * @param enable true: switch inputs with spans, false: switch spans back, undefined: toggle
 	 */
 	JsForm.prototype.preventEditing = function(prevent) {
-		let $this = $(this.element);
-		let viewClass = this.options.viewClass;
+		const $this = $(this.element);
+		const viewClass = this.options.viewClass;
 
 		if(typeof prevent === "undefined") {
 			// get the disable from the form itself 
@@ -1853,7 +1861,7 @@
 	 * @private
 	 */
 	JsForm.prototype._fill = function(noInput) {
-		let that = this;
+		const that = this;
 		$(this.element).addClass("POJO");
 		$(this.element).data("pojo", this.options.data);
 
@@ -1906,45 +1914,44 @@
 	 * @private
 	 */
 	JsForm.prototype._fillCollection = function(container, data, prefix, noInput) {
-		let that = this;
+		const that = this;
 		// fill collections
 		$(".collection", container).each(function() {
-			let container = $(this),
-			fieldname = $(this).attr("data-field");
+			const container = $(this);
+			const fieldname = $(this).attr("data-field");
 			// only collections with the correct prefix
 			if(!data || !fieldname || fieldname.indexOf(prefix+".") !== 0) {
 				return;
 			}
 
 			// data for the collection filling
-			let colData = null;
-
 			let cname = fieldname;
 			// remove the prefix
 			if (prefix) {
 				cname = cname.substring(prefix.length + 1);
 			}
-			colData = that._get(data, cname);
-
-			if(colData) {
-				// fill the collection
-				if(noInput) {
-					for(let i = 0; i < colData.length; i++) {
-						// cut away any prefixes - only the fieldname is used
-						if(cname.indexOf('.') !== -1) {
-							prefix = cname.substring(cname.lastIndexOf('.')+1);
-						}
-
-						let line = $(container.children().get(i));
-						let cur = colData[i];
-						// only fill read only fields
-						that._fillFieldData(line, cur, cname, i+1);
-						// fill with data
-						that._fillCollection(line, cur, cname, noInput);
-					}
-				} else {
-					that._fillList(container, colData, cname);
+			const colData = that._get(data, cname);
+			if(!colData) {
+				return;
+			}
+			
+			// cut away any prefixes - only the fieldname is used
+			if(cname.indexOf('.') !== -1) {
+				cname = cname.substring(cname.lastIndexOf('.')+1);
+			}
+			
+			// fill the collection
+			if(noInput) {
+				for(let i = 0; i < colData.length; i++) {
+					const line = $(container.children().get(i));
+					const cur = colData[i];
+					// only fill read only fields
+					that._fillFieldData(line, cur, cname, i+1);
+					// fill with data
+					that._fillCollection(line, cur, cname, noInput);
 				}
+			} else {
+				that._fillList(container, colData, cname);
 			}
 		});
 	};
@@ -1957,8 +1964,8 @@
 	 * @private
 	 */
 	JsForm.prototype._fillList = function(container, data, prefix, lineFunc) {
-		let tmpl = container.data("template");
-		let that = this;
+		const tmpl = container.data("template");
+		const that = this;
 
 		if(!tmpl) {
 			return;
@@ -2019,8 +2026,8 @@
 		}
 		
 		for(let i = 0; i < data.length; i++) {
-			let cur = data[i];
-			let line = tmpl.clone(true);
+			const cur = data[i];
+			const line = tmpl.clone(true);
 			// save current line
 			line.data().pojo = cur;
 			line.addClass("POJO");
@@ -2048,7 +2055,7 @@
 	 * @private
 	 */
 	JsForm.prototype._fillLine = function(container, cur, line, prefix, i) {
-		let that = this;
+		const that = this;
 		that._addCollectionControls(line);
 
 		// trigger a callback
@@ -2057,17 +2064,16 @@
 		if(prefix) {
 			$(line).on("refresh", function(){
 				// fill read only fields
-				that._fillFieldData($(this), $(this).data().pojo, prefix, i+1);
+				that._fillFieldData($(line), $(line).data().pojo, prefix, i+1);
 				
 				// "fill data"
-				that._fillData($(this), $(this).data().pojo, prefix, i+1);
+				that._fillData($(line), $(line).data().pojo, prefix, i+1);
 			}).trigger("refresh");
 			
 			// enable collection controls
 			that._initCollection(line, prefix);
 			// fill with data
 			that._fillCollection(line, cur, prefix);
-
 		}
 
 	};
@@ -2078,8 +2084,8 @@
 	 * @private
 	 */
 	JsForm.prototype._addCollectionControls = function(line) {
-		let that = this;
-		let container = $(line).closest(".collection");
+		const that = this;
+		const container = $(line).closest(".collection");
 		
 		// enable controls on the line
 		if($.jsFormControls) {
@@ -2092,9 +2098,9 @@
 			if(target && target[0] !== this) {
 				return;
 			}
-			let ele = $(this);
-			let pojo = $(ele).data().pojo;
-			let base = $(this).closest(".collection");
+			const ele = $(this);
+			const pojo = $(ele).data().pojo;
+			const base = $(this).closest(".collection");
 			ele.detach();
 			// trigger a callback
 			$(base).trigger("deleteCollection", [ele, pojo]);
@@ -2106,8 +2112,8 @@
 				return;
 			}
 			// check if there is an up
-			let ele = $(this);
-			let prev = ele.prev(".POJO");
+			const ele = $(this);
+			const prev = ele.prev(".POJO");
 			if(prev.size() === 0) {
 				// no previous element - return
 				return;
@@ -2202,7 +2208,7 @@
 			return "";
 		}
 
-		let that = this;
+		const that = this;
 		let ret = "";
 		$.each(skin.split(","), function(){
 			let val = this.trim();
@@ -2488,7 +2494,7 @@
 	 * @return true if any change between formfields and the pojo is found
 	 */
 	JsForm.prototype.equals = function(pojo, idField) {
-		let obj = this.get(false);
+		const obj = this.get(false);
 		return this._equals(obj, pojo, idField);
 	};
 
@@ -2502,7 +2508,7 @@
 			return false;
 
 		let changed = false;
-		let that = this;
+		const that = this;
 		$.each(this._getForm(), function(){
 			if($("." + that.options.trackChanges, this).size() > 0) {
 				changed = true;
@@ -2517,7 +2523,7 @@
 	 * Clears all change information to avoid triggering change events
 	 */
 	JsForm.prototype.clearChanged = function() {
-		let that = this;
+		const that = this;
 		// reset changes
 		$.each(this._getForm(), function(){
 			this.find("." + that.options.trackChanges).removeClass(that.options.trackChanges);
@@ -2532,7 +2538,7 @@
 			return false;
 
 		let changed = false;
-		let that = this;
+		const that = this;
 		$.each(this._getForm(), function(){
 			$("." + that.options.trackChanges, this).each(function(){
 				$(this).removeClass(that.options.trackChanges);
@@ -2544,7 +2550,7 @@
 	};
 
 	JsForm.prototype._equalsCollection = function(form, prefix, pojo) {
-		let that = this;
+		const that = this;
 		let differs = false;
 
 		$(".collection", form).each(function() {
@@ -2576,7 +2582,7 @@
 					return;
 				}
 
-				let ele = pojo[fieldname][childCounter++];
+				const ele = pojo[fieldname][childCounter++];
 				if(that._pojoDifferFromInput($(this), fieldname, ele)) {
 					differs = true;
 				}
@@ -2656,7 +2662,7 @@
 	 * Clear all fields in a form
 	 */
 	JsForm.prototype.clear = function() {
-		let that = this;
+		const that = this;
 		$.each(this._getForm(), function(){
 			that._clear(this, that.options.prefix);
 		});
