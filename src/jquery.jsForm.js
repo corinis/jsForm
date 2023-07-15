@@ -306,6 +306,10 @@
 	 * @private
 	 */
 	JsForm.prototype._initCollection = function(form, prefix) {
+		// precent double init
+		if($(form).data().collections)
+			return;
+			
 		// all collections
 		const collectionMap = {};
 		const that = this;
@@ -461,7 +465,6 @@
 			}
 			
 			const subPrefix = fieldName.substring(fieldName.indexOf('.')+1);
-			console.log("prefix", subPrefix)
 
 			// only init once
 			if($(this).data().isCollection) {
@@ -1231,9 +1234,6 @@
 				name = $(this).data().field;
 			}
 			
-			console.log("fixx field  " + name, data);
-
-						
 			// add optional prefix
 			let dataprefix = $(this).attr("data-prefix");
 			if(!dataprefix) {
@@ -1594,7 +1594,6 @@
 
 			if(!that.options.validateHidden) {
 				this.find(".invalid").filter(":visible").each(function(){
-					console.log("Invalid: " + $(this).attr("name"));
 					invalid = true;
 					$(this).focus();
 					if(!ignoreInvalid) {
@@ -1604,7 +1603,6 @@
 				});
 			} else {
 				this.find(".invalid").each(function(){
-					console.log("Invalid: " + $(this).attr("name"));
 					invalid = true;
 					$(this).focus();
 					return false;
@@ -1915,6 +1913,7 @@
 	 */
 	JsForm.prototype._fillCollection = function(container, data, prefix, noInput) {
 		const that = this;
+		
 		// fill collections
 		$(".collection", container).each(function() {
 			const container = $(this);
@@ -1978,12 +1977,10 @@
 		if(!$.isArray(data)) {
 			return;
 		}
-
 		// cut away any prefixes - only the fieldname is used
 		if(prefix.indexOf('.') !== -1) {
 			prefix = prefix.substring(prefix.lastIndexOf('.')+1);
 		}
-
 
 		// check if we need to sort the array
 		if(container.hasClass("sort")) {
@@ -2061,13 +2058,16 @@
 		// trigger a callback
 		container.trigger("addCollection", [line, cur]);
 
-		if(prefix) {
-			$(line).on("refresh", function(){
+		if(prefix && ! $(line).data().fillLine) {
+			$(line).data().fillLine = true;
+
+			$(line).on("refresh", function(ev){
 				// fill read only fields
 				that._fillFieldData($(line), $(line).data().pojo, prefix, i+1);
 				
 				// "fill data"
 				that._fillData($(line), $(line).data().pojo, prefix, i+1);
+				return false;
 			}).trigger("refresh");
 			
 			// enable collection controls
