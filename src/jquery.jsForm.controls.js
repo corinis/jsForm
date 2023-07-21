@@ -670,11 +670,11 @@
 					return $.jsFormControls.Format.timespan(cdata);
 				} else if($ele.hasClass("timeday")) {
 					if(!cdata)
-						return cdata
+						return cdata;
 					return $.jsFormControls.Format.time(Number(cdata*24*3600000));
 				} else if($ele.hasClass("humantimeday")) {
 					if(!cdata)
-						return cdata
+						return cdata;
 					$ele.data().processor = $.jsFormControls.Format.getHumanTime;
 					return $.jsFormControls.Format.humanTime(Number(cdata*24*3600000));
 				}

@@ -870,7 +870,7 @@
 					if($(this).hasClass("bool") || $(this).hasClass("boolean")) {
 						val = $(this).val() === "true";
 					} else if($(this).hasClass("number")) {
-						val = Number($(this).val())
+						val = Number($(this).val());
 					}
 				}
 				else if ($(this).hasClass("number") || $(this).hasClass("integer")) {

@@ -35,6 +35,9 @@ module.exports = function( grunt ) {
 				options: {
 					jshintrc: ".jshintrc"
 				}
+			},
+			options: {
+				esversion: 6
 			}
 //			tests: {
 				// TODO: Once .jshintignore is supported, use that instead.
