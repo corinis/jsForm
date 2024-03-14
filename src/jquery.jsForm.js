@@ -790,13 +790,16 @@
 		let result = null;
 
 		// get it from the starting dom element
-		if($(start).data("pojo")) {
-			startObj = $(start).data("pojo");
+		if($(start).data().pojo) {
+			startObj = $(start).data().pojo;
 		}
 
 		// if we have an object, use this as base and fill the pojo
 		if(startObj) {
-			$.extend(true, pojo, startObj);
+			if(typeof startObj === "object")
+				$.extend(true, pojo, startObj);
+			else	// primitive: simply return
+				return startObj;
 		}
 
 		$(start).find("input,select,textarea,button,.jsobject").each(function(){
@@ -1654,6 +1657,7 @@
 			$(this).children().each(function(){
 				let ele = {}, result;
 				result = that._createPojoFromInput($(this), fieldname, ele);
+
 				if(!result) {
 					//that._debug("no string result - get subcollection");
 					// also collect sub-collections
