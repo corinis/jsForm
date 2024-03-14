@@ -291,7 +291,7 @@
 	 */
 	JsForm.prototype._evaluateConditionals = function(form, data) {
 		this.conditionals.each(function(){
-			let ele = $(this);
+			const ele = $(this);
 			// go throguh all evaluation functions
 			$.each(ele.data().conditionalEval, function() {
 				this.func(ele, data, this.field);
@@ -316,16 +316,16 @@
 		$(form).data().collections = collectionMap; 
 
 		$(".collection", form).each(function() {
-			let colName = $(this).attr("data-field");
+			const colName = $(this).attr("data-field");
 			// skip collections without a data-field mapping
 			if (!colName || colName.indexOf(prefix + ".") !== 0) {
 				return;
 			}
 
-			let container = $(this);
+			const container = $(this);
 
 			// remember the collection
-			let cols = collectionMap[colName];
+			const cols = collectionMap[colName];
 			if(cols) {
 				cols.push(container);
 			} else {
@@ -361,7 +361,6 @@
 				if(fn && (fieldName !== fn && subPrefix !== fn) )
 					return;
 		
-				
 				const tmpl = $(this).data("template");
 				if(!pojo) {
 					pojo = {};
@@ -399,14 +398,25 @@
 				return;
 			}
 			$(this).data().hasJsForm = true;
-
-
+			
 			$(this).click(function(ev){
 				ev.preventDefault();
+				
+				// get prefill data
+				let prefill = $(this).data().prefill;
+				if(prefill) {
+					if(typeof prefill === "function") {
+						prefill = prefill();
+					}
+					else if(prefill.length > 2)
+						prefill = JSON.parse(prefill);
+				} else {
+					prefill = null;
+				}
 
 				// search for a collection with that name
 				$.each($(this).data("collections"), function() {
-					$(this).trigger("add", [null, fieldName]);
+					$(this).trigger("add", [prefill, fieldName]);
 				});
 			});
 		});
@@ -425,8 +435,9 @@
 		
 		// insert: similar to add - but works with events
 		$(".insert", form).each(function(){
-			const fieldName = $(this).attr("data-field"); 
+			const fieldName = $(this).data().field; 
 			if (!fieldName || fieldName.indexOf(prefix + ".") !== 0) {
+				console.log("INSERT: unable to find " + fieldName, this);
 				return;
 			}
 			
@@ -439,10 +450,21 @@
 			$(this).data().isCollection = true;
 
 			// remember the collections
-			$(this).data("collections", collectionMap[$(this).attr("data-field")]);
+			$(this).data().collections = collectionMap[fieldName];
 			$(this).on("insert", function(_ev, pojo){
-				if(!pojo)
+				if(!pojo) {
 					pojo = $(this).data().pojo;
+				}
+
+				if(!pojo && $(this).is("select")) {
+					const sel = $(this).find(":selected");
+					if(sel.data().pojo)
+						pojo = sel.data().pojo;
+					else if(sel.val() !== "" && sel.val() !== "null") {
+						pojo = sel.val();
+					}
+				}
+
 				// insert only works if there is a pojo
 				if(!pojo) {
 					return;
@@ -471,28 +493,35 @@
 
 		// insert: helper button (triggers insert)
 		$(".insertAction", form).each(function(){
-			let fieldName = $(this).attr("data-field"); 
+			const fieldName = $(this).data().field; 
 			if(!fieldName) {
+				console.log("Field name not specified", this);
 				return;
 			}
 
 			// only init once
-			if($(this).data("inserter")) {
+			if($(this).data().inserter) {
 				return;
 			}
 
 			// find the insert element for this data-field
 			let inserter = $(this).parent().find(".insert");
-			if(!inserter) {
+			if(inserter.length === 0) {
+				// go one more level
+				inserter = $(this).parent().parent().find(".insert");
+			}
+
+			if(inserter.length === 0) {
+				console.log("Unable to find inserter for field: " + fieldName);
 				return;
 			}
 
 			// remember the inserter
-			$(this).data("inserter", inserter);
+			$(this).data().inserter = inserter;
 
 			$(this).click(function(ev){
 				ev.preventDefault();
-				$(this).data("inserter").trigger("insert");
+				$(this).data().inserter.trigger("insert");
 				return false;
 			});
 
@@ -1118,7 +1147,7 @@
 	 *  <li>&lt;div class="field"&gt;prefix.fieldname&lt;/div&gt; -> allows html
 	 *  <li>&lt;a class="field" href="prefix.fieldname"&gt;linktest&lt;/a&gt;
 	 *  <li>&lt;img class="field" src="prefix.fieldname"/&gt;
-	 *  <li>&lt;x class="templatefield" data-attr="href" data-template="some/{{prefix.id}}/{{cur.fieldname}}/whatever"&gt;...&lt;/a&gt;
+	 *  <li>&lt;ELEMENT class="templatefield" data-attr="href" data-template="some/{{prefix.id}}/{{cur.fieldname}}/whatever"&gt;...&lt;/a&gt;
 	 * </ul>
 	 * @param parent the root of the subtree
 	 * @param data the data
@@ -1233,6 +1262,10 @@
 						cdata = that.options.dataHandler.deserialize(cdata, $(this), cname, data); 
 					}
 	
+					if($(this).hasClass("formatter") && $(this).data().formatter) {
+						cdata = Formatter[$(this).data().formatter](null, null, cdata);	
+					}
+					
 					// format the string
 					if($.jsFormControls) {
 						cdata = $.jsFormControls.Format.format(this, cdata);
@@ -1553,6 +1586,34 @@
 
 		return pojo;
 	};
+	
+	/**
+	 * retrieve the pojo from a collection element
+	 * @param line one element of the collection
+	 * @return the data object representing the current line
+	 */
+	JsForm.prototype.getCollection = function(line) {
+		if(!line) {
+			console.debug("Collection Line not given.");
+			return;
+		}
+		
+		const that = this;
+		
+		const originalPojo = line[0].data().pojo;
+		let prefix = line[0].parent().data().field;
+		prefix = prefix.substring(prefix.lastIndexOf(".")+1);
+
+		let pojo = {};
+		if(originalPojo && $.isPlainObject(originalPojo)) {
+			pojo = $.extend({}, originalPojo); 
+		}
+
+		// update
+		that._createPojoFromInput(line[0], prefix, pojo);
+		
+		return pojo;
+	}
 
 	/**
 	 * fill a pojo based on collections
@@ -2023,6 +2084,9 @@
 				
 				// "fill data"
 				that._fillData($line, $line.data().pojo, prefix, i+1);
+				
+				// "finished"
+				$line.trigger("refreshed", [$line, $line.data().pojo]);
 				return false;
 			}).trigger("refresh");
 			
