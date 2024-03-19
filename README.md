@@ -69,8 +69,11 @@ compatible to jquery-ui.
 * [Tree](https://github.com/corinis/jsForm/wiki/Tree)
  - [jquery.tree.js](https://raw.github.com/corinis/jsForm/master/controls/jquery.tree.js)
  - [jquery.tree.css](https://raw.github.com/corinis/jsForm/master/controls/jquery.tree.css)
+* [Sortable Table](https://github.com/corinis/jsForm/wiki/Sortable-Table)
+ - [jquery.sorTable.js](https://raw.github.com/corinis/jsForm/master/controls/jquery.sorTable.js)
 * [jquery.responsiveDialog.js](https://github.com/corinis/jsForm/wiki/jquery.responsiveDialog.js) Plugin which extends the default jquery.ui dialog to be more responsive
 
+ 
 # Quickstart
 
 * Start with a simple html to show you the basic usage [download sample](https://raw.github.com/corinis/jsForm/master/sample.html) [view life](http://www.gargan.org/jsform/index.jsp).
@@ -94,9 +97,7 @@ $(function(){
 	};
 
 	// initialize the form, prefix is optional and defaults to data
-	$("#details").jsForm({
-		data:jsonData
-	});
+	$("#details").jsForm({ data:jsonData });
 
 	$("#show").click(function() {
 		// show the json data
@@ -106,7 +107,7 @@ $(function(){
 </script>
 </head>
 <body>
-<h1>Simpel Form Test</h1>
+<h1>Simple Form Test</h1>
 <div id="details">
 	Name: <input name="data.name"/><br/>
 	<input type="checkbox" name="data.active"/> active<br/>
