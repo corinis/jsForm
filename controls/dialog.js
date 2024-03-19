@@ -1,7 +1,10 @@
+"use strict";
 /// <reference path="../3rdparty/jquery.d.ts" />
 /// <reference path="ConnectionUtils.ts" />
 /// <reference path="jquery.jsForm.d.ts" />
 /**
+ * Documentation:(https://project.corinis.com/docs/pages/viewpage.action?pageId=99615166)
+ *
  * Dialog Helper Class.
  * this works in combination with jqueryUI dialog and Connection Utils
  * to provide a generic CRUD dialog functionality
@@ -45,40 +48,59 @@
  * Events
  * You can use the default dialog events to add extra actions:
  * ```
- * $dlg.on("dialogopen", function(){ alert("dosth"); });
+ * $dlg.on("dialogopen", function(){ alert("just opened a dialog"); });
+ * $dlg.on("success", function(){ alert("just successfully saved"); });
+ *
  * ```
  */
 var Dialog;
 (function (Dialog) {
-    var DialogConfig = /** @class */ (function () {
-        function DialogConfig() {
+    class DialogConfig {
+        constructor() {
             this.width = 600;
+            this.responsive = 800;
+            this.modal = true;
         }
-        return DialogConfig;
-    }());
-    var ActionConfig = /** @class */ (function () {
-        function ActionConfig() {
-        }
-        return ActionConfig;
-    }());
-    var SubDialogConfig = /** @class */ (function () {
-        function SubDialogConfig() {
+    }
+    class ActionConfig {
+    }
+    class SubDialogConfig {
+        constructor() {
             this.width = 400;
         }
-        return SubDialogConfig;
-    }());
+    }
     /**
-     * Init a new dialog, everything is stored directly in data
+     * Initializes the dialog overlay with the given ID and options.
+     *
+     * @param {any} id - the ID of the dialog
+     * @param {object} options - optional settings for the dialog
+     * @return {undefined}
      */
-    function init(id, options) {
-        var _this = this;
-        var $dlg = $(id);
+    function init(id, options, replaceButton = false) {
+        if (typeof Panel !== "undefined") {
+            console.log("Using panel init ", id, options);
+            Panel.init(id, options);
+            return;
+        }
+        if (replaceButton) {
+            setTimeout(() => {
+                console.log("Replace button pane...");
+                replaceDefaultButtonPane($dlg);
+            }, 100);
+        }
+        const $dlg = $(id);
         if (!$dlg.length) {
             console.log("Unable to find dialog: " + id, new Error().stack);
             return;
         }
         if (!options) {
-            options = {};
+            options = new DialogConfig();
+        }
+        if ($dlg.attr("data-modal") === "false") {
+            options.modal = false;
+        }
+        else {
+            options.modal = true;
         }
         if ($dlg.attr("data-icon")) {
             options.icon = $dlg.attr("data-icon");
@@ -89,12 +111,18 @@ var Dialog;
         if ($dlg.attr("data-width")) {
             options.width = Number($dlg.attr("data-width"));
         }
+        if ($dlg.attr("data-responsive")) {
+            options.responsive = Number($dlg.attr("data-responsive"));
+        }
+        if ($dlg.attr("data-buttonsave")) {
+            options.buttonSave = $dlg.attr("data-buttonsave") === "true";
+        }
         /**
          * Save the form (and close)
          */
-        var save = function () {
-            if (options && options.saveMethod && !$dlg.hasClass("view")) {
-                var data = $dlg.jsForm("get");
+        let save = function (close) {
+            if ((options === null || options === void 0 ? void 0 : options.saveMethod) && !$dlg.hasClass("view")) {
+                let data = $dlg.jsForm("get");
                 if ($dlg.data().onData) {
                     data = $dlg.data().onData(data);
                 }
@@ -104,7 +132,7 @@ var Dialog;
                 }
                 if (typeof options.saveMethod === "function") {
                     options.saveMethod(data, function (data) {
-                        var postResult = null;
+                        let postResult = null;
                         if ($dlg.data().onDone) {
                             postResult = $dlg.data().onDone(data);
                         }
@@ -112,7 +140,7 @@ var Dialog;
                             postResult = options.onDone(data);
                         }
                         $dlg.trigger("success", [data]);
-                        if (postResult === false) {
+                        if (postResult === false || !close) {
                             $dlg.jsForm("fill", data);
                             return;
                         }
@@ -121,7 +149,7 @@ var Dialog;
                 }
                 else {
                     Core.conn.execute(options.service, options.saveMethod, [data]).then(function (data) {
-                        var postResult = null;
+                        let postResult = null;
                         if ($dlg.data().onDone) {
                             postResult = $dlg.data().onDone(data);
                         }
@@ -129,7 +157,7 @@ var Dialog;
                             postResult = options.onDone(data);
                         }
                         $dlg.trigger("success", [data]);
-                        if (postResult === false) {
+                        if (postResult === false || !close) {
                             $dlg.jsForm("fill", data);
                             return;
                         }
@@ -138,15 +166,30 @@ var Dialog;
                 }
             }
             else if ($dlg.data().onDone) {
-                var data = $dlg.jsForm("get");
+                let data = $dlg.jsForm("get");
+                // prepare data (if required)
                 if ($dlg.data().onData) {
                     data = $dlg.data().onData(data);
                 }
-                if ($dlg.data().onDone(data) === false) {
+                // call the onDone function
+                let res = $dlg.data().onDone(data, (data) => {
+                    if (close || !data) {
+                        $dlg.dialog("close");
+                    }
+                    else {
+                        $dlg.jsForm("fill", data);
+                    }
+                });
+                if (res === false) {
                     alert(i18n.dialog_validation_notOk);
                     return;
                 }
-                $dlg.dialog("close");
+                else if (res === true) {
+                    // keep open, wait for callback
+                }
+                else {
+                    $dlg.dialog("close");
+                }
             }
             else {
                 $dlg.dialog("close");
@@ -155,8 +198,8 @@ var Dialog;
         // action integration: open dialog
         if (options) {
             if (options.create) {
-                $(options.create.action).click(function () {
-                    if ($(_this).hasClass("disabled")) {
+                $(options.create.action).click(() => {
+                    if ($(this).hasClass("disabled")) {
                         return;
                     }
                     $dlg.removeClass("view");
@@ -164,8 +207,8 @@ var Dialog;
                 });
             }
             if (options.update) {
-                $(options.update.action).click(function () {
-                    if ($(_this).hasClass("disabled")) {
+                $(options.update.action).click(() => {
+                    if ($(this).hasClass("disabled")) {
                         return;
                     }
                     $dlg.removeClass("view");
@@ -173,8 +216,8 @@ var Dialog;
                 });
             }
             if (options.view) {
-                $(options.view.action).click(function () {
-                    if ($(_this).hasClass("disabled")) {
+                $(options.view.action).click(() => {
+                    if ($(this).hasClass("disabled")) {
                         return;
                     }
                     $dlg.addClass("view");
@@ -182,28 +225,51 @@ var Dialog;
                 });
             }
         }
-        var buttons = [
-            {
+        let buttons = [];
+        if (options.buttonSave) {
+            buttons.push({
                 'class': "ui-button-primary",
-                text: i18n.dialog_ok,
+                text: i18n.dialog_save,
                 responsive: {
                     html: '<i class="fas fa-2x fa-check"></i>',
                     position: 1
                 },
                 click: function () {
-                    save();
+                    save(false);
                 }
+            });
+        }
+        buttons.push({
+            'class': "ui-button-primary",
+            text: i18n.dialog_ok,
+            responsive: {
+                html: '<i class="fas fa-2x fa-check"></i>',
+                position: 1
             },
-            {
-                text: i18n.dialog_cancel,
-                click: function () {
-                    $dlg.dialog("close");
-                }
+            click: function () {
+                save(true);
             }
-        ];
+        });
+        buttons.push({
+            text: i18n.dialog_cancel,
+            click: function () {
+                $dlg.dialog("close");
+            }
+        });
         // default buttons
         if (options.buttons) {
-            buttons = options.buttons($dlg);
+            if (typeof options.buttons === "function")
+                buttons = options.buttons($dlg, buttons);
+            else
+                buttons = options.buttons;
+        }
+        // fill default class
+        if ((buttons === null || buttons === void 0 ? void 0 : buttons.length) > 1) {
+            buttons.forEach(item => {
+                if (!item.class && item.color) {
+                    item.class = 'btn btn-' + item.color;
+                }
+            });
         }
         // check if overlay exists
         if (options.overlay && $(options.overlay).length === 0) {
@@ -213,14 +279,14 @@ var Dialog;
         $dlg.dialog({
             autoOpen: false,
             width: options.width || 600,
-            modal: true,
+            modal: options.modal,
             titleIcon: {
                 background: options.color,
                 icon: options.icon
             },
             responsive: {
                 overlay: options.overlay,
-                limit: options.width || 600,
+                limit: options.responsive || options.width || 600,
                 left: {
                     'class': 'bg-icon active ' + options.color,
                     text: '&#160;<i class="fas fa-chevron-left"/>&#160;<i class="' + options.icon + '"/>',
@@ -238,7 +304,7 @@ var Dialog;
             buttons: buttons
         });
         if (options.subDialogs) {
-            options.subDialogs.forEach(function (curDlg, index, array) {
+            options.subDialogs.forEach((curDlg, index, array) => {
                 $(curDlg.action, $dlg).click(function () {
                     if ($(this).hasClass("disabled")) {
                         return;
@@ -247,15 +313,15 @@ var Dialog;
                     curDlg.dlg.data().updateData = $(this).closest(".POJO").data();
                     curDlg.dlg.jsForm("fill", $(this).closest(".POJO").data().pojo);
                 });
-                var saveDlg = function () {
-                    var data = curDlg.dlg.jsForm("get");
+                let saveDlg = function () {
+                    let data = curDlg.dlg.jsForm("get");
                     if (!data) {
                         alert(i18n.dialog_validation_notOk);
                         return;
                     }
                     // update original object
                     curDlg.dlg.data().updateData.pojo = data;
-                    var updated = $dlg.jsForm("get");
+                    let updated = $dlg.jsForm("get");
                     $dlg.jsForm("fill", updated);
                 };
                 curDlg.dlg.dialog({
@@ -283,11 +349,11 @@ var Dialog;
             });
         }
         $dlg.jsForm();
-        var $form = $dlg.find("form");
+        let $form = $dlg.find("form");
         if ($form) {
             $form.submit(function (ev) {
                 ev.preventDefault();
-                save();
+                save(false);
             });
         }
         /**
@@ -295,7 +361,7 @@ var Dialog;
          * Fix for bootstrap bug
          */
         $dlg.find("a.nav-link").each(function (idx, ele) {
-            var tabTrigger = new bootstrap.Tab(ele);
+            let tabTrigger = new bootstrap.Tab(ele);
             $(ele).on('click', function (event) {
                 event.preventDefault();
                 tabTrigger.show();
@@ -304,23 +370,29 @@ var Dialog;
     }
     Dialog.init = init;
     /**
-     * Open a dialog window
-     * @param id the id or jquery selector for the dialog dom object
-     * @param data a data object used to fill the dialog form or a callback function
-     * @param done callback when the dialog is closed with "OK"
-     * @param onData callback for data processing right before processed with done
+     * Opens a dialog with the specified ID, populates it with data, and sets up event handlers.
+     *
+     * @param {string} id - The ID of the dialog element.
+     * @param {object} data - The data to populate the dialog with.
+     * @param {Function} done - The callback function to execute when the dialog is closed.
+     * @param {Function} onData - The callback function to execute when new data is received.
      */
     function open(id, data, done, onData) {
-        if (!data)
+        if (typeof Panel !== "undefined") {
+            Panel.open(id, data, done, onData);
+            return;
+        }
+        if (!data) {
             data = {};
+        }
         // save the callback
-        var $dlg = $(id);
+        const $dlg = $(id);
         $dlg.data().onDone = done;
         $dlg.data().onData = onData;
         // toggle view/edit mode		
         $dlg.jsForm("preventEditing", false);
         if (typeof data === "function") {
-            data(function (retrieveData) {
+            data((retrieveData) => {
                 $dlg.data().pojo = retrieveData;
                 $dlg.jsForm("fill", retrieveData);
                 if ($dlg.hasClass("view")) {
@@ -330,8 +402,9 @@ var Dialog;
             });
         }
         else {
-            if (!data)
+            if (!data) {
                 data = {};
+            }
             $dlg.data().pojo = data;
             $dlg.jsForm("fill", data);
             if ($dlg.hasClass("view")) {
@@ -342,12 +415,72 @@ var Dialog;
     }
     Dialog.open = open;
     /**
-     * Helper to close a dialog
-     * @param id the id or jquery selector for the dialog dom object
+     * Closes the overlay or modal identified by the given ID.
+     *
+     * @param {string} id - The ID of the overlay or modal to be closed.
      */
     function close(id) {
-        var $dlg = $(id);
+        if (typeof Panel !== "undefined") {
+            Panel.close(id);
+            return;
+        }
+        const $dlg = $(id);
         $dlg.dialog("close");
     }
     Dialog.close = close;
+    /**
+     * Helper functions
+     */
+    /**
+     * Replace default buttonpane if button div or/and button dropdown exists
+     * @param dlg Dialog object contains HTMLDivElement
+     */
+    function replaceDefaultButtonPane(dlg) {
+        if ($(dlg).find('.dialog-buttons').length > 0 || $(dlg).find('.dropdown').length > 0) {
+            if ($(dlg).parent().find('.ui-dialog-buttonpane').length > 0) {
+                $(dlg).parent().find('.ui-dialog-buttonpane').empty();
+                if ($(dlg).find('.dialog-buttons').length === 1) {
+                    $(dlg).parent().find('.ui-dialog-buttonpane').append($(dlg).find('.dialog-buttons'));
+                    dispatchButtonEvents($(dlg).parent().find('.dialog-buttons'), dlg);
+                }
+            }
+            else {
+                $(dlg).parent().append('<div class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"></div>');
+                replaceDefaultButtonPane(dlg);
+            }
+        }
+    }
+    /**
+     * Dispatch button events for the given button container and dialog.
+     *
+     * @param {HTMLElement} buttonContainer - The container element that holds the buttons.
+     * @param {HTMLElement} dlg - The dialog element.
+     */
+    function dispatchButtonEvents(buttonContainer, dlg) {
+        // Add click handler for event dispatching to every single element
+        $(buttonContainer).children().each(function (index, element) {
+            var _a;
+            // For dropdown buttons set correct buttoncontainer
+            if (element.nodeName === 'DIV') {
+                dispatchButtonEvents($(dlg).parent().find('.dropdown-menu'), dlg);
+            }
+            // Check if button has data-event, dispatch event if element is not disabled
+            if (element.hasAttribute('data-event') || ((_a = element === null || element === void 0 ? void 0 : element.children[0]) === null || _a === void 0 ? void 0 : _a.hasAttribute('data-event'))) {
+                let el = element; // button or anchor
+                if (!element.hasAttribute('data-event')) {
+                    el = element.children[0];
+                }
+                $(el).on('click', function () {
+                    if (this.classList.contains('disabled'))
+                        return;
+                    let data = null;
+                    if (this.classList.contains('data')) {
+                        data = $('.detail').jsForm('get');
+                    }
+                    //console.log('----- Dispatched event', $(this).data().event);
+                    dlg.trigger($(this).data().event, [dlg, data]);
+                });
+            }
+        });
+    }
 })(Dialog || (Dialog = {}));
