@@ -37,7 +37,7 @@
 			 * add icons in the header: add html snipped.
 			 * If empty, nothing will be shown
 			 */
-			icon: ['<i class="fa fa-sort"></i>', '<i class="fa fa-sort-up"></i>', '<i class="fa fa-sort-down"></i>'],
+			icon: ['&#160;<i class="fa fa-sort"></i>', '&#160;<i class="fa fa-sort-up"></i>', '&#160;<i class="fa fa-sort-down"></i>'],
 			/**
 			 * selector to get the header cells
 			 */
@@ -70,11 +70,11 @@
 	SorTable.prototype._init = function() {
 		const that = this;
 		$(this.options.headSelect, this.element).each(function(){
-			if(!$(this).hasClass(classSortable))
+			if(!$(this).hasClass(that.options.classSortable))
 				return;
 			let sortIcon = null;
-			if(this.options.icon) {
-				sortIcon = $('<span class="action sort">'+this.options.icon[0]+'</sort>');
+			if(that.options.icon) {
+				sortIcon = $('<span class="action sort">'+that.options.icon[0]+'</sort>');
 				$(this).append(sortIcon);
 			}
 				
@@ -82,10 +82,10 @@
 				const curSort = that._sort($(this).prevAll().length, that.lastSort !== sortIcon ? 0 : $(this).data().sortOrder);
 				$(this).data().sortOrder = curSort;
 				if(sortIcon) {
-					if(that.lastSort) that.lastSort.html(this.options.icon[0]);
+					if(that.lastSort) that.lastSort.html(that.options.icon[0]);
 					// remember the current row and set the icon correctly
 					that.lastSort = sortIcon;
-					sortIcon.html(this.options.icon[curSort]);
+					sortIcon.html(that.options.icon[curSort]);
 				}
 			});
 		});
@@ -99,7 +99,7 @@
 	 * @private 
 	 */
 	SorTable.prototype._sort = function(pos, order) {
-		const $body = $(bodySelect, this.config.element); 
+		const $body = $(this.options.bodySelect, this.element); 
 		let dataType = "string";
 		if(order == 1)
 			order = 2;
@@ -107,17 +107,24 @@
 			order = 1;
 			
 		const he = $($(this.options.headSelect, this.element).get(pos));
-		if(he.hasClass("num"))
+		if(he.hasClass("num") || he.hasClass("number"))
 			dataType = "number";
-		if(he.hasClass("trimnum"))
+		else if(he.hasClass("trimnum"))
 			dataType = "findnumber";
 		else if(he.hasClass("date"))
 			dataType = "date";
+			
+		console.log("sort "+pos+" by", dataType);
 		
 		// collect all tr
 		const data = [];
 		$($body).children("tr").each(function(){
-			const rowVal = $("td:eq(" + pos + ")", this).text();
+			const $cell = $($(this).children()[pos]);
+			let rowVal = $cell.text();
+			// no text - check input
+			if(rowVal === "") {
+				rowVal = $("input", $cell).val();
+			}
 			data.push({ 
 				val: rowVal,
 				row: $(this).detach()
@@ -127,10 +134,6 @@
 		let valFunc = he.data().sorter;
 		if(!valFunc)
 			switch(dataType){
-				case "string":
-					valFunc = (a)=>{
-						return a.val;
-					}; break;
 				case "number":
 					valFunc = (a)=>{
 						return Number(a.val);
@@ -144,6 +147,10 @@
 					valFunc = (a)=>{
 						const aval = new Date(a); 
 						return aval.getTime();
+					}; break;
+				default:
+					valFunc = (a)=>{
+						return a.val;
 					}; break;
 			} 
 					
