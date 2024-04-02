@@ -65,13 +65,14 @@ can be found in the github wiki:
 
 Additionally to the base form, I created some custom controls. There might be much more powerful versions out there,
 but the aim here is to have simple to use controls that are compatible with the json-approach of jsForm and also 
-compatible to jquery-ui. 
-* [Tree](https://github.com/corinis/jsForm/wiki/Tree)
+compatible to jquery-ui and bootstrap. 
+
+* [Tree](https://github.com/corinis/jsForm/wiki/Tree) 
    * [jquery.tree.js](https://raw.github.com/corinis/jsForm/master/controls/jquery.tree.js)
    * [jquery.tree.css](https://raw.github.com/corinis/jsForm/master/controls/jquery.tree.css)
-* [Sortable Table](https://github.com/corinis/jsForm/wiki/Sortable-Table)
-   * [jquery.sorTable.js](https://raw.github.com/corinis/jsForm/master/controls/jquery.sorTable.js)
-* [jqueryUI Responive Dialog](https://github.com/corinis/jsForm/wiki/Responsive-Dialog)
+* [Sortable Table](https://github.com/corinis/jsForm/wiki/Sortable-Table) 
+   * [jquery.sorTable.js](https://raw.github.com/corinis/jsForm/master/controls/jquery.sorTable.js) also allows quick filtering
+* [jqueryUI Responsive Dialog](https://github.com/corinis/jsForm/wiki/Responsive-Dialog) 
    * [jquery.responsiveDialog.js](https://github.com/corinis/jsForm/wiki/jquery.responsiveDialog.js) Plugin which extends the default jquery.ui dialog to be more responsive
 
  

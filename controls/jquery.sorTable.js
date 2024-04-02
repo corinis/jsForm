@@ -51,6 +51,10 @@
 			 */
 			classSortable: "sortable", 
 			/**
+			 * quickfilter element
+			 */
+			quickfilter: null,
+			/**
 			 * remember the sort order in a cookie (non-null = name of the cookie)
 			 */
 			remember: null
@@ -89,7 +93,63 @@
 				}
 			});
 		});
+		
+		const qf = $(this.options.headSelect, this.element).find("input.quickfilter");
+		if(qf.length > 0) {
+			qf.on("keyup change", function(){
+				const val = $(this).val().trim();
+				that._filter(val);
+			});
+		}
+
 	};
+	
+	
+	/**
+	 * filter the body table based on a value
+	 */
+	SorTable.prototype._filter = function(value) {
+		const that = this;
+		const $body = $(this.options.bodySelect, this.element);
+		value = value.toLowerCase(); 
+		$($body).children("tr").each(function(){
+			if(!value || value === "") {
+				$(this).show();
+				return;
+			}
+			// check the text content
+			const content = that._rowVal($(this)).toLowerCase();
+			if(content.indexOf(value) === -1)
+				$(this).hide();
+			else
+				$(this).show();				
+		});
+	};
+	
+	/**
+	 * get the content of a cell
+	 */
+	SorTable.prototype._cellVal= function($cell) {
+		
+		let rowVal = $cell.text();
+		// no text - check input
+		if(rowVal === "") {
+			rowVal += $("input", $cell).val();
+		}
+		return rowVal;
+	}
+
+	/**
+	 * get the content of a row 
+	 */
+	SorTable.prototype._rowVal= function($row) {
+		const that = this;
+		let rowVal = "";
+		$row.children().each(function(){
+			rowVal += that._cellVal($(this));
+		});
+		return rowVal;
+	}
 	
 	/**
 	 * repaint the sorTable with new data
@@ -99,6 +159,7 @@
 	 * @private 
 	 */
 	SorTable.prototype._sort = function(pos, order) {
+		const that = this;
 		const $body = $(this.options.bodySelect, this.element); 
 		let dataType = "string";
 		if(order == 1)
@@ -120,11 +181,7 @@
 		const data = [];
 		$($body).children("tr").each(function(){
 			const $cell = $($(this).children()[pos]);
-			let rowVal = $cell.text();
-			// no text - check input
-			if(rowVal === "") {
-				rowVal = $("input", $cell).val();
-			}
+			const rowVal = that._cellVal($cell);
 			data.push({ 
 				val: rowVal,
 				row: $(this).detach()
