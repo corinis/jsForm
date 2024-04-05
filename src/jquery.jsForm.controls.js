@@ -2,7 +2,7 @@
  * jquery.jsForm.controls
  * ----------------------
  * UI Controls and Field validation
- * @version 1.0
+ * @version 1.3
  * @class
  * @author Niko Berger
  * @license MIT License GPL
@@ -10,8 +10,8 @@
 ;(function( $, window, undefined ){
 	"use strict";
 	
-	var JSFORM_INIT_FUNCTIONS = {},	// remember initialization functions
-		JSFORM_MAP = {};	// remember all forms
+	const JSFORM_INIT_FUNCTIONS = {};	// remember initialization functions
+	const JSFORM_MAP = {};	// remember all forms
 
 	/**
 	 * handlebars extension (+simple date format)
@@ -87,7 +87,8 @@
 	 * @private 
 	 */
 	JsFormControls.prototype._domInit = function() {
-		var location = $(this.element);
+		const location = $(this.element);
+		
 		// validation
 		// check required (this is the first check)
 		location.find("input.mandatory,textarea.mandatory").on("keyup", function(){
@@ -138,12 +139,12 @@
 		
 		// show datepicker for all inputs
 		location.find("input.date").each(function(){
-			var dateformat = null;
-			var format = $(this).attr("data-format");
+			let dateformat = null;
+			const format = $(this).attr("data-format");
+			const $this = $(this);
 			
 			if(window.flatpickr) {
-				var $this = $(this);
-				window.flatpickr($(this)[0], {
+				window.flatpickr($this[0], {
 					enableTime: false,
 					allowInput: true,
 					time_24hr: false,
@@ -154,7 +155,7 @@
 					}]
 				});
 			} 
-			else if($(this).datepicker) {
+			else if($this.datepicker) {
 				// get date format
 				if(typeof format !== "undefined") {
 					dateformat = format;
@@ -172,9 +173,9 @@
 			
 		// date-time picker
 		location.find("input.dateTime").each(function(){
-			var dateformat = null;
-			var format = $(this).attr("data-format");
-			var $this = $(this);
+			let dateformat = null;
+			let format = $(this).attr("data-format");
+			const $this = $(this);
 			if(window.flatpickr) {
 				window.flatpickr($(this)[0], {
 					enableTime: true,
@@ -185,7 +186,7 @@
 						if($this.val() === '')
 							inst.jumpToDate(new Date());
 						else {
-							var curDate = $.jsFormControls.Format.asDate($this.val());
+							const curDate = $.jsFormControls.Format.asDate($this.val());
 							inst.jumpToDate(curDate);
 							inst.setDate(curDate, true);
 						}
@@ -199,14 +200,14 @@
 				}
 				
 				// convert to group
-				var id = "DTID_" + $(this).attr("name").replace('.', '_');
-				var group = $('<div class="input-group date" data-target-input="nearest"/>');
+				const id = "DTID_" + $(this).attr("name").replace('.', '_');
+				const group = $('<div class="input-group date" data-target-input="nearest"/>');
 				group.attr("id", id);
 				$this.parent().append(group);
 				
 				$this.addClass("datetimepicker-input")
 					.attr("data-target", "#" + id);
-				var addendum = $('<div class="input-group-append" data-toggle="datetimepicker">' +
+				const addendum = $('<div class="input-group-append" data-toggle="datetimepicker">' +
 						'<div class="input-group-text"><i class="fa fa-calendar"></i></div>' + 
 						'</div>');
 				group.append($this);
@@ -222,7 +223,7 @@
 			}
 			else if($(this).jqxDateTimeInput) {
 				$(this).data().valclass = "jqxDateTimeInput";
-				var options = {
+				const options = {
 						showTimeButton:true
 				};
 				if($(this).attr("data-width")) {
@@ -236,15 +237,16 @@
 					options.formatString = format;
 				else {
 					// get date format
-					if(typeof i18n !== "undefined")
+					if(typeof i18n !== "undefined") {
 						dateformat = i18n.date;
-					else if($(document).data().i18n && $(document).data().i18n.date)
+					} else if($(document).data().i18n?.date)
 						dateformat = $(document).data().i18n.date;
 					options.formatString = dateformat.shortDateFormat + " HH:mm";
 				}
 				$(this).jqxDateTimeInput(options);
 			}
 		});
+		
 		
 		// show time
 		location.find("input.time").each(function(){
@@ -266,36 +268,35 @@
 
 		
 		// input validation (number)
-		var numberRegexp =  new RegExp("^[0-9.,-]+$");
+		const numberRegexp =  /^[0-9.,-]+$/;
 		location.find("input.number").keyup(function(){
-			var val = $(this).val();
+			let val = $(this).val();
 			if($(this).hasClass("currency") && val)
 				val = $.jsFormControls.Format._getNumber(val);
-			if(val.length > 0) {
-				if($(this).hasClass("autoclean")) {
-					$(this).val(val.replace(/[^0-9.,-]/g, ""));
-				}
-				else {
-					if(numberRegexp.test($(this).val())) {
-						$(this).addClass("valid").removeClass("invalid");
-					} else {
-						$(this).removeClass("valid").addClass("invalid");
-					}
-				}
+			if(val.length == 0) {
+				return;
+			}
+			if($(this).hasClass("autoclean")) {
+				$(this).val(val.replace(/[^0-9.,-]/g, ""));
+			}
+			else if(numberRegexp.test($(this).val())) {
+				$(this).addClass("valid").removeClass("invalid");
+			} else {
+				$(this).removeClass("valid").addClass("invalid");
 			}
 		}).keyup();
 		
 		// currency formatting (add decimal)
 		location.find("input.currency").each(function(){
 			$(this).on("change blur", function(){
-				var val = $(this).val();
+				const val = $(this).val();
 				if(val.length > 0) {
 					$(this).val($.jsFormControls.Format.currency($.jsFormControls.Format._getNumber(val)));
 				}			
 			});
 
 			$(this).focus(function(){
-				var val = $(this).val();
+				const val = $(this).val();
 				if(val.length > 0) {
 					$(this).val($.jsFormControls.Format._getNumber(val));
 				}
@@ -304,13 +305,13 @@
 		});
 
 		location.find("input.percent").change(function(){
-			var val = $(this).val();
-			if(val.length > 0) {
-				$(this).val($.jsFormControls.Format.decimal($.jsFormControls.Format._getNumber(val)));
+			const cval = $(this).val();
+			if(cval.length > 0) {
+				$(this).val($.jsFormControls.Format.decimal($.jsFormControls.Format._getNumber(cval)));
 			}			
 
 			$(this).focus(function(){
-				var val = $(this).val();
+				const val = $(this).val();
 				if(val.length > 0) {
 					$(this).val($.jsFormControls.Format._getNumber(val));
 				}
@@ -321,7 +322,7 @@
 
 		// decimal formatting (add decimal)
 		location.find("input.decimal").change(function(){
-			var val = $(this).val();
+			const val = $(this).val();
 			if(val.length > 0) {
 				$(this).val($.jsFormControls.Format.decimal($.jsFormControls.Format._getNumber(val)));
 			}			
@@ -329,7 +330,7 @@
 
 		// variable unit
 		location.find("input.vunit").change(function(){
-			var val = $(this).val();
+			let val = $(this).val();
 			if(val.length > 0) {
 				// save the actual data
 				val = $.jsFormControls.Format._getNumber(val);
@@ -338,20 +339,18 @@
 			}			
 		});
 
-		var integerRegexp = new RegExp("^[0-9]+$");
+		const integerRegexp = /\D+$/;
 		location.find("input.integer").keyup(function(){
-			var val = $(this).val();
-			if(val.length > 0) {
-				if($(this).hasClass("autoclean")) {
-					$(this).val(val.replace(/[^0-9]/g, ""));
-				}
-				else {
-					if(integerRegexp.test($(this).val())) {
-						$(this).addClass("valid").removeClass("invalid");
-					} else {
-						$(this).removeClass("valid").addClass("invalid");
-					}
-				}
+			const val = $(this).val();
+			if(val.length == 0)
+				return;			
+			if($(this).hasClass("autoclean")) {
+				$(this).val(val.replace(/\d/g, ""));
+			}
+			else if(integerRegexp.test($(this).val())) {
+				$(this).addClass("valid").removeClass("invalid");
+			} else {
+				$(this).removeClass("valid").addClass("invalid");
 			}
 		}).keyup();
 
@@ -365,24 +364,19 @@
 					$(this).data("regexp", new RegExp($(this).attr("data-regexp")));
 				}
 
-				var val = $(this).val();
+				const val = $(this).val();
 				if(val.length > 0) {
-					var regexp = $(this).data("regexp");
+					const regexp = $(this).data("regexp");
 					if($(this).hasClass("autoclean")) {
 						$(this).val(val.replace(regexp, ""));
 					}
-					else {
-						if(regexp.test($(this).val())) {
-							$(this).addClass("valid").removeClass("invalid");
-						} else {
-							$(this).removeClass("valid").addClass("invalid");
-						}
+					else if(regexp.test($(this).val())) {
+						$(this).addClass("valid").removeClass("invalid");
+					} else {
+						$(this).removeClass("valid").addClass("invalid");
 					}
-				} else {
-					// if not mandatory: nothing is valid
-					if(!$(this).hasClass("mandatory")) {
-						$(this).removeClass("invalid").addClass("valid");
-					}
+				} else if(!$(this).hasClass("mandatory")) { // if not mandatory: nothing is valid
+					$(this).removeClass("invalid").addClass("valid");
 				}
 			}).keyup();
 			$(this).change(function(){
@@ -431,8 +425,8 @@
 		
 		/* rotatestate stontrol */
 		location.find("input.rotatestate").each(function(){
-			var states = $(this).attr("data-state-values");
-			var defaultClass = $(this).attr("data-state-class");
+			let states = $(this).attr("data-state-values");
+			let defaultClass = $(this).attr("data-state-class");
 			// no need to continue if there are no states
 			if(!states) {
 				return;
@@ -445,7 +439,7 @@
 				return;
 			}
 			
-			var stateControl = $("<span></span>");
+			const stateControl = $("<span></span>");
 			if($(this).attr("title")) {
 				stateControl.attr("title", $(this).attr("title"));
 			}
@@ -462,14 +456,14 @@
 			
 			// click on the control starts rotating
 			stateControl.click(function(){
-				var cState = $(this).data().activeState;
-				var cStates = $(this).data().states;
-				var control = $(this).data().control;
-				var newState = null;
+				const cState = $(this).data().activeState;
+				const cStates = $(this).data().states;
+				const control = $(this).data().control;
+				let newState = null;
 
 				if(cState !== null) {
 					// go to the 'next' state
-					for(var i = 0; i < cStates.length; i++) {
+					for(let i = 0; i < cStates.length; i++) {
 						if(cStates[i].value === cState.value) {
 							// last element
 							if(i === cStates.length - 1) {
@@ -492,9 +486,9 @@
 			
 			// make sure to update state if the value is changed
 			$(this).change(function(){
-				var control = $($(this).data().control);
-				var cState = control.data().activeState;
-				var cStates = control.data().states;
+				const control = $($(this).data().control);
+				const cState = control.data().activeState;
+				const cStates = control.data().states;
 				
 				if(cState !== null) {
 					// remove "old state"
@@ -502,7 +496,7 @@
 				}
 				
 				// add new State
-				var val = $(this).val();
+				const val = $(this).val();
 				$.each(cStates, function(){
 					if(this.value === val) {
 						control.data().activeState = this;
@@ -532,11 +526,7 @@
 		$(".required,.regexp,.date,.mandatory,.number,.validate", this.element).change();
 		
 		// check for invalid fields
-		if($(".invalid", this.element).length > 0) {
-			return false;
-		}
-		
-		return true;
+		return $(".invalid", this.element).length <= 0;
 	};
 	
 	/**
@@ -560,31 +550,31 @@
 				}
 			});
 		} else {
-			var args = Array.prototype.slice.call( arguments, 1 );
+			const args = Array.prototype.slice.call( arguments, 1 );
 			
 			// only one - return directly
 			if(this.length == 1) {
-				var jsFormControls = $(this).data('jsFormControls'); 
-				if (jsFormControls) {
-					if(method.indexOf("_") !== 0 && jsFormControls[method]) {
-						var ret =  jsFormControls[method].apply(jsFormControls, args);
-						return ret;
-					}
-
-					$.error( 'Method ' +  method + ' does not exist on jQuery.jsFormControls' );
-					return false;
+				const jsFormControls = $(this).data('jsFormControls'); 
+				if (!jsFormControls)
+					return;
+				if(method.indexOf("_") !== 0 && jsFormControls[method]) {
+					return jsFormControls[method](...args);
 				}
+
+				$.error( 'Method ' +  method + ' does not exist on jQuery.jsFormControls' );
+				return false;
 			}
 			
 			return this.each(function () {
-				var jsFormControls = $.data(this, 'jsFormControls'); 
-				if (jsFormControls) {
-					if(method.indexOf("_") !== 0 && jsFormControls[method]) {
-						return jsFormControls[method].apply(jsFormControls, args);
-					} else {
-						$.error( 'Method ' +  method + ' does not exist on jQuery.jsFormControls' );
-						return false;
-					}
+				const jsFormControls = $.data(this, 'jsFormControls'); 
+				if (!jsFormControls)
+					return;
+					
+				if(method.indexOf("_") !== 0 && jsFormControls[method]) {
+					return jsFormControls[method](...args);
+				} else {
+					$.error( 'Method ' +  method + ' does not exist on jQuery.jsFormControls' );
+					return false;
 				}
 			});
 		}   
@@ -594,9 +584,9 @@
 	 * global jsForm function for intialization
 	 */
 	$.jsFormControls = function ( name, initFunc ) {
-		var jsForms;
+		let jsForms;
 		// initFunc is a function -> initialize
-		if($.isFunction(initFunc)) {
+		if(typeof initFunc === "function") {
 			// call init if already initialized
 			jsForms = JSFORM_MAP[name];
 			if(jsForms) {
@@ -611,10 +601,10 @@
 			// call init if already initialized
 			jsForms = JSFORM_MAP[name];
 			if(jsForms) {
-				var method = initFunc;
-				var args = Array.prototype.slice.call( arguments, 2 );
+				const method = initFunc;
+				const args = Array.prototype.slice.call( arguments, 2 );
 				$.each(portlets, function(){
-					this[method].apply(this, args);
+					this[method](...args);
 				});
 			}
 		}
@@ -692,7 +682,7 @@
 			 * @param dataContext
 			 * @private
 			 */
-			_getValue: function(row, cell, value, columnDef, dataContext) {
+			_getValue: function(row, cell, value, _columnDef, _dataContext) {
 				// if value is undefined: this is probably a direct call
 				if(typeof cell === "undefined" && typeof value === "undefined") {
 					return row;
@@ -714,11 +704,8 @@
 				
 				if(value) {
 					return '<span class="ui-icon ui-icon-check">&nbsp;</span>';
-				} else {
-					return '<span class="ui-icon ui-icon-close">&nbsp;</span>';
 				}
-				
-				return value;
+				return '<span class="ui-icon ui-icon-close">&nbsp;</span>';
 			}, 
 			
 
@@ -732,12 +719,11 @@
 				}
 				
 				// default number format
-				var numberformat = {
-					format: "#,##0.###",
+				let numberformat = {
 					groupingSeparator: ",",
 					decimalSeparator: "."
 				};
-				var pre = null, post = null;
+				let pre = null, post = null;
 				if(typeof i18n !== "undefined" && i18n.number) {
 					numberformat = i18n.number;
 					if(i18n.currency) {
@@ -745,7 +731,7 @@
 						post = i18n.currency.suffix;
 					}
 				}
-				else if($(document).data().i18n && $(document).data().i18n.number) {
+				else if(typeof $ !== "undefined" && $(document).data().i18n?.number) {
 					numberformat = $(document).data().i18n.number;
 					if($(document).data().i18n.currency) {
 						pre = $(document).data().i18n.currency.prefix;
@@ -757,34 +743,34 @@
 				num = "" + num;
 				
 				// check for currency pre/postfix
-				if(pre && pre.length > 0){
-					if(num.indexOf(pre) === 0)
-						num = num.substring(pre.length);
+				if(pre?.length > 0 && num.indexOf(pre) === 0) {
+					num = num.substring(pre.length);
 				}
-				if(post && post.length > 0){
-					if(num.indexOf(post) > 0)
-						num = num.substring(0, num.length - post.length);
+				if(post?.length > 0 && num.indexOf(post) > 0) {
+					num = num.substring(0, num.length - post.length);
 				}
 				
-				num = $.trim(num);
+				// get rid of spaces
+				num = num.trim();
+				
 				// first check: only grouping and 2 positions afterwards
-				var gs = num.indexOf(numberformat.groupingSeparator); 
+				const gs = num.indexOf(numberformat.groupingSeparator); 
 				
 				// get rid of the grouping seperator (if any exist)
 				if(gs !== -1) {
 					if(gs >= num.length - 3) {
-						console.log("gs looks like decimal: ");						
 						if(numberformat.groupingSeparator !== ".")
-							num = num.replace(new RegExp(numberformat.groupingSeparator, 'g'), ".");
+							num = num.replaceAll(numberformat.groupingSeparator, ".");
 					} else {
-						num = num.replace(new RegExp("\\" +numberformat.groupingSeparator, 'g'), "");
+						num = num.replaceAll(numberformat.groupingSeparator, "");
 					}
 				}
 				// now convert the decimal seperator into a "real" decimal
 				if(numberformat.decimalSeparator !== '.' && num.indexOf(numberformat.decimalSeparator) !== -1) {
-					if(numberformat.decimalSeparator !== ".")
-						num = num.replace(new RegExp(numberformat.decimalSeparator, 'g'), ".");
+					num = num.replaceAll(numberformat.decimalSeparator, ".");
 				}
+				
+				// let javascript to the conversion to a number
 				return Number(num);
 			},
 
@@ -793,16 +779,14 @@
 			 * @private
 			 */
 			_pad: function(val) {
-				var o = (val < 10) ? "0" : "";
-				o += val;
-				return o;
+				return ((val < 10) ? "0" : "") + val;
 			},
 			
 			/**
 			 * try parsing a string to date using i18n and libraries such as moment or luxon
 			 */
 			asDate: function(value) {
-				var d = $.jsFormControls.Format.asMoment(value);
+				const d = $.jsFormControls.Format.asMoment(value);
 				// null
 				if(!d)
 					return null;
@@ -824,8 +808,8 @@
 			 * 
 			 */
 			asMoment: function(value) {
-				var m = null;
-				var formats = [i18n.date.format + " " + i18n.date.timeFormat, i18n.date.dateTimeFormat, 
+				let m = null;
+				const formats = [i18n.date.format + " " + i18n.date.timeFormat, i18n.date.dateTimeFormat, 
 					i18n.date.format,
 					i18n.date.longDateFormat, 
 					i18n.date.timeFormat,
@@ -857,7 +841,7 @@
 						if(m)
 							return false;
 						try {
-							var cur = luxon.DateTime.fromFormat(value, format);
+							const cur = luxon.DateTime.fromFormat(value, format);
 							if(cur.isValid) {
 								m = cur;
 								return false;
@@ -876,13 +860,13 @@
 				
 				// moment.js parsing
 				if(typeof moment !== "undefined") {
-					for(var i = 0; i < formats.length; i++)
+					for(let i = 0; i < formats.length; i++)
 						formats[i] = moment().toMomentFormatString(formats[i]);
 						
 					$.each(formats, function(){
 						if(m)
 							return false;
-						var cur = moment(value, this, true);
+						const cur = moment(value, this, true);
 						if(cur.isValid()) {
 							m = cur;
 							return false;
@@ -914,10 +898,10 @@
 					return bytes;
 				}
 				
-				var unit = 1024;
+				const unit = 1024;
 				if (bytes < unit) return bytes + " B";
-				var exp = Math.floor(Math.log(bytes) / Math.log(unit));
-				var pre = "KMGTPE".charAt(exp-1) + "B";
+				const exp = Math.floor(Math.log(bytes) / Math.log(unit));
+				const pre = "KMGTPE".charAt(exp-1) + "B";
 				return Math.round(bytes*10 / Math.pow(unit, exp))/10 + pre;
 			},
 
@@ -929,16 +913,16 @@
 					return value;
 				}
 				
-				var neg = value < 0;
+				let neg = value < 0;
 				if(neg)
 					value *= -1; 
 					
 				if(value < 1000) {
 					return (neg?'-':'') + $.jsFormControls.Format.decimal(value) + ' ' + unit;
 				}
-				var un = 1000;
-				var exp = Math.floor(Math.log(value) / Math.log(un));
-				var pre = "kmgtpe".charAt(exp-1) + unit;
+				const un = 1000;
+				const exp = Math.floor(Math.log(value) / Math.log(un));
+				const pre = "kmgtpe".charAt(exp-1) + unit;
 				return (neg?'-':'') + $.jsFormControls.Format.decimal(Math.round(value*100 / Math.pow(un, exp))/100) + ' ' + pre;
 			},
 			
@@ -950,30 +934,25 @@
 					return num;
 				}
 				
-				// default number format
-				var numberformat = {
-					format: "#,##0.###",
-					groupingSeparator: ",",
-					decimalSeparator: "."
-				};
+				// get number format
+				let numberformat;
 
-				if(typeof i18n !== "undefined" && i18n.number)
+				if(typeof i18n !== "undefined" && i18n.number) {
 					numberformat = i18n.number;
-				else if($(document).data().i18n && $(document).data().i18n.number)
+				} else if(typeof $ !== "undefined" && $(document).data().i18n?.number) {
 					numberformat = $(document).data().i18n.number;
-
-				var comma = 0;
-				if (Math.abs(num - Math.floor(num)) > 0.005) {
-					comma = 2;
 				}
+				
+				let n = num;
+				const c = (Math.abs(num - Math.floor(num)) > 0.005) ? 2 : 0;
+				const d = numberformat?.decimalSeparator || '.';
+				const t = numberformat?.groupingSeparator || ',';
+				const i = parseInt(n = Math.abs( + n || 0).toFixed(c), 10) + "";
+				const il = i.length;
+				const j = il > 3 ? il % 3 : 0;
+				
 				// convert to a nice number for display
-				var n = num, 
-					c = isNaN(c = Math.abs(comma)) ? 2 : comma, 
-					d = numberformat.decimalSeparator, // decimal d == undefined ? "," : d, 
-					t = numberformat.groupingSeparator, // thousand: t == undefined ? "." : t, 
-					i = parseInt(n = Math.abs( +n || 0).toFixed(c), 10) + "", 
-					j = (j = i.length) > 3 ? j % 3 : 0;
-				return (num<0 ? "-" : "") + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+				return (num<0 ? "-" : "") + (j ? i.substring(0, j) + t : "") + i.substring(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
 			},
 			
 			/**
@@ -985,29 +964,21 @@
 				}
 				
 				// default number format
-				var numberformat = {
-					format: "#,##0.###",
-					groupingSeparator: ",",
-					decimalSeparator: "."
-				};
+				let numberformat;
 
-				if(typeof i18n !== "undefined" && i18n.number)
+				if(typeof i18n !== "undefined" && i18n.number) {
 					numberformat = i18n.number;
-				else if($(document).data().i18n && $(document).data().i18n.number)
+				} else if(typeof $ !== "undefined" && $(document).data().i18n?.number) {
 					numberformat = $(document).data().i18n.number;
-
-				var comma = 0;
-				if (Math.abs(num - Math.floor(num)) > 0.001) {
-					comma = 2;
 				}
+
 				// convert to a nice number for display
-				var n = num, 
-					c = 0, 
-					d = numberformat.decimalSeparator, // decimal d == undefined ? "," : d, 
-					t = numberformat.groupingSeparator, // thousand: t == undefined ? "." : t, 
-					i = parseInt(n = Math.abs( +n || 0).toFixed(c), 10) + "", 
-					j = (j = i.length) > 3 ? j % 3 : 0;
-				return (num<0 ? "-" : "") + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+				let n = num;
+				const t = numberformat?.groupingSeparator || ',';
+				const i = parseInt(n = Math.abs( + n || 0), 10) + "";
+				const il = i.length;
+				const j = il > 3 ? il % 3 : 0;
+				return (num<0 ? "-" : "") + (j ? i.substring(0, j) + t : "") + i.substring(j).replace(/(\d{3})(?=\d)/g, "$1" + t);
 			},
 			
 			getDecimal: function(val) {
@@ -1016,7 +987,6 @@
 				}
 				
 				return $.jsFormControls.Format.asNumber(val);
-				
 			},
 
 			getVunit: function(val) {
@@ -1044,9 +1014,7 @@
 				if(val.indexOf("%") !== -1)
 					val = val.substring(0, val.length-1);
 				
-				var num =  $.jsFormControls.Format.getDecimal(val);
-				console.log("Percent", val, num);
-				
+				const num =  $.jsFormControls.Format.getDecimal(val);
 				return Number(num) / 100;
 			},
 
@@ -1063,16 +1031,16 @@
 					value = 0;
 				}
 				
-				var num =  $.jsFormControls.Format.decimal(value);
+				let num =  $.jsFormControls.Format.decimal(value);
 				// check for currency
-				var pre = null, post = null;
+				let pre = null, post = null;
 				if(typeof i18n !== "undefined") {
 					if(i18n.currency) {
 						pre = i18n.currency.prefix;
 						post = i18n.currency.suffix;
 					}
 				}
-				else if($(document).data().i18n && $(document).data().i18n.number) {
+				else if($(document).data().i18n?.number) {
 					if($(document).data().i18n.currency) {
 						pre = $(document).data().i18n.currency.prefix;
 						post = $(document).data().i18n.currency.suffix;
@@ -1100,7 +1068,7 @@
 				
 				return (this.date(value) + " " + this.time(value));
 			},
-
+			
 			/**
 			 * @private
 			 */
@@ -1116,19 +1084,19 @@
 				if(isNaN(value))
 					return value;
 				
-				var d = new Date();
+				const d = new Date();
 				d.setTime(value);
-				var year = d.getYear();
+				let year = d.getYear();
 				if(year < 1900) {
 					year += 1900;
 				}
 				
 				// get date format
-				var dateformat = null;
+				let dateformat = null;
 				
 				if(typeof i18n !== "undefined")
 					dateformat = i18n.date;
-				else if($(document).data().i18n && $(document).data().i18n.date)
+				else if($(document).data().i18n?.date)
 					dateformat = $(document).data().i18n.date;
 
 				
@@ -1152,14 +1120,14 @@
 				}
 				if(isNaN(value))
 					return value;
-				var d = new Date();
+				const d = new Date();
 				d.setTime(value);
 				
-				var timeFormat = "HH:mm";
+				let timeFormat = "HH:mm";
 				if(typeof i18n !== "undefined") {
 					if(i18n.timeFormat)
 						timeFormat = i18n.timeFormat;
-					else if (i18n.date && i18n.date.timeFormat)
+					else if (i18n.date?.timeFormat)
 						timeFormat = i18n.date.timeFormat;
 				} else if($(document).data().i18n && typeof $(document).data().i18n.timeFormat !== "undefined")
 					timeFormat = $(document).data().i18n.timeFormat;
@@ -1183,11 +1151,11 @@
 				if(!value)
 					value = "0";
 
-				var tokens = value.split(":");
-				var allowkomma = false;
+				const tokens = value.split(":");
+				let allowkomma = false;
 				// check each token
-				for(var i=0; i<tokens.length; i++) {
-					var nt = Number(tokens[i]);
+				for(let i=0; i<tokens.length; i++) {
+					let nt = Number(tokens[i]);
 					if(!nt || nt === 'NaN') {
 						nt = 0;
 					}
@@ -1225,18 +1193,18 @@
 					return value;
 				}
 				
-				var neg = value < 0;
+				const neg = value < 0;
 				if(neg)
 					value *= -1;
 				
-				var h = Math.floor(value/3600000);
+				let h = Math.floor(value/3600000);
 				value -= h * 3600000;
-				var m = Math.floor(value/60000);
+				let m = Math.floor(value/60000);
 				value -= m * 60000;
-				var s = Math.floor(value/1000);
+				let s = Math.floor(value/1000);
 				value -= s * 1000;
 				
-				var out = neg?"-":"";
+				let out = neg?"-":"";
 				if (h > 0) {
 					out += h + "h ";
 					// ignore seconds and milliseconds if we have hours
@@ -1272,17 +1240,17 @@
 					return 0;
 				
 				// go through val
-				var result = 0;
-				var num = "";
-				var tu = "";
-				var mult = val.charAt(0) === '-' ? -1 : 1;
+				let result = 0;
+				let num = "";
+				let tu = "";
+				let mult = val.charAt(0) === '-' ? -1 : 1;
 				 
-				var convert = function(){
+				const convert = function(){
 					if(num === "") {
 						return;
 					}
 					
-					var curNum = Number(num);
+					const curNum = Number(num);
 					
 					switch(tu) {
 					case "ms":
@@ -1310,8 +1278,8 @@
 					num = "";
 				};
 				
-				for(var i = 0; i < val.length; i++) {
-					var c = val.charAt(i);
+				for(let i = 0; i < val.length; i++) {
+					const c = val.charAt(i);
 					switch(c) {
 					case '0':
 					case '1':

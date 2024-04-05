@@ -1,0 +1,153 @@
+<html>
+	<head>
+<script>
+			var i18n = {};
+			var parse = function(num) {
+				if (num === "" || !num || isNaN(num)) {
+					return num;
+				}
+				
+				// get number format
+				let numberformat;
+
+				if(typeof i18n !== "undefined" && i18n.number) {
+					numberformat = i18n.number;
+				} else if(typeof $ !== "undefined" && $(document).data().i18n?.number) {
+					numberformat = $(document).data().i18n.number;
+				}
+				
+				let n = num;
+				const c = (Math.abs(num - Math.floor(num)) > 0.005) ? 2 : 0;
+				const d = numberformat?.decimalSeparator || '.';
+				const t = numberformat?.groupingSeparator || ',';
+				const i = parseInt(n = Math.abs( + n || 0).toFixed(c), 10) + "";
+				const il = i.length;
+				const j = il > 3 ? il % 3 : 0;
+				
+				// convert to a nice number for display
+				return (num<0 ? "-" : "") + (j ? i.substring(0, j) + t : "") + i.substring(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+			}
+			
+			
+			/**
+			 * @private
+			 */
+			function integer(num) {
+				if (num === "" || !num || isNaN(num)) {
+					return num;
+				}
+				
+				// default number format
+				let numberformat;
+
+				if(typeof i18n !== "undefined" && i18n.number) {
+					numberformat = i18n.number;
+				} else if(typeof $ !== "undefined" && $(document).data().i18n?.number) {
+					numberformat = $(document).data().i18n.number;
+				}
+
+				// convert to a nice number for display
+				let n = num;
+				const t = numberformat?.groupingSeparator || ',';
+				const i = parseInt(n = Math.abs( + n || 0), 10) + "";
+				const il = i.length;
+				const j = il > 3 ? il % 3 : 0;
+				return (num<0 ? "-" : "") + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t);
+			}
+			
+			function getNumber(num) {
+				if (!num) {
+					return null;
+				}
+				
+				// default number format
+				let numberformat = {
+					groupingSeparator: ",",
+					decimalSeparator: "."
+				};
+				let pre = null, post = null;
+				if(typeof i18n !== "undefined" && i18n.number) {
+					numberformat = i18n.number;
+					if(i18n.currency) {
+						pre = i18n.currency.prefix;
+						post = i18n.currency.suffix;
+					}
+				}
+				else if(typeof $ !== "undefined" && $(document).data().i18n?.number) {
+					numberformat = $(document).data().i18n.number;
+					if($(document).data().i18n.currency) {
+						pre = $(document).data().i18n.currency.prefix;
+						post = $(document).data().i18n.currency.suffix;
+					}
+				}
+				
+				// make sure num is a string
+				num = "" + num;
+				
+				// check for currency pre/postfix
+				if(pre?.length > 0 && num.indexOf(pre) === 0) {
+					num = num.substring(pre.length);
+				}
+				if(post?.length > 0 && num.indexOf(post) > 0) {
+					num = num.substring(0, num.length - post.length);
+				}
+				
+				// get rid of spaces
+				num = num.trim();
+				
+				// first check: only grouping and 2 positions afterwards
+				const gs = num.indexOf(numberformat.groupingSeparator); 
+				
+				// get rid of the grouping seperator (if any exist)
+				if(gs !== -1) {
+					if(gs >= num.length - 3) {
+						if(numberformat.groupingSeparator !== ".")
+							num = num.replaceAll(numberformat.groupingSeparator, ".");
+					} else {
+						num = num.replaceAll(numberformat.groupingSeparator, "");
+					}
+				}
+				// now convert the decimal seperator into a "real" decimal
+				if(numberformat.decimalSeparator !== '.' && num.indexOf(numberformat.decimalSeparator) !== -1) {
+					num = num.replaceAll(numberformat.decimalSeparator, ".");
+				}
+				return Number(num);
+			}
+</script>
+	</head>
+	<body>
+		<pre>
+<script>
+		document.write(parse(1.1) + "\n");
+		document.write(parse(123000.123) + "\n");
+		document.write(integer(1.1) + "\n");
+		document.write(integer(123000.123) + "\n");
+		document.write("------\n");
+		document.write(getNumber("4.120") + "\n");
+		document.write(getNumber("123,234.12") + "\n");
+		document.write(getNumber("4,12") + "\n");
+		document.write(getNumber("4,120") + "\n");
+		document.write(getNumber("123.234,12") + "\n");
+		
+		document.write("------\nGERMAN:\n");
+		i18n.number = {
+					format: "#.##0,###",
+					groupingSeparator: ".",
+					decimalSeparator: ","
+				}
+		document.write(parse(1.1) + "\n");
+		document.write(parse(123000.123) + "\n");
+		document.write(integer(1.1) + "\n");
+		document.write(integer(123000.123) + "\n");
+		document.write("------\n");
+		document.write(getNumber("4,120") + "\n");
+		document.write(getNumber("123.234,12") + "\n");
+		document.write(getNumber("4.12") + "\n");
+		document.write(getNumber("4.120") + "\n");
+		document.write(getNumber("123,234.12") + "\n");
+		
+		
+</script>
+		</pre>
+	</body>
+</html>

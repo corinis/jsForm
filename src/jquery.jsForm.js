@@ -635,7 +635,7 @@
 			}
 
 			// remove all pojos
-			$(this).removeData("pojo");
+			delete $(this).data().pojo;
 
 			if($(this).attr("type") === "checkbox") {
 				$(this).prop("checked", false);
@@ -1616,7 +1616,7 @@
 		that._createPojoFromInput(line[0], prefix, pojo);
 		
 		return pojo;
-	}
+	};
 
 	/**
 	 * fill a pojo based on collections
