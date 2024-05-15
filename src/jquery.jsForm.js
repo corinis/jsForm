@@ -464,6 +464,11 @@
 						pojo = sel.val();
 					}
 				}
+				
+					
+				if(!pojo && $(this).hasClass("string")) {
+					pojo = $(this).val();
+				}
 
 				// insert only works if there is a pojo
 				if(!pojo) {
