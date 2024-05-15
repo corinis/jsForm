@@ -43,7 +43,7 @@ Optional Libraries are used with jquery.jsForm.controls.js to allow various inpu
 
 # Download
 
-Current Version: 1.5.4
+Current Version: 1.6.0
 
 * [Minified](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.min.js)
 * [Combined Source](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.js)
