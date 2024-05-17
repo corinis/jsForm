@@ -687,6 +687,7 @@
 	 * @private
 	 */
 	JsForm.prototype._handleArrayInPojo = function(ele, pojo, name, val) {
+		console.log("hanlding", name, ele);
 		// create an array out of this
 		if(!pojo[name]) {
 			pojo[name] = [];
@@ -767,7 +768,7 @@
 
 			// handle arrays 
 			if($this && $this.hasClass("array")) { 
-				that._handleArrayInPojo($(this), current, prev, val);
+				that._handleArrayInPojo($this, current, prev, val);
 			} else {
 				current[prev] = val;
 			}

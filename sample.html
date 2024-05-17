@@ -14,7 +14,9 @@ $(function(){
 		state: "VISIBLE",	// selects (enums)
 		age: 45, // number 
 		quips: ["Don't left school interfere with your education!", "Can you repeat the question? I was thinking about cookies.", "In my house I'm the boss, my wife is just the decision maker."],
-		colors: ["green"]
+		config: {
+			colors: ["green"]
+		}
 	};
 
 	// initialize the form, prefix is optional and defaults to data
@@ -64,9 +66,9 @@ $(function(){
 	
 	<fieldset>
 		<legend>Favorite Colors</legend>
-		<input type="checkbox" name="data.colors" class="array" value="red"/> Red 
-		<input type="checkbox" name="data.colors" class="array" value="green"/> Green 
-		<input type="checkbox" name="data.colors" class="array" value="blue"/> Blue
+		<input type="checkbox" name="data.config.colors" class="array" value="red"/> Red 
+		<input type="checkbox" name="data.config.colors" class="array" value="green"/> Green 
+		<input type="checkbox" name="data.config.colors" class="array" value="blue"/> Blue
 	</fieldset>
 	
 </div>
