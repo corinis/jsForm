@@ -687,7 +687,6 @@
 	 * @private
 	 */
 	JsForm.prototype._handleArrayInPojo = function(ele, pojo, name, val) {
-		console.log("hanlding", name, ele);
 		// create an array out of this
 		if(!pojo[name]) {
 			pojo[name] = [];
