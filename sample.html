@@ -13,7 +13,8 @@ $(function(){
 		type: "COOL", // radio (enums)
 		state: "VISIBLE",	// selects (enums)
 		age: 45, // number 
-		quips: ["Don't left school interfere with your education!", "Can you repeat the question? I was thinking about cookies.", "In my house I'm the boss, my wife is just the decision maker."]
+		quips: ["Don't left school interfere with your education!", "Can you repeat the question? I was thinking about cookies.", "In my house I'm the boss, my wife is just the decision maker."],
+		colors: ["green"]
 	};
 
 	// initialize the form, prefix is optional and defaults to data
@@ -59,6 +60,13 @@ $(function(){
 			<li><input name="quips."/></li>
 		</ul>
 		<button class="add" data-field="data.quips">add a quip</button><br/>
+	</fieldset>
+	
+	<fieldset>
+		<legend>Favorite Colors</legend>
+		<input type="checkbox" name="data.colors" class="array" value="red"/> Red 
+		<input type="checkbox" name="data.colors" class="array" value="green"/> Green 
+		<input type="checkbox" name="data.colors" class="array" value="blue"/> Blue
 	</fieldset>
 	
 </div>
