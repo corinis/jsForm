@@ -221,10 +221,11 @@
 			let show = false;
 			$.each(fields, function(){
 				let value = that._getValueWithArrays(data, this);
-				if($(that).data().condition && value !== $(that).data().condition)
+				if($(that).data().condition && value !== $(that).data().condition) {
 					return;
-				else if(!value || value === "" || value === 0 || value === -1)
+				} else if(!value || value === "" || value === 0 || value === -1) {
 					return;
+				}
 				 
 				show = true;
 				// skip processing
@@ -239,10 +240,11 @@
 			let show = false;
 			$.each(fields, function(){
 				let value = that._getValueWithArrays(data, this);
-				if($(that).data().condition && value !== $(that).data().condition)
+				if($(that).data().condition && value !== $(that).data().condition) {
 					return;
-				else if(!value || value === "" || value === 0 || value === -1)
+				} else if(!value || value === "" || value === 0 || value === -1) {
 					return;
+				}
 					
 				show = true;
 				// skip processing
@@ -464,7 +466,6 @@
 						pojo = sel.val();
 					}
 				}
-				
 					
 				if(!pojo && $(this).hasClass("string")) {
 					pojo = $(this).val();
@@ -533,8 +534,8 @@
 		});
 
 		$("input.object", form).each(function(){
-			$(this).on("update", function(evt){
-				let pojo = $(this).data().pojo;
+			$(this).on("update", function(_evt){
+				const pojo = $(this).data().pojo;
 				if($(this).attr("data-display") || $(this).attr("data-render")) {
 					$(this).val(that._renderObject(pojo, $(this).attr("data-display"), $(this).attr("data-render")));
 				} 
@@ -548,20 +549,20 @@
 				return;
 			}
 
-			let blobInput = $(this);
+			const blobInput = $(this);
 
 			// bind on change
 			$(this).on("change", function(evt){
 
 				//get file name
-				let fileName = $(this).val().split(/\\/).pop();
+				const fileName = $(this).val().split(/\\/).pop();
 				blobInput.data("name", fileName);
 
-				let files = evt.target.files; // FileList object
+				const files = evt.target.files; // FileList object
 				// Loop through the FileList (and render image files as thumbnails.(skip for ie < 9)
 				if(files && files.length) {
 					$.each(files, function() {
-						let reader = new FileReader();
+						const reader = new FileReader();
 
 						// closure to capture the file information
 						reader.onload = function(e) {
@@ -694,15 +695,16 @@
 
 		if(ele.attr("type") === "checkbox" || ele.attr("type") === "CHECKBOX") {
 			// do we want the value of not
-			let use = ele.is(":checked");
+			const use = ele.is(":checked");
 			let pushVal = true;
 			$.each(pojo[name], function(data, index){
 				if(this == val) {
 					// dont need to push
 					pushVal = false;
 					// we dont use it - remove it
-					if(!use)
+					if(!use) {
 						pojo[name].splice(index, 1);
+					}
 					return false;
 				}
 			});
