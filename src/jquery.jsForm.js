@@ -1578,6 +1578,9 @@
 				});
 			} else {
 				this.find(".invalid").each(function(){
+					if($(this).is(":hidden")) {
+						that._debug("Found invalid hidden field: " + $(this).attr("name"));
+					}
 					invalid = true;
 					$(this).focus();
 					return false;

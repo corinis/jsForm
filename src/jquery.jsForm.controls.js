@@ -138,7 +138,7 @@
 		}).change();
 		
 		// show datepicker for all inputs
-		location.find("input.date").each(function(){
+		location.find("input.date").each(function() {
 			let dateformat = null;
 			const format = $(this).attr("data-format");
 			const $this = $(this);
@@ -182,6 +182,7 @@
 					time_24hr: true,
 					allowInput: true,
 					dateFormat: i18n.flatpickrDateTime,
+					minuteIncrement: 15,
 					onOpen: [function(a,b,inst){
 						if($this.val() === '')
 							inst.jumpToDate(new Date());
@@ -249,8 +250,24 @@
 		
 		
 		// show time
-		location.find("input.time").each(function(){
-			if($(this).clockpicker && $(this).parent().hasClass("clockpicker")) {
+		location.find("input.time").each(function(){			
+			if(window.flatpickr) {
+				window.flatpickr($(this)[0], {
+					enableTime: true,
+					noCalendar: true,
+					dateFormat: "H:i",
+					time_24hr: true,
+					minuteIncrement: 15,
+					onOpen: [function(a,b,inst){
+						if($(inst._input).val() !== '') {
+							const [hour, minutes] = $(inst._input).val().split(':');
+							$('#flatpickr-time').find('.flatpickr-hour').val(hour);
+							$('#flatpickr-time').find('.flatpickr-minute').val(minutes);
+						}
+					}]
+				});
+			}
+			else if($(this).clockpicker && $(this).parent().hasClass("clockpicker")) {
 				$(this).attr("type", "text");
 				$(this).parent().clockpicker({ 
 						autoclose: true
@@ -279,7 +296,7 @@
 			if($(this).hasClass("autoclean")) {
 				$(this).val(val.replace(/[^0-9.,-]/g, ""));
 			}
-			else if(numberRegexp.test($(this).val())) {
+			else if(numberRegexp.test(val)) {
 				$(this).addClass("valid").removeClass("invalid");
 			} else {
 				$(this).removeClass("valid").addClass("invalid");
@@ -631,6 +648,13 @@
 					return $.jsFormControls.Format.time(cdata);
 				} else if($ele.hasClass("currency")) {
 					return $.jsFormControls.Format.currency(cdata);
+				} else if($ele.hasClass("select")) {
+					if(!cdata)
+						return "";
+					if(!$ele.data().options || !$ele.data().options[cdata])
+						return cdata;
+					// use "options" to convert
+					return $ele.data().options[cdata];
 				} else if($ele.hasClass("bool")) {
 					if(!cdata)
 						return $ele.data().false || '';
@@ -658,6 +682,8 @@
 					return $.jsFormControls.Format.humanTime(cdata);
 				} else if($ele.hasClass("timespan")) {
 					return $.jsFormControls.Format.timespan(cdata);
+				} else if($ele.hasClass("phone")) {
+					return $.jsFormControls.Format.phone(cdata);
 				} else if($ele.hasClass("timeday")) {
 					if(!cdata)
 						return cdata;
@@ -889,6 +915,54 @@
 
 			asNumber: function(value) {
 				return $.jsFormControls.Format._getNumber(value);
+			},
+			/**
+			 * normalize phone number
+			 */
+			phone: function(phoneNumber) {
+				if (!phoneNumber) {
+					return phoneNumber;
+				}
+				
+				// Remove all non-numeric characters except +
+			 	phoneNumber = phoneNumber.replace(/[^0-9+]/g, '');
+			
+				// Convert numbers starting with 00 to +
+				if (phoneNumber.startsWith("00")) {
+			    	phoneNumber = "+" + phoneNumber.slice(2);
+				}
+			
+				// If the number doesn't start with +, it's likely a local number, return as is
+				if (!phoneNumber.startsWith("+")) {
+			    	return phoneNumber;
+			   	}
+			
+				// Extract country code
+			   let countryCode, remainingNumber;
+			   if (phoneNumber.startsWith("+1")) {
+			       countryCode = "1";
+			       remainingNumber = phoneNumber.slice(2);
+			   } else {
+			       const countryCodeLengths = [2, 3]; // European and other international country codes can be 2 or 3 digits long
+			       for (let len of countryCodeLengths) {
+			           countryCode = phoneNumber.slice(1, len + 1); // Skip the leading +
+			           remainingNumber = phoneNumber.slice(len + 1);
+			           
+			           if (remainingNumber.length > 0) {
+			               break;
+			           }
+			       }
+			   }
+			
+			   let formattedNumber;
+			   if (countryCode === "1") {
+			       // Format North American numbers: +1 XXX-XXX-XXXX
+			       formattedNumber = remainingNumber.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
+			   } else {
+			       // Format other international numbers with spaces every 3 digits (this can be customized)
+			       formattedNumber = remainingNumber.replace(/(\d{3})(?=\d)/g, "$1 ");
+			   }
+			   return `+${countryCode} ${formattedNumber.trim()}`;		
 			},
 			/**
 			 * convert a number to a byte
