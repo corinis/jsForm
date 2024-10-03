@@ -131,10 +131,13 @@
 	 */
 	SorTable.prototype._cellVal= function($cell) {
 		
-		let rowVal = $cell.text();
+		let rowVal = $("select", $cell).val(); 
 		// no text - check input
-		if(rowVal === "") {
-			rowVal += $("input", $cell).val();
+		if(typeof rowVal === "undefined") {
+			rowVal = $("input", $cell).val();
+		}
+		if(typeof rowVal === "undefined") {
+			rowVal = $cell.text().trim();
 		}
 		return rowVal;
 	}
