@@ -136,6 +136,10 @@
 				$(this).removeClass("valid").addClass("invalid");
 			}
 		}).change();
+
+		if(window.flatpickr) {
+			window.flatpickr.localize('_lib/3rdparty/flatpickr/l10n/de.js'); // Set localization global
+		}
 		
 		// show datepicker for all inputs
 		location.find("input.date").each(function() {
@@ -149,9 +153,14 @@
 					allowInput: true,
 					time_24hr: false,
 					dateFormat: i18n.flatpickrDate,
-					onOpen: [function(a,b,inst){
-						inst.jumpToDate(new Date());
-						inst.setDate(new Date());
+					onOpen: [function(dt,value,inst){
+						if($this.val() === '')
+							inst.jumpToDate(new Date());
+						else {
+							const curDate = $.jsFormControls.Format.asDate($this.val());
+							inst.jumpToDate(curDate);
+							inst.setDate(curDate, true);
+						}
 					}]
 				});
 			} 
@@ -183,7 +192,7 @@
 					allowInput: true,
 					dateFormat: i18n.flatpickrDateTime,
 					minuteIncrement: 15,
-					onOpen: [function(a,b,inst){
+					onOpen: [function(_a,_b,inst){
 						if($this.val() === '')
 							inst.jumpToDate(new Date());
 						else {
@@ -214,10 +223,10 @@
 				group.append($this);
 				group.append(addendum);
 				addendum.attr("data-target", "#" + id);
-
+	
 				// jquery ui
 				if(dateformat)
-					$(this).datetimepicker({format: "DD.MM.YYYY " + " HH:mm"});
+					$(this).datetimepicker({format: "DD.MM.YYYY HH:mm"});
 				else {
 					$(this).datetimepicker();
 				}
@@ -435,7 +444,6 @@
 		    // hide textarea
 		    $(this).hide();  
 		    $text.on("fill", function(){
-			console.log("filling", $text.val());
 				$text.data().editor.setMarkdown($text.val());
 			});
 		});
@@ -645,7 +653,13 @@
 				}  else if($ele.hasClass("time")) {
 					if(isNaN(cdata))
 						return cdata;
-					return $.jsFormControls.Format.time(cdata);
+					
+					// as a number: hhmm
+					if($ele.hasClass("number")) {
+						return $.jsFormControls.Format.timeNum(cdata);
+					}
+					else
+						return $.jsFormControls.Format.time(cdata);
 				} else if($ele.hasClass("currency")) {
 					return $.jsFormControls.Format.currency(cdata);
 				} else if($ele.hasClass("select")) {
@@ -1157,28 +1171,38 @@
 				
 				if(isNaN(value))
 					return value;
+
+				// get date format
+				let dateformat = null;
+
+				if(typeof i18n !== "undefined")
+					dateformat = i18n.date;
+				else if($(document).data().i18n?.date)
+					dateformat = $(document).data().i18n.date;
 				
+				if(typeof luxon !== "undefined") {
+					return luxon.DateTime.fromMillis(Number(value)).toFormat(dateformat.shortDateFormat);
+				}
+
 				const d = new Date();
 				d.setTime(value);
 				let year = d.getYear();
 				if(year < 1900) {
 					year += 1900;
 				}
-				
-				// get date format
-				let dateformat = null;
-				
-				if(typeof i18n !== "undefined")
-					dateformat = i18n.date;
-				else if($(document).data().i18n?.date)
-					dateformat = $(document).data().i18n.date;
-
-				
 
 				if($.format) {
 					return $.format.date(d, dateformat.shortDateFormat);
 				} else
 					return this._pad(d.getDate()) + "." + this._pad((d.getMonth()+1)) + "." + this._pad(year);
+			},
+			
+			timeNum : (row, cell, value, columnDef, dataContext) => {
+				value = $.jsFormControls.Format._getValue(row, cell, value, columnDef);
+				
+				const h = (value < 1000 ? "0" : "") + Math.floor(value / 100) +"";
+				const m = value % 100 +"";
+				return  h + ":" + ( m < 10 ? "0" : "") +m;
 			},
 
 			/**
@@ -1194,9 +1218,7 @@
 				}
 				if(isNaN(value))
 					return value;
-				const d = new Date();
-				d.setTime(value);
-				
+
 				let timeFormat = "HH:mm";
 				if(typeof i18n !== "undefined") {
 					if(i18n.timeFormat)
@@ -1205,6 +1227,14 @@
 						timeFormat = i18n.date.timeFormat;
 				} else if($(document).data().i18n && typeof $(document).data().i18n.timeFormat !== "undefined")
 					timeFormat = $(document).data().i18n.timeFormat;
+				
+				if(typeof luxon !== "undefined") {
+					return luxon.DateTime.fromMillis(value).toFormat(timeFormat);
+				}
+				
+				const d = new Date();
+				d.setTime(value);
+				
 				
 				if($.format)
 					return $.format.date(d, timeFormat);

@@ -923,6 +923,8 @@
 							val = d.getTime();
 						} else
 							val = new Date(val).getTime();
+					} else if($(this).hasClass("number") && isNaN(val)) {
+						val = that._getNumber(val.replace(":", ""));
 					} else
 						val = that._getNumber(val);
 					if(isNaN(val)) {
