@@ -134,10 +134,19 @@
 		let rowVal = $("select", $cell).val(); 
 		// no text - check input
 		if(typeof rowVal === "undefined") {
-			rowVal = $("input", $cell).val();
+			const input = $("input", $cell);
+			if(input.length > 0) {
+				if(input[0].type === "CHECKBOX" || input[0].type === "checkbox")
+					rowVal = input.is(":checked");
+				else
+					rowVal = $("input", $cell).val();
+			}
 		}
 		if(typeof rowVal === "undefined") {
-			rowVal = $cell.text().trim();
+			if($cell.data().value)
+				rowVal = $cell.data().value;
+			else
+				rowVal = $cell.text().trim();
 		}
 		return rowVal;
 	}

@@ -62,8 +62,8 @@ $.widget("ui.dialog", $.ui.dialog, {
 
 	open: function() {
 		
-		var that = this;
-		
+		const that = this;
+
 		// a responsive dialog
 		if(this.options.responsive) {
 			var isResponsive = ($(window).width() <= this.options.responsive.limit) || $(document).data().mobile || this.options.overlay;
@@ -81,7 +81,7 @@ $.widget("ui.dialog", $.ui.dialog, {
 				// create the right title bar
 				if(!this.overlayTitlebar) {
 					// move the buttons in the header instead of the "x"
-					var buttonPane = this.uiDialogButtonPane.detach();
+					const buttonPane = this.uiDialogButtonPane.detach();
 					buttonPane.find(".ui-dialog-buttonset").addClass("btn-group");
 					buttonPane.css({
 						position: "absolute",
@@ -114,7 +114,7 @@ $.widget("ui.dialog", $.ui.dialog, {
 				// create the right title bar
 				if(this.overlayTitlebar) {
 					// move the buttons in the header instead of the "x"
-					var buttonPane = this.uiDialogButtonPane.detach();
+					const buttonPane = this.uiDialogButtonPane.detach();
 					buttonPane.css({
 						position: "block",
 						top: "auto",
@@ -136,24 +136,30 @@ $.widget("ui.dialog", $.ui.dialog, {
 					this.uiDialogTitlebar.show();
 					this.uiDialogButtonPane.show();
 					this.uiDialogTitlepane.hide();
-					$(".titleIcon", this.uiDialogTitlebar).show();
+					this.uiDialogTitlepane.find('.titleIcon').show(); 
 					this._setOption("draggable", true);
 					this.uiDialog.addClass("ui-corner-all").removeClass("resp-fullscreen");
 					this.uiDialog.css("margin", "auto");
 				}
 	
+	
 				if(isResponsive) {
+				
 					// set full screen flag
 					this.fullScreen = "full";
 					
 					// hide the default panes
-					$(".titleIcon", this.uiDialogTitlepane).hide();
+					this.uiDialogTitlepane.find('.titleIcon').hide(); 
 					this.uiDialogTitlebar.hide();
 					this.uiDialogButtonPane.hide();
 					this.uiDialogTitlepane.show();
 					this.uiDialog.removeClass("ui-corner-all").addClass("resp-fullscreen");;
 					this._setOption("draggable", false);
 					this.uiDialog.css("margin", "-2px"); // remove extra border
+					
+					
+					// Display FAB (Floating Action Buttons)
+					this.uiDialog.find('.fab-container').show();
 				}
 			}
 			
@@ -161,9 +167,9 @@ $.widget("ui.dialog", $.ui.dialog, {
 		
 		// auto save position and size
 		if(this.options.savePosition && !this.fullScreen) {
-			var saveKey = this.options.savePosition; 
+			const saveKey = this.options.savePosition; 
 			// set the default position and w/h
-			var defaultPos = localStorage ? localStorage.getItem(saveKey) : null;
+			let defaultPos = localStorage ? localStorage.getItem(saveKey) : null;
 			if(!defaultPos) {
 				defaultPos = {
 						width: this.options.width,
@@ -189,11 +195,11 @@ $.widget("ui.dialog", $.ui.dialog, {
 			this.options.position = defaultPos.position;
 			
 			// add drag and resize handler
-			var savePos = function(event, ui) {
+			const savePos = function(_event, ui) {
 				if(this.fullScreen) {
 					return;
 				}
-				var pos = {
+				const pos = {
 						width: $(this).dialog("option", "width"),
 						height: $(this).dialog("option", "height"),
 						position: {
@@ -211,8 +217,8 @@ $.widget("ui.dialog", $.ui.dialog, {
 		
 		
 		// invoke the parent widget
-		var wasOpen = this._isOpen; 
-		var resp = this._super();
+		const wasOpen = this._isOpen; 
+		const resp = this._super();
 		if(wasOpen) {
 			this._trigger( "open" );
 		}
@@ -251,7 +257,7 @@ $.widget("ui.dialog", $.ui.dialog, {
 				height: 0
 			} );
 			
-			var nonContentHeight = this.uiDialog.css( {
+			const nonContentHeight = this.uiDialog.css( {
 				height: "auto",
 				width: "100%",
 			} ).outerHeight();
@@ -308,7 +314,7 @@ $.widget("ui.dialog", $.ui.dialog, {
 			this._super();
 			
 			// shrink to avoid overwriting the window size (async to allow painting of content)
-			var $ele = this.element;
+			const $ele = this.element;
 			setTimeout(function(){
 				if($ele.height() > $(window).height() - 150) {
 					$ele.height($(window).height() - 130); 
@@ -316,10 +322,35 @@ $.widget("ui.dialog", $.ui.dialog, {
 			}, 30);
 		}
 	},
+
+	/**
+	 * Create Floating Action Buttons HTML
+	 * Append to current dialog
+	 */
+	_createFloatingButtonsHtml: function() {
+		const floatingButtonsPane = $('<div class="fab-container" style="display:none">' + ' <button id="fabBtn" class="btn btn-primary btn-circle"><i class="fas fa-check"></i></button>' + '<div class="fab-content" style="display:none"></div>' + '</div>');
+		this.uiDialog.append(floatingButtonsPane);
+
+		floatingButtonsPane.find('#fabBtn').on('click', function() { 
+			const toggleButton = this;
+			$(this).next('.fab-content').toggle(0, function() {
+				if($(toggleButton).children().hasClass('fa-check')) {
+					$(toggleButton).children().removeClass('fa-check').addClass('fa-times');
+				}
+				else {
+					$(toggleButton).children().removeClass('fa-times').addClass('fa-check');
+				}
+			});
+		});
+		
+		floatingButtonsPane.find('.fab-content').on('click', () => { 
+			floatingButtonsPane.find('#fabBtn').click();
+		});
+	},
 	
 	_createButtons: function() {
-		var that = this,
-			buttons = this.options.buttons;
+		const that = this;
+		const buttons = this.options.buttons;
 
 		// now go over over buttons and see if any have a pulldown
 		$.each( buttons, function( name, props ) {
@@ -327,13 +358,13 @@ $.widget("ui.dialog", $.ui.dialog, {
 				props["class"] = "btn btn-secondary";
 			else if(props["class"].indexOf("ui-button-primary") !== -1) {
 				props["class"] = props["class"] + " btn btn-primary";
-			} else
+			} else if(props["class"].indexOf("btn-") === -1)
 				props["class"] = props["class"] + " btn btn-secondary";
 			
 			if(!props.pulldown) {
 				return;
 			}
-			var cur = props;
+			let cur = props;
 			if(!cur.id) {
 				cur.id = "pd-" + new Date().getTime() - Math.random() * 10000;
 			}
@@ -349,12 +380,12 @@ $.widget("ui.dialog", $.ui.dialog, {
 				}
 				
 				// create the html
-				var container = $("<div style='position:absolute;overflow:visible;'></div>")
-				var pd = $("<ul class='drowdown-menu pull-right' role='menu'></ul>");
+				const container = $("<div style='position:absolute;overflow:visible;'></div>")
+				const pd = $("<ul class='drowdown-menu pull-right' role='menu'></ul>");
 				pd.css("min-width", $("#" + cur.id).outerWidth());
 				container.append(pd);
 				$.each(cur.pulldown.items, function(){
-					var entry = $("<li></li>");
+					const entry = $("<li></li>");
 					entry.append("<div>" + this.html + "</div>");
 					entry.click(this.click);
 					entry.on("close", function(){
@@ -383,32 +414,30 @@ $.widget("ui.dialog", $.ui.dialog, {
 			}
 		});
 
-	
-		this._createPaneButtons();
+		this._createFloatingButtonsHtml();
+		//this._createPaneButtons();
 		this._super();
 	},
 	
 	_createPaneButtons: function() {
-		if(!this.options.responsive || !this.uiDialogTitlepaneRight) {
+		if(!this.options.responsive) {
 			return;
 		}
-		var that = this,
+		const that = this,
 			buttons = this.options.buttons, 
 			config = this.options.responsive;
 		if(!config) {
 			return;
 		}
 		
-		// remove existing buttons
-		this.uiDialogTitlepaneRight.empty();
-		var buttonArr =[];
+		const buttonArr =[];
 		$.each( buttons, function( name, props ) {
 			if(!props.responsive) {
 				return;
 			}
 			
 			
-			var click, buttonOptions;
+			let click, buttonOptions;
 			
 			props = $.isFunction( props ) ?
 				{ click: props, text: name } :
@@ -440,21 +469,39 @@ $.widget("ui.dialog", $.ui.dialog, {
 			return a.options.pos - b.options.pos
 		});
 		
+		// FAB - stuff
 		$.each(buttonArr, function(){
-			var button = this;
-			if(button.options.html) {
-				$(button.options.html).appendTo( that.uiDialogTitlepaneRight )
-				.on( "click", function() {
-					button.click.apply( that.element[ 0 ], arguments );
-				} );
-			} else {
-				$( "<button></button>", button.props )
-					.btn( button.options )
-					.appendTo( that.uiDialogTitlepaneRight )
-					.on( "click", function() {
-						button.click.apply( that.element[ 0 ], arguments );
-					} );
+			const button = this;
+	
+			// No need for toggle if only one action button exists
+			if(buttonArr.length === 1) {
+				that.uiDialog.find('#fabBtn').remove(); 
+				that.uiDialog.find('.fab-content').show(); 
 			}
+
+			// Set default values for FAB (color, icon, label-text)
+			let fabBtnColor ='secondary';
+			let fabIcon = '<i class="fas fa-check"></i>';
+			let fabBtnLabel = '';
+
+			// Set values from config (if config/property exists) 
+			if(button.props.color) {
+				fabBtnColor = button.props.color;
+			}
+			if(button.options.html) {
+				fabIcon = button.options.html;
+			}
+			if(button.props.text) {
+				fabBtnLabel = button.props.text;
+			}
+
+			// Update options html
+			button.options.html = '<button class="btn-' + fabBtnColor + '">' + fabIcon + '<span class="btnText badge bg-' + fabBtnColor +'">' + fabBtnLabel + '</span>' + '</button>';
+			
+			$(button.options.html).appendTo(that.uiDialog.find('.fab-content'))
+			.on( "click", function() {
+				button.click.apply( that.element[ 0 ], arguments );
+			});
 		});
 	},
 	
@@ -462,8 +509,8 @@ $.widget("ui.dialog", $.ui.dialog, {
 	 * create a combined title bar/button pane for responsive layout
 	 */
 	_createTitlepane: function() {
-		var that = this;
-		var config = this.options.responsive;
+		const that = this;
+		const config = this.options.responsive;
 		if(!config) {
 			return;
 		}
@@ -491,18 +538,9 @@ $.widget("ui.dialog", $.ui.dialog, {
 			}
 		}
 		
-		this.uiDialogTitlepaneRight = $( "<div class='resp-right-btn'>" );
+		//this.floatingButtonsPane = $('<div class="fab-container">' + ' <button id="fabBtn" class="btn btn-primary btn-circle"><i class="fas fa-bars fa-2x"></i></button>' + '<div class="fab-content" style="display:none"></div>' + '</div>');
 		if(config.right) {
-			if(config.right['class']) {
-				this.uiDialogTitlepaneRight.addClass(config.right['class']);
-			}
-			// content function (use append)
-			if(config.right.content) {
-				config.right.content(this.uiDialogTitlepaneRight);
-			} else {
-				// create based on the buttons
-				this._createPaneButtons();
-			}
+			this._createPaneButtons();
 		}
 		
 		this.uiDialogTitlepaneTitle = $( "<span class='ui-dialog-title'>" );
@@ -531,9 +569,9 @@ $.widget("ui.dialog", $.ui.dialog, {
 		this.uiDialogTitlepane.append(this.uiDialogTitlepaneLeft);
 		
 		this.uiDialogTitlepane.append(this.uiDialogTitlepaneTitle);
-		
-		// has to be within title pane to allow click events
-		this.uiDialogTitlepane.append(this.uiDialogTitlepaneRight);
+
+		// add floating buttons to dialog content (bottom right)
+		//this.uiDialog.append(this.floatingButtonsPane);
 		
 		// add on top
 		this.uiDialogTitlepane.prependTo(this.uiDialog);
@@ -541,12 +579,12 @@ $.widget("ui.dialog", $.ui.dialog, {
 	
 	_title: function(title, xtra) {
 		this._super(title);
-		var that = this;
+		const that = this;
 		// add icon
-		var opts = this.options.titleIcon; 
+		const opts = this.options.titleIcon; 
 		if(opts || xtra) {
 			title.addClass("has-icon");
-			var bg = opts?opts.background:'';
+			let bg = opts?opts.background:'';
 			if(!bg) {
 				bg = '';
 			}
@@ -579,7 +617,7 @@ $.widget("ui.dialog", $.ui.dialog, {
 			if(this.options.responsive === true) {
 				this.options.responsive = {};
 			}
-			var responsiveOpts = $.extend({}, {
+			const responsiveOpts = $.extend({}, {
 				/**
 				 * the limit when the responsive full screen dialog should appear
 				 */
@@ -613,7 +651,7 @@ $.widget("corinis.btn", $.ui.button, {
 	},
 	_create: function() {
 		this._super();
-		var type = this.options.type || "secondary";
+		const type = this.options.type || "secondary";
 		if($(this).hasClass("ui-button-primary"))
 			type = "primary";
 		this._addClass("btn btn-" + type);

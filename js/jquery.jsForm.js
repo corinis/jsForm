@@ -221,10 +221,11 @@
 			let show = false;
 			$.each(fields, function(){
 				let value = that._getValueWithArrays(data, this);
-				if($(that).data().condition && value !== $(that).data().condition)
+				if($(that).data().condition && value !== $(that).data().condition) {
 					return;
-				else if(!value || value === "" || value === 0 || value === -1)
+				} else if(!value || value === "" || value === 0 || value === -1) {
 					return;
+				}
 				 
 				show = true;
 				// skip processing
@@ -239,10 +240,11 @@
 			let show = false;
 			$.each(fields, function(){
 				let value = that._getValueWithArrays(data, this);
-				if($(that).data().condition && value !== $(that).data().condition)
+				if($(that).data().condition && value !== $(that).data().condition) {
 					return;
-				else if(!value || value === "" || value === 0 || value === -1)
+				} else if(!value || value === "" || value === 0 || value === -1) {
 					return;
+				}
 					
 				show = true;
 				// skip processing
@@ -255,7 +257,7 @@
 		};
 
 		// remember the conditionals for faster dom access
-		this.conditionals = $(form).find(".conditional"); 
+		this.conditionals = $(form).find(".conditional,.jsf-conditional"); 
 
 		this.conditionals.each(function(){
 			$(this).data().conditionalEval = [];
@@ -399,7 +401,7 @@
 			}
 			$(this).data().hasJsForm = true;
 			
-			$(this).click(function(ev){
+			$(this).on("click", function(ev){
 				ev.preventDefault();
 				
 				// get prefill data
@@ -429,7 +431,7 @@
 			
 			$(this).on("click", function(){
 				$(this).closest(".POJO").find("input[name='"+fieldname+"']").data().pojo = null;
-				$(this).closest(".POJO").find("input[name='"+fieldname+"']").val("").change();
+				$(this).closest(".POJO").find("input[name='"+fieldname+"']").val("").trigger("change");
 			});
 		});
 		
@@ -464,13 +466,17 @@
 						pojo = sel.val();
 					}
 				}
+					
+				if(!pojo && $(this).hasClass("string")) {
+					pojo = $(this).val();
+				}
 
 				// insert only works if there is a pojo
 				if(!pojo) {
 					return;
 				}
 				let beforeInsertCallback = $(this).data().beforeInsert;
-				if(beforeInsertCallback && $.isFunction(beforeInsertCallback)) {
+				if(beforeInsertCallback && typeof beforeInsertCallback === "function") {
 					pojo = beforeInsertCallback(pojo);
 
 					// insert only works if there is a pojo
@@ -487,7 +493,7 @@
 				// empty field
 				$(this).val("");
 				$(this).data().pojo = null;
-				$(this).focus();
+				$(this).trigger("focus");
 			});
 		});
 
@@ -519,7 +525,7 @@
 			// remember the inserter
 			$(this).data().inserter = inserter;
 
-			$(this).click(function(ev){
+			$(this).on("click",function(ev){
 				ev.preventDefault();
 				$(this).data().inserter.trigger("insert");
 				return false;
@@ -528,8 +534,8 @@
 		});
 
 		$("input.object", form).each(function(){
-			$(this).on("update", function(evt){
-				let pojo = $(this).data().pojo;
+			$(this).on("update", function(_evt){
+				const pojo = $(this).data().pojo;
 				if($(this).attr("data-display") || $(this).attr("data-render")) {
 					$(this).val(that._renderObject(pojo, $(this).attr("data-display"), $(this).attr("data-render")));
 				} 
@@ -543,20 +549,20 @@
 				return;
 			}
 
-			let blobInput = $(this);
+			const blobInput = $(this);
 
 			// bind on change
 			$(this).on("change", function(evt){
 
 				//get file name
-				let fileName = $(this).val().split(/\\/).pop();
+				const fileName = $(this).val().split(/\\/).pop();
 				blobInput.data("name", fileName);
 
-				let files = evt.target.files; // FileList object
+				const files = evt.target.files; // FileList object
 				// Loop through the FileList (and render image files as thumbnails.(skip for ie < 9)
 				if(files && files.length) {
 					$.each(files, function() {
-						let reader = new FileReader();
+						const reader = new FileReader();
 
 						// closure to capture the file information
 						reader.onload = function(e) {
@@ -655,10 +661,10 @@
 				$('option:first', this).prop('selected', true);
 
 				$(this).val($("option:first", this).val());
-				$(this).change();
+				$(this).trigger("change");
 			}
 			// trigger change
-			$(this).change();
+			$(this).trigger("change");
 		});
 
 		$(".collection", form).each(function() {
@@ -689,15 +695,16 @@
 
 		if(ele.attr("type") === "checkbox" || ele.attr("type") === "CHECKBOX") {
 			// do we want the value of not
-			let use = ele.is(":checked");
+			const use = ele.is(":checked");
 			let pushVal = true;
 			$.each(pojo[name], function(data, index){
 				if(this == val) {
 					// dont need to push
 					pushVal = false;
 					// we dont use it - remove it
-					if(!use)
+					if(!use) {
 						pojo[name].splice(index, 1);
+					}
 					return false;
 				}
 			});
@@ -762,7 +769,7 @@
 
 			// handle arrays 
 			if($this && $this.hasClass("array")) { 
-				that._handleArrayInPojo($(this), current, prev, val);
+				that._handleArrayInPojo($this, current, prev, val);
 			} else {
 				current[prev] = val;
 			}
@@ -802,7 +809,7 @@
 				return startObj;
 		}
 
-		$(start).find("input,select,textarea,button,.jsobject").each(function(){
+		$(start).find("input,select,textarea,button,.jsobject,.splitvalue").each(function(){
 			let name = $(this).attr("data-name");
 			if(!name) {
 				name = $(this).attr("name");
@@ -836,8 +843,17 @@
 			// jsobject use the pojo data directly - ignore the rest
 			if($(this).hasClass("jsobject")) {
 				val = $(this).data().pojo;
-			}
-			else {
+			} else if($(this).hasClass("splitvalue")) {
+				// special "split"-control
+				val = "";
+				// allow a custom separator
+				const separator = $(this).data().separator || " ";
+				$(this).find("input").each(function(){
+					if(val.length !== 0)
+						val += separator;
+					val += $(this).val();
+				});
+			} else {
 				// ignore empty values when skipEmpty is set
 				if(that.options.skipEmpty && (!val || val === "" || val.trim() === "")) {
 					return;
@@ -861,7 +877,7 @@
 						val[$(this).data().onylfield] = objlimit;
 					}
 					// object can also have a processor
-					if($.isFunction($(this).data().processor)) {
+					if(typeof $(this).data().processor === "function") {
 						val = $(this).data().processor(val);
 					} else {
 						let processor = $(this).attr("data-processor");
@@ -916,6 +932,8 @@
 							val = d.getTime();
 						} else
 							val = new Date(val).getTime();
+					} else if($(this).hasClass("number") && isNaN(val)) {
+						val = that._getNumber(val.replace(":", ""));
 					} else
 						val = that._getNumber(val);
 					if(isNaN(val)) {
@@ -1029,7 +1047,7 @@
 		const that = this;
 		if(that.options.trackChanges && !$(ele).data().track) {
 			$(ele).data().track = true;
-			$(ele).change(function(){
+			$(ele).on("change", function(){
 				if($(this).val() !== $(this).data().orig) {
 					$(this).addClass(that.options.trackChanges);
 				}else {
@@ -1073,7 +1091,7 @@
 			}
 			colData = that._get(data, cname);
 
-			if(!colData || !$.isArray(colData)) {
+			if(!colData || !Array.isArray(colData)) {
 				colData = [];
 			}
 
@@ -1086,7 +1104,7 @@
 					// identify that we already bound
 					$(this).addClass("jsfselect");
 
-					$(this).click(function(){
+					$(this).on("click", function(){
 						$(this).toggleClass(selectedClass);
 						$(this).trigger("selected");
 					});
@@ -1234,7 +1252,8 @@
 				let cdata = that._get(data, cname, false, idx);
 
 				if(!cdata && cdata !== 0 && cdata !== false) {
-					cdata = "";
+					// allow for an "alt" value if no data is in there 
+					cdata = $(this).data().alt || "";
 				} else if(cdata !== "") {
 					if(dataprefix !== "") {
 						cdata = dataprefix + cdata;
@@ -1322,8 +1341,11 @@
 			});
 		}
 
-		$("input,textarea,button", $parent).each(function() {
+		$("input,textarea,button,.splitvalue", $parent).each(function() {
 			let name = $(this).attr("name");
+			if(!name) {
+				name = $(this).data().name;
+			}
 			if(!name) {
 				return;
 			}
@@ -1415,6 +1437,23 @@
 					} else {
 						$(this).prop("checked", cdata == $(this).val());
 					}
+				} else if($(this).hasClass('splitvalue')) {
+					const separator = $(this).data().separator || " ";
+					// special case: date-time
+					if(cdata && $(this).hasClass('datetime') && (!cdata.indexOf || cdata.indexOf(separator) == -1)) {
+						cdata = $.jsFormControls.Format.dateTime(cdata); 
+					}
+					
+					const split = cdata.split ? cdata.split(separator) : [];
+					$(this).find("input").each(function(idx){
+						if(split.length > idx) {
+							$(this).val(split[idx]);
+						} else {
+							$(this).val("");
+						}
+						$(this).trigger("fill");
+						$(this).trigger("change");
+					});
 				} else {
 					if(!cdata && cdata !== 0 && cdata !== false) {
 						cdata = "";
@@ -1453,7 +1492,7 @@
 
 				// make sure fill comes before change to allow setting of values
 				$(this).trigger("fill");
-				$(this).change();
+				$(this).trigger("change");
 			}
 		});
 
@@ -1508,7 +1547,7 @@
 					});
 					
 					// trigger the change (but dont mark it)
-					$(this).change().removeClass("changed");
+					$(this).trigger("change").removeClass("changed");
 					return;
 				} else if($(this).hasClass("bool")) {
 					value = value ? "true" : "false";
@@ -1526,7 +1565,7 @@
 				if(that.options.trackChanges)
 					$(this).data().orig = $(this).val();
 				// trigger the change (but dont mark it)
-				$(this).change().trigger("fill").removeClass("changed");
+				$(this).trigger("change").trigger("fill").removeClass("changed");
 			}
 		});
 	};
@@ -1563,7 +1602,7 @@
 			if(!that.options.validateHidden) {
 				this.find(".invalid").filter(":visible").each(function(){
 					invalid = true;
-					$(this).focus();
+					$(this).trigger("focus");
 					if(!ignoreInvalid) {
 						that._debug("Found invalid field: " + $(this).attr("name"));
 					}
@@ -1571,8 +1610,11 @@
 				});
 			} else {
 				this.find(".invalid").each(function(){
+					if($(this).is(":hidden")) {
+						that._debug("Found invalid hidden field: " + $(this).attr("name"));
+					}
 					invalid = true;
-					$(this).focus();
+					$(this).trigger("focus");
 					return false;
 				});
 			}
@@ -1644,7 +1686,7 @@
 
 			fieldname = fieldname.substring((prefix+".").length);
 
-			let colParent = that._getParent(pojo, fieldname, true);
+			const colParent = that._getParent(pojo, fieldname, true);
 			// get only the last part
 			if(fieldname.indexOf('.') !== -1) {
 				fieldname = fieldname.substring(fieldname.lastIndexOf('.') + 1);
@@ -1714,35 +1756,37 @@
 
 		const viewClass = this.options.viewClass;
 
-		if(mode) {
-			if (field.closest("span." + viewClass)[0])
-				return;
-
-			let val = field.val();
-			if (val === "null" || val === null || field.attr("type") === "submit")
-				val = "";
-			if(field.hasClass("trueFalse") || field.hasClass("bool") || field.hasClass("boolean")) {
-				if(field.is(':checked'))
-					val = 'X';
-				else
-					val = '&#160;';
-			}
-
-			// convert \n to brs - escape all other html
-			val = val.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
-			let thespan = $('<span class="'+viewClass+'">'+val+'</span>');
-			if(field.parent().hasClass("ui-wrapper"))
-				field.parent().hide().wrap(thespan);
-			else
-				field.hide().wrap(thespan);
-		} else {
+		if(!mode) {
 			// remove text and then unwrap
 			let span = field.closest("span." + viewClass);
 			let ele = field.show().detach();
 			span.before(ele);
 			span.remove();
+			return;
+		} 
+		
+		if (field.closest("span." + viewClass)[0])
+			return;
+
+		let val = field.val();
+		if (val === "null" || val === null || field.attr("type") === "submit") {
+			val = "";
+		}
+		
+		if(field.hasClass("trueFalse") || field.hasClass("bool") || field.hasClass("boolean")) {
+			if(field.is(':checked'))
+				val = 'X';
+			else
+				val = '&#160;';
 		}
 
+		// convert \n to brs - escape all other html
+		val = val.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
+		let thespan = $('<span class="'+viewClass+'">'+val+'</span>');
+		if(field.parent().hasClass("ui-wrapper"))
+			field.parent().hide().wrap(thespan);
+		else
+			field.hide().wrap(thespan);
 	};
 
 	/**
@@ -1757,12 +1801,10 @@
 
 		if(typeof prevent === "undefined") {
 			// get the disable from the form itself 
-			prevent = $this.data("disabled")?false:true;
-		} else {
+			prevent = $this.data("disabled");
+		} else if(prevent === $this.data("disabled")) {
 			// already in that state
-			if(prevent === $this.data("disabled")) {
-				return;
-			}
+			return;
 		}
 
 		if (prevent)
@@ -1840,7 +1882,7 @@
 
 		$.each(this._getForm(), function(){
 			// validation
-			$(".required,.regexp,.date,.mandatory,.number,.validate,.integer", this).change();
+			$(".required,.regexp,.date,.mandatory,.number,.validate,.integer,.time,.datetime", this).trigger("change");
 			// check for invalid fields
 			if($(".invalid", this).length > 0) {
 				valid = false;
@@ -1971,7 +2013,7 @@
 		container.empty();
 
 		// not an array
-		if(!$.isArray(data)) {
+		if(!Array.isArray(data)) {
 			return;
 		}
 		// cut away any prefixes - only the fieldname is used
@@ -2012,11 +2054,9 @@
 			}
 		}
 
-		if(!lineFunc) {
-			if($.isFunction(prefix)) {
-				lineFunc = prefix;
-				prefix = null;
-			}
+		if(!lineFunc && typeof prefix === "function") {
+			lineFunc = prefix;
+			prefix = null;
 		}
 		
 		for(let i = 0; i < data.length; i++) {
@@ -2026,10 +2066,8 @@
 			line.data().pojo = cur;
 			line.addClass("POJO");
 
-			if(lineFunc) {
-				if(lineFunc(line, cur) === false) {
-					continue;
-				}
+			if(lineFunc && lineFunc(line, cur) === false) {
+				continue;
 			}
 
 			that._fillLine(container, cur, line, prefix, i);
@@ -2060,7 +2098,7 @@
 			prefill = $line.val("data-prefill");
 		// allow prefill
 		if(prefill){
-			if($.isFunction(prefill))
+			if(typeof prefill === "function")
 				prefill($line.data().pojo, $(line));
 			else if(prefill.substring)
 				$line.data().pojo = JSON.parse(prefill);
@@ -2165,15 +2203,15 @@
 			that._reorder(ele);
 		});
 		
-		$(".delete", line).click(function(){
+		$(".delete", line).on("click", function(){
 			let ele = $(this).closest(".POJO");
 			ele.trigger("delete", [ele]);
 		});
-		$(".sortUp", line).click(function(){
+		$(".sortUp", line).on("click",function(){
 			let ele = $(this).closest(".POJO");
 			ele.trigger("sortUp", [ele]);
 		});
-		$(".sortDown", line).click(function(){
+		$(".sortDown", line).on("click",function(){
 			let ele = $(this).closest(".POJO");
 			ele.trigger("sortDown", [ele]);
 		});
@@ -2363,12 +2401,12 @@
 		// remove thousand seperator...
 		if(num.indexOf(",") !== -1 && num.indexOf(".") !== -1)
 		{
-			num = num.replace(new RegExp(",", 'g'), "");
+			num = num.replace(/,/g, "");
 		}
 		else
 		if(num.indexOf(",") !== -1 && num.indexOf(".") === -1)
 		{
-			num = num.replace(new RegExp(",", 'g'), ".");
+			num = num.replace(/,/g, ".");
 		}
 
 		return Number(num);
@@ -2391,7 +2429,7 @@
 		}
 
 		// array
-		if($.isArray(pojo)) {
+		if(Array.isArray(pojo)) {
 			// zero length
 			if(pojo.length === 0) {
 				return true;
@@ -2496,10 +2534,8 @@
 					return false;
 				}
 				}
-			} else {
-				if (b[p]) {
-					return false;
-				}
+			} else if (b[p]) {
+				return false;
 			}
 		}
 
@@ -2757,7 +2793,7 @@
 	$.jsForm = function ( name, initFunc ) {
 		let jsForms = JSFORM_MAP[name];
 		// initFunc is a function -> initialize
-		if($.isFunction(initFunc)) {
+		if(typeof initFunc === "function") {
 			// call init if already initialized
 			if(jsForms) {
 				$.each(jsForms, function(){
@@ -2905,9 +2941,9 @@
 			} else {
 				$(this).removeClass("valid").addClass("invalid");
 			}
-		}).change();
+		}).trigger("change");
 
-		location.find("select.mandatory").change(function(){
+		location.find("select.mandatory").on("change", function(){
 			if(!$(this).hasClass("mandatory")) {
 				return;
 			}
@@ -2918,10 +2954,14 @@
 			} else {
 				$(this).removeClass("valid").addClass("invalid");
 			}
-		}).change();
+		}).trigger("change");
+
+		if(window.flatpickr) {
+			window.flatpickr.localize('_lib/3rdparty/flatpickr/l10n/de.js'); // Set localization global
+		}
 		
 		// show datepicker for all inputs
-		location.find("input.date").each(function(){
+		location.find("input.date").each(function() {
 			let dateformat = null;
 			const format = $(this).attr("data-format");
 			const $this = $(this);
@@ -2931,10 +2971,16 @@
 					enableTime: false,
 					allowInput: true,
 					time_24hr: false,
+					disableMobile: true,
 					dateFormat: i18n.flatpickrDate,
-					onOpen: [function(a,b,inst){
-						inst.jumpToDate(new Date());
-						inst.setDate(new Date());
+					onOpen: [function(dt,value,inst){
+						if($this.val() === '')
+							inst.jumpToDate(new Date());
+						else {
+							const curDate = $.jsFormControls.Format.asDate($this.val());
+							inst.jumpToDate(curDate);
+							inst.setDate(curDate, true);
+						}
 					}]
 				});
 			} 
@@ -2953,9 +2999,11 @@
 					$(this).datepicker();
 			}
 		});
-			
-		// date-time picker
-		location.find("input.dateTime").each(function(){
+
+		/**
+		 * date-time picker
+		 */
+		location.find("input.dateTime,input.datetime").each(function(){
 			let dateformat = null;
 			let format = $(this).attr("data-format");
 			const $this = $(this);
@@ -2964,8 +3012,10 @@
 					enableTime: true,
 					time_24hr: true,
 					allowInput: true,
+					disableMobile: true,
 					dateFormat: i18n.flatpickrDateTime,
-					onOpen: [function(a,b,inst){
+					minuteIncrement: 15,
+					onOpen: [function(_a,_b,inst){
 						if($this.val() === '')
 							inst.jumpToDate(new Date());
 						else {
@@ -2978,81 +3028,97 @@
 			} else if($this.datetimepicker && $this.hasClass("form-control")) {
 				if(format) {
 					dateformat = format;
-				} else if(typeof i18n !== "undefined") {
-					dateformat = i18n.momentDate;
+				} else if(typeof i18n !== "undefined" && i18n.date) {
+					dateformat = i18n.date.format;
 				}
 				
 				// convert to group
 				const id = "DTID_" + $(this).attr("name").replace('.', '_');
-				const group = $('<div class="input-group date" data-target-input="nearest"/>');
+				const group = $('<div class="input-group date" data-target-input="nearest" data-format="'+dateformat+'"/>');
 				group.attr("id", id);
 				$this.parent().append(group);
 				
 				$this.addClass("datetimepicker-input")
 					.attr("data-target", "#" + id);
-				const addendum = $('<div class="input-group-append" data-toggle="datetimepicker">' +
-						'<div class="input-group-text"><i class="fa fa-calendar"></i></div>' + 
-						'</div>');
+				const addendum = $('<div class="input-group-text" data-toggle="datetimepicker"><i class="fa fa-calendar"></i></div>');
 				group.append($this);
 				group.append(addendum);
 				addendum.attr("data-target", "#" + id);
 
-				// jquery ui
-				if(dateformat)
-					$(this).datetimepicker({format: "DD.MM.YYYY " + " HH:mm"});
-				else {
-					$(this).datetimepicker();
+				if(!dateformat) {
+				 	dateformat = "dd.MM.yyyy";	
 				}
-			}
-			else if($(this).jqxDateTimeInput) {
-				$(this).data().valclass = "jqxDateTimeInput";
-				const options = {
-						showTimeButton:true
+				
+				dateformat = dateformat + " HH:mm";
+				// convert to php format foo datetime
+				dateformat = FormatParser.toPhpString(dateformat);
+				
+				const dtOptions = {
+					format: dateformat,
+					/*
+					parseDate: (date, format) => {
+						console.log("parsedate", date, format, $.jsFormControls.Format.asDate(date))
+						return $.jsFormControls.Format.asDate(date);
+					},
+					formatDate: (date, format) => {
+						console.log("formatdate", date, format)
+						return $.jsFormControls.Format.dateTime(data);
+					},
+					formatMask: (format)=>{
+				        return format
+				            .replace(/Y{4}/g, '9999')
+				            .replace(/Y{2}/g, '99')
+				            .replace(/M{2}/g, '19')
+				            .replace(/D{2}/g, '39')
+				            .replace(/H{2}/g, '29')
+				            .replace(/m{2}/g, '59')
+				            .replace(/s{2}/g, '59');
+				    } 
+					*/
 				};
-				if($(this).attr("data-width")) {
-					options.width = Number($(this).attr("data-width"));
-				} else {
-					options.width = $(this).width();
-				}
-
-				// jqwidget
-				if(format)
-					options.formatString = format;
-				else {
-					// get date format
-					if(typeof i18n !== "undefined") {
-						dateformat = i18n.date;
-					} else if($(document).data().i18n?.date)
-						dateformat = $(document).data().i18n.date;
-					options.formatString = dateformat.shortDateFormat + " HH:mm";
-				}
-				$(this).jqxDateTimeInput(options);
+				
+				$(this).datetimepicker(dtOptions);
 			}
 		});
 		
 		
-		// show time
-		location.find("input.time").each(function(){
+		/**
+		 * show/edit time
+		 */ 
+		location.find("input.time").each(function(){	
+			// clockpicker requires parent to be clockpicker as well
 			if($(this).clockpicker && $(this).parent().hasClass("clockpicker")) {
 				$(this).attr("type", "text");
 				$(this).parent().clockpicker({ 
-						autoclose: true
-					});
+					autoclose: true,
+					placement: 'bottom-adaptive'
+				});
+			} else if(window.flatpickr) {
+				window.flatpickr($(this)[0], {
+					enableTime: true,
+					noCalendar: true,
+					dateFormat: "H:i",
+					time_24hr: true,
+					disableMobile: true,
+					minuteIncrement: 15,
+					onOpen: [function(a,b,inst){
+						if($(inst._input).val() !== '') {
+							const [hour, minutes] = $(inst._input).val().split(':');
+							$('#flatpickr-time').find('.flatpickr-hour').val(hour);
+							$('#flatpickr-time').find('.flatpickr-minute').val(minutes);
+						}
+					}]
+				});
 			}
 			else if($(this).datetimepicker) {
 				$(this).datetimepicker();
-			}
-			else if($(this).jqxDateTimeInput) {
-				// jqwidget
-				$(this).jqxDateTimeInput({formatString: 'HH:mm', showTimeButton: true, showDateButton:false});
-				$(this).data().valclass = "jqxDateTimeInput"; 
 			}
 		});
 
 		
 		// input validation (number)
 		const numberRegexp =  /^[0-9.,-]+$/;
-		location.find("input.number").keyup(function(){
+		location.find("input.number").on("keyup", function(){
 			let val = $(this).val();
 			if($(this).hasClass("currency") && val)
 				val = $.jsFormControls.Format._getNumber(val);
@@ -3062,12 +3128,12 @@
 			if($(this).hasClass("autoclean")) {
 				$(this).val(val.replace(/[^0-9.,-]/g, ""));
 			}
-			else if(numberRegexp.test($(this).val())) {
+			else if(numberRegexp.test(val)) {
 				$(this).addClass("valid").removeClass("invalid");
 			} else {
 				$(this).removeClass("valid").addClass("invalid");
 			}
-		}).keyup();
+		}).trigger("keyup");
 		
 		// currency formatting (add decimal)
 		location.find("input.currency").each(function(){
@@ -3078,7 +3144,7 @@
 				}			
 			});
 
-			$(this).focus(function(){
+			$(this).on("focus", function(){
 				const val = $(this).val();
 				if(val.length > 0) {
 					$(this).val($.jsFormControls.Format._getNumber(val));
@@ -3087,13 +3153,13 @@
 			});
 		});
 
-		location.find("input.percent").change(function(){
+		location.find("input.percent").on("change", function(){
 			const cval = $(this).val();
 			if(cval.length > 0) {
 				$(this).val($.jsFormControls.Format.decimal($.jsFormControls.Format._getNumber(cval)));
 			}			
 
-			$(this).focus(function(){
+			$(this).on("focus", function(){
 				const val = $(this).val();
 				if(val.length > 0) {
 					$(this).val($.jsFormControls.Format._getNumber(val));
@@ -3104,7 +3170,7 @@
 
 
 		// decimal formatting (add decimal)
-		location.find("input.decimal").change(function(){
+		location.find("input.decimal").on("change", function(){
 			const val = $(this).val();
 			if(val.length > 0) {
 				$(this).val($.jsFormControls.Format.decimal($.jsFormControls.Format._getNumber(val)));
@@ -3112,7 +3178,7 @@
 		});
 
 		// variable unit
-		location.find("input.vunit").change(function(){
+		location.find("input.vunit").on("change", function(){
 			let val = $(this).val();
 			if(val.length > 0) {
 				// save the actual data
@@ -3123,7 +3189,7 @@
 		});
 
 		const integerRegexp = /\D+$/;
-		location.find("input.integer").keyup(function(){
+		location.find("input.integer").on("keyup", function(){
 			const val = $(this).val();
 			if(val.length == 0)
 				return;			
@@ -3135,11 +3201,11 @@
 			} else {
 				$(this).removeClass("valid").addClass("invalid");
 			}
-		}).keyup();
+		}).trigger("keyup");
 
 		// regular expression
 		location.find("input.regexp").each(function(){
-			$(this).keyup(function(){
+			$(this).on("keyup", function(){
 				if($(this).hasClass("autoclean")) {
 					$(this).data("regexp", new RegExp($(this).attr("data-regexp"), 'g'));
 				}
@@ -3161,9 +3227,9 @@
 				} else if(!$(this).hasClass("mandatory")) { // if not mandatory: nothing is valid
 					$(this).removeClass("invalid").addClass("valid");
 				}
-			}).keyup();
-			$(this).change(function(){
-				$(this).keyup();
+			}).trigger("keyup");
+			$(this).on("change", function(){
+				$(this).trigger("keyup");
 			});
 		});
 		
@@ -3194,14 +3260,13 @@
 		      events: {
 		          change: function() {
 		        	  $text.val($text.data().editor.getMarkdown());
-		        	  $text.change();
+		        	  $text.trigger("change");
 		          }
 	          }
 		    });
 		    // hide textarea
 		    $(this).hide();  
 		    $text.on("fill", function(){
-			console.log("filling", $text.val());
 				$text.data().editor.setMarkdown($text.val());
 			});
 		});
@@ -3264,11 +3329,11 @@
 				
 				$(control).attr("value", newState.value);
 				// trigger change
-				$(control).change();
+				$(control).trigger("change");
 			});
 			
 			// make sure to update state if the value is changed
-			$(this).change(function(){
+			$(this).on("change", function(){
 				const control = $($(this).data().control);
 				const cState = control.data().activeState;
 				const cStates = control.data().states;
@@ -3293,7 +3358,7 @@
 			});
 			
 			// trigger initial state
-			$(this).change();
+			$(this).trigger("change");
 			$(this).after(stateControl);
 			$(this).hide();
 		});		
@@ -3306,7 +3371,7 @@
 	 */
 	JsFormControls.prototype.validate = function() {
 		// validation
-		$(".required,.regexp,.date,.mandatory,.number,.validate", this.element).change();
+		$(".required,.regexp,.date,.mandatory,.number,.validate", this.element).trigger("change");
 		
 		// check for invalid fields
 		return $(".invalid", this.element).length <= 0;
@@ -3411,9 +3476,22 @@
 				}  else if($ele.hasClass("time")) {
 					if(isNaN(cdata))
 						return cdata;
-					return $.jsFormControls.Format.time(cdata);
+					
+					// as a number: hhmm
+					if($ele.hasClass("number")) {
+						return $.jsFormControls.Format.timeNum(cdata);
+					}
+					else
+						return $.jsFormControls.Format.time(cdata);
 				} else if($ele.hasClass("currency")) {
 					return $.jsFormControls.Format.currency(cdata);
+				} else if($ele.hasClass("select")) {
+					if(!cdata)
+						return "";
+					if(!$ele.data().options || !$ele.data().options[cdata])
+						return cdata;
+					// use "options" to convert
+					return $ele.data().options[cdata];
 				} else if($ele.hasClass("bool")) {
 					if(!cdata)
 						return $ele.data().false || '';
@@ -3441,6 +3519,8 @@
 					return $.jsFormControls.Format.humanTime(cdata);
 				} else if($ele.hasClass("timespan")) {
 					return $.jsFormControls.Format.timespan(cdata);
+				} else if($ele.hasClass("phone")) {
+					return $.jsFormControls.Format.phone(cdata);
 				} else if($ele.hasClass("timeday")) {
 					if(!cdata)
 						return cdata;
@@ -3600,7 +3680,9 @@
 					"d.M.y H:m",
 					"d.M.y",
 					"d/M/y H:m",
-					"d/M/y"];
+					"d/M/y",
+					"M/dd/yy HH:mm",
+					"M/dd/yyyy HH:mm"];
 				
 				if(value.toFormat)
 					return value;
@@ -3672,6 +3754,54 @@
 
 			asNumber: function(value) {
 				return $.jsFormControls.Format._getNumber(value);
+			},
+			/**
+			 * normalize phone number
+			 */
+			phone: function(phoneNumber) {
+				if (!phoneNumber) {
+					return phoneNumber;
+				}
+				
+				// Remove all non-numeric characters except +
+			 	phoneNumber = phoneNumber.replace(/[^0-9+]/g, '');
+			
+				// Convert numbers starting with 00 to +
+				if (phoneNumber.startsWith("00")) {
+			    	phoneNumber = "+" + phoneNumber.slice(2);
+				}
+			
+				// If the number doesn't start with +, it's likely a local number, return as is
+				if (!phoneNumber.startsWith("+")) {
+			    	return phoneNumber;
+			   	}
+			
+				// Extract country code
+			   let countryCode, remainingNumber;
+			   if (phoneNumber.startsWith("+1")) {
+			       countryCode = "1";
+			       remainingNumber = phoneNumber.slice(2);
+			   } else {
+			       const countryCodeLengths = [2, 3]; // European and other international country codes can be 2 or 3 digits long
+			       for (let len of countryCodeLengths) {
+			           countryCode = phoneNumber.slice(1, len + 1); // Skip the leading +
+			           remainingNumber = phoneNumber.slice(len + 1);
+			           
+			           if (remainingNumber.length > 0) {
+			               break;
+			           }
+			       }
+			   }
+			
+			   let formattedNumber;
+			   if (countryCode === "1") {
+			       // Format North American numbers: +1 XXX-XXX-XXXX
+			       formattedNumber = remainingNumber.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
+			   } else {
+			       // Format other international numbers with spaces every 3 digits (this can be customized)
+			       formattedNumber = remainingNumber.replace(/(\d{3})(?=\d)/g, "$1 ");
+			   }
+			   return `+${countryCode} ${formattedNumber.trim()}`;		
 			},
 			/**
 			 * convert a number to a byte
@@ -3866,28 +3996,40 @@
 				
 				if(isNaN(value))
 					return value;
+
+				// get date format
+				let dateformat = null;
+
+				if(typeof i18n !== "undefined")
+					dateformat = i18n.date;
+				else if($(document).data().i18n?.date)
+					dateformat = $(document).data().i18n.date;
 				
+				if(typeof luxon !== "undefined") {
+					return luxon.DateTime.fromMillis(Number(value)).toFormat(dateformat.shortDateFormat);
+				}
+
 				const d = new Date();
 				d.setTime(value);
 				let year = d.getYear();
 				if(year < 1900) {
 					year += 1900;
 				}
-				
-				// get date format
-				let dateformat = null;
-				
-				if(typeof i18n !== "undefined")
-					dateformat = i18n.date;
-				else if($(document).data().i18n?.date)
-					dateformat = $(document).data().i18n.date;
-
-				
 
 				if($.format) {
 					return $.format.date(d, dateformat.shortDateFormat);
-				} else
+				} else {
+					// fallback: german version
 					return this._pad(d.getDate()) + "." + this._pad((d.getMonth()+1)) + "." + this._pad(year);
+				}
+			},
+			
+			timeNum : (row, cell, value, columnDef, dataContext) => {
+				value = $.jsFormControls.Format._getValue(row, cell, value, columnDef);
+				
+				const h = (value < 1000 ? "0" : "") + Math.floor(value / 100) +"";
+				const m = value % 100 +"";
+				return  h + ":" + ( m < 10 ? "0" : "") +m;
 			},
 
 			/**
@@ -3903,9 +4045,7 @@
 				}
 				if(isNaN(value))
 					return value;
-				const d = new Date();
-				d.setTime(value);
-				
+
 				let timeFormat = "HH:mm";
 				if(typeof i18n !== "undefined") {
 					if(i18n.timeFormat)
@@ -3914,6 +4054,14 @@
 						timeFormat = i18n.date.timeFormat;
 				} else if($(document).data().i18n && typeof $(document).data().i18n.timeFormat !== "undefined")
 					timeFormat = $(document).data().i18n.timeFormat;
+				
+				if(typeof luxon !== "undefined") {
+					return luxon.DateTime.fromMillis(value).toFormat(timeFormat);
+				}
+				
+				const d = new Date();
+				d.setTime(value);
+				
 				
 				if($.format)
 					return $.format.date(d, timeFormat);

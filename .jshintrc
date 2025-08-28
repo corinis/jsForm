@@ -1,5 +1,7 @@
 {
 	"esversion": 11,
+	"-W138": true,
+	"-W083": true,
 	"boss": true,
 	"curly": true,
 	"eqeqeq": true,
@@ -14,5 +16,5 @@
 	"undef": true,
 	"unused": true,
 
-	"node": true
+	"node": false 
 }

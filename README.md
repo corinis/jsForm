@@ -39,11 +39,10 @@ Optional Libraries are used with jquery.jsForm.controls.js to allow various inpu
 * [clockpicker](https://weareoutman.github.io/clockpicker/) used to display a clock input using input class="time"
 * [flatpickr](https://flatpickr.js.org) date and dateTime control (class="date" or class="dateTime") 
 * [datetimepicker](https://eonasdan.github.io/bootstrap-datetimepicker/) alternative datetime picker (class="date" or class="dateTime")
-* [Moment.js](http://momentjs.com/) allows for finer grained international date support (deprecated) -> use [luxon](https://moment.github.io/luxon/)
 
 # Download
 
-Current Version: 1.6.0
+Current Version: 1.7.0
 
 * [Minified](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.min.js)
 * [Combined Source](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.js)

@@ -1,7 +1,5 @@
+
 module.exports = function( grunt ) {
-
-	"use strict";
-
 	var readOptionalJSON = function( filepath ) {
 			var data = {};
 			try {
@@ -37,16 +35,8 @@ module.exports = function( grunt ) {
 				}
 			},
 			options: {
-				esversion: 11 
+				esversion: 2020
 			}
-//			tests: {
-				// TODO: Once .jshintignore is supported, use that instead.
-				// issue located here: https://github.com/gruntjs/grunt-contrib-jshint/issues/1
-//				src: [ "test/data/{test,testinit,testrunner}.js", "test/unit/**/*.js" ],
-//				options: {
-//					jshintrc: "test/.jshintrc"
-//				}
-//			}
 		},
 		uglify: {
 			all: {
@@ -71,6 +61,6 @@ module.exports = function( grunt ) {
 
 
 	// Short list as a high frequency watch task
-	grunt.registerTask( "default", [ "concat:js", "concat:js2", "uglify", "jshint" ] );
+	grunt.registerTask( "default", [ "concat:js", "concat:js2", "uglify" ] );
 };
 

@@ -257,7 +257,7 @@
 		};
 
 		// remember the conditionals for faster dom access
-		this.conditionals = $(form).find(".conditional"); 
+		this.conditionals = $(form).find(".conditional,.jsf-conditional"); 
 
 		this.conditionals.each(function(){
 			$(this).data().conditionalEval = [];
@@ -401,7 +401,7 @@
 			}
 			$(this).data().hasJsForm = true;
 			
-			$(this).click(function(ev){
+			$(this).on("click", function(ev){
 				ev.preventDefault();
 				
 				// get prefill data
@@ -431,7 +431,7 @@
 			
 			$(this).on("click", function(){
 				$(this).closest(".POJO").find("input[name='"+fieldname+"']").data().pojo = null;
-				$(this).closest(".POJO").find("input[name='"+fieldname+"']").val("").change();
+				$(this).closest(".POJO").find("input[name='"+fieldname+"']").val("").trigger("change");
 			});
 		});
 		
@@ -476,7 +476,7 @@
 					return;
 				}
 				let beforeInsertCallback = $(this).data().beforeInsert;
-				if(beforeInsertCallback && $.isFunction(beforeInsertCallback)) {
+				if(beforeInsertCallback && typeof beforeInsertCallback === "function") {
 					pojo = beforeInsertCallback(pojo);
 
 					// insert only works if there is a pojo
@@ -493,7 +493,7 @@
 				// empty field
 				$(this).val("");
 				$(this).data().pojo = null;
-				$(this).focus();
+				$(this).trigger("focus");
 			});
 		});
 
@@ -525,7 +525,7 @@
 			// remember the inserter
 			$(this).data().inserter = inserter;
 
-			$(this).click(function(ev){
+			$(this).on("click",function(ev){
 				ev.preventDefault();
 				$(this).data().inserter.trigger("insert");
 				return false;
@@ -661,10 +661,10 @@
 				$('option:first', this).prop('selected', true);
 
 				$(this).val($("option:first", this).val());
-				$(this).change();
+				$(this).trigger("change");
 			}
 			// trigger change
-			$(this).change();
+			$(this).trigger("change");
 		});
 
 		$(".collection", form).each(function() {
@@ -809,7 +809,7 @@
 				return startObj;
 		}
 
-		$(start).find("input,select,textarea,button,.jsobject").each(function(){
+		$(start).find("input,select,textarea,button,.jsobject,.splitvalue").each(function(){
 			let name = $(this).attr("data-name");
 			if(!name) {
 				name = $(this).attr("name");
@@ -843,8 +843,17 @@
 			// jsobject use the pojo data directly - ignore the rest
 			if($(this).hasClass("jsobject")) {
 				val = $(this).data().pojo;
-			}
-			else {
+			} else if($(this).hasClass("splitvalue")) {
+				// special "split"-control
+				val = "";
+				// allow a custom separator
+				const separator = $(this).data().separator || " ";
+				$(this).find("input").each(function(){
+					if(val.length !== 0)
+						val += separator;
+					val += $(this).val();
+				});
+			} else {
 				// ignore empty values when skipEmpty is set
 				if(that.options.skipEmpty && (!val || val === "" || val.trim() === "")) {
 					return;
@@ -868,7 +877,7 @@
 						val[$(this).data().onylfield] = objlimit;
 					}
 					// object can also have a processor
-					if($.isFunction($(this).data().processor)) {
+					if(typeof $(this).data().processor === "function") {
 						val = $(this).data().processor(val);
 					} else {
 						let processor = $(this).attr("data-processor");
@@ -1038,7 +1047,7 @@
 		const that = this;
 		if(that.options.trackChanges && !$(ele).data().track) {
 			$(ele).data().track = true;
-			$(ele).change(function(){
+			$(ele).on("change", function(){
 				if($(this).val() !== $(this).data().orig) {
 					$(this).addClass(that.options.trackChanges);
 				}else {
@@ -1082,7 +1091,7 @@
 			}
 			colData = that._get(data, cname);
 
-			if(!colData || !$.isArray(colData)) {
+			if(!colData || !Array.isArray(colData)) {
 				colData = [];
 			}
 
@@ -1095,7 +1104,7 @@
 					// identify that we already bound
 					$(this).addClass("jsfselect");
 
-					$(this).click(function(){
+					$(this).on("click", function(){
 						$(this).toggleClass(selectedClass);
 						$(this).trigger("selected");
 					});
@@ -1243,7 +1252,8 @@
 				let cdata = that._get(data, cname, false, idx);
 
 				if(!cdata && cdata !== 0 && cdata !== false) {
-					cdata = "";
+					// allow for an "alt" value if no data is in there 
+					cdata = $(this).data().alt || "";
 				} else if(cdata !== "") {
 					if(dataprefix !== "") {
 						cdata = dataprefix + cdata;
@@ -1331,8 +1341,11 @@
 			});
 		}
 
-		$("input,textarea,button", $parent).each(function() {
+		$("input,textarea,button,.splitvalue", $parent).each(function() {
 			let name = $(this).attr("name");
+			if(!name) {
+				name = $(this).data().name;
+			}
 			if(!name) {
 				return;
 			}
@@ -1424,6 +1437,23 @@
 					} else {
 						$(this).prop("checked", cdata == $(this).val());
 					}
+				} else if($(this).hasClass('splitvalue')) {
+					const separator = $(this).data().separator || " ";
+					// special case: date-time
+					if(cdata && $(this).hasClass('datetime') && (!cdata.indexOf || cdata.indexOf(separator) == -1)) {
+						cdata = $.jsFormControls.Format.dateTime(cdata); 
+					}
+					
+					const split = cdata.split ? cdata.split(separator) : [];
+					$(this).find("input").each(function(idx){
+						if(split.length > idx) {
+							$(this).val(split[idx]);
+						} else {
+							$(this).val("");
+						}
+						$(this).trigger("fill");
+						$(this).trigger("change");
+					});
 				} else {
 					if(!cdata && cdata !== 0 && cdata !== false) {
 						cdata = "";
@@ -1462,7 +1492,7 @@
 
 				// make sure fill comes before change to allow setting of values
 				$(this).trigger("fill");
-				$(this).change();
+				$(this).trigger("change");
 			}
 		});
 
@@ -1517,7 +1547,7 @@
 					});
 					
 					// trigger the change (but dont mark it)
-					$(this).change().removeClass("changed");
+					$(this).trigger("change").removeClass("changed");
 					return;
 				} else if($(this).hasClass("bool")) {
 					value = value ? "true" : "false";
@@ -1535,7 +1565,7 @@
 				if(that.options.trackChanges)
 					$(this).data().orig = $(this).val();
 				// trigger the change (but dont mark it)
-				$(this).change().trigger("fill").removeClass("changed");
+				$(this).trigger("change").trigger("fill").removeClass("changed");
 			}
 		});
 	};
@@ -1572,7 +1602,7 @@
 			if(!that.options.validateHidden) {
 				this.find(".invalid").filter(":visible").each(function(){
 					invalid = true;
-					$(this).focus();
+					$(this).trigger("focus");
 					if(!ignoreInvalid) {
 						that._debug("Found invalid field: " + $(this).attr("name"));
 					}
@@ -1584,7 +1614,7 @@
 						that._debug("Found invalid hidden field: " + $(this).attr("name"));
 					}
 					invalid = true;
-					$(this).focus();
+					$(this).trigger("focus");
 					return false;
 				});
 			}
@@ -1656,7 +1686,7 @@
 
 			fieldname = fieldname.substring((prefix+".").length);
 
-			let colParent = that._getParent(pojo, fieldname, true);
+			const colParent = that._getParent(pojo, fieldname, true);
 			// get only the last part
 			if(fieldname.indexOf('.') !== -1) {
 				fieldname = fieldname.substring(fieldname.lastIndexOf('.') + 1);
@@ -1726,35 +1756,37 @@
 
 		const viewClass = this.options.viewClass;
 
-		if(mode) {
-			if (field.closest("span." + viewClass)[0])
-				return;
-
-			let val = field.val();
-			if (val === "null" || val === null || field.attr("type") === "submit")
-				val = "";
-			if(field.hasClass("trueFalse") || field.hasClass("bool") || field.hasClass("boolean")) {
-				if(field.is(':checked'))
-					val = 'X';
-				else
-					val = '&#160;';
-			}
-
-			// convert \n to brs - escape all other html
-			val = val.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
-			let thespan = $('<span class="'+viewClass+'">'+val+'</span>');
-			if(field.parent().hasClass("ui-wrapper"))
-				field.parent().hide().wrap(thespan);
-			else
-				field.hide().wrap(thespan);
-		} else {
+		if(!mode) {
 			// remove text and then unwrap
 			let span = field.closest("span." + viewClass);
 			let ele = field.show().detach();
 			span.before(ele);
 			span.remove();
+			return;
+		} 
+		
+		if (field.closest("span." + viewClass)[0])
+			return;
+
+		let val = field.val();
+		if (val === "null" || val === null || field.attr("type") === "submit") {
+			val = "";
+		}
+		
+		if(field.hasClass("trueFalse") || field.hasClass("bool") || field.hasClass("boolean")) {
+			if(field.is(':checked'))
+				val = 'X';
+			else
+				val = '&#160;';
 		}
 
+		// convert \n to brs - escape all other html
+		val = val.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br/>");
+		let thespan = $('<span class="'+viewClass+'">'+val+'</span>');
+		if(field.parent().hasClass("ui-wrapper"))
+			field.parent().hide().wrap(thespan);
+		else
+			field.hide().wrap(thespan);
 	};
 
 	/**
@@ -1769,12 +1801,10 @@
 
 		if(typeof prevent === "undefined") {
 			// get the disable from the form itself 
-			prevent = $this.data("disabled")?false:true;
-		} else {
+			prevent = $this.data("disabled");
+		} else if(prevent === $this.data("disabled")) {
 			// already in that state
-			if(prevent === $this.data("disabled")) {
-				return;
-			}
+			return;
 		}
 
 		if (prevent)
@@ -1852,7 +1882,7 @@
 
 		$.each(this._getForm(), function(){
 			// validation
-			$(".required,.regexp,.date,.mandatory,.number,.validate,.integer", this).change();
+			$(".required,.regexp,.date,.mandatory,.number,.validate,.integer,.time,.datetime", this).trigger("change");
 			// check for invalid fields
 			if($(".invalid", this).length > 0) {
 				valid = false;
@@ -1983,7 +2013,7 @@
 		container.empty();
 
 		// not an array
-		if(!$.isArray(data)) {
+		if(!Array.isArray(data)) {
 			return;
 		}
 		// cut away any prefixes - only the fieldname is used
@@ -2024,11 +2054,9 @@
 			}
 		}
 
-		if(!lineFunc) {
-			if($.isFunction(prefix)) {
-				lineFunc = prefix;
-				prefix = null;
-			}
+		if(!lineFunc && typeof prefix === "function") {
+			lineFunc = prefix;
+			prefix = null;
 		}
 		
 		for(let i = 0; i < data.length; i++) {
@@ -2038,10 +2066,8 @@
 			line.data().pojo = cur;
 			line.addClass("POJO");
 
-			if(lineFunc) {
-				if(lineFunc(line, cur) === false) {
-					continue;
-				}
+			if(lineFunc && lineFunc(line, cur) === false) {
+				continue;
 			}
 
 			that._fillLine(container, cur, line, prefix, i);
@@ -2072,7 +2098,7 @@
 			prefill = $line.val("data-prefill");
 		// allow prefill
 		if(prefill){
-			if($.isFunction(prefill))
+			if(typeof prefill === "function")
 				prefill($line.data().pojo, $(line));
 			else if(prefill.substring)
 				$line.data().pojo = JSON.parse(prefill);
@@ -2177,15 +2203,15 @@
 			that._reorder(ele);
 		});
 		
-		$(".delete", line).click(function(){
+		$(".delete", line).on("click", function(){
 			let ele = $(this).closest(".POJO");
 			ele.trigger("delete", [ele]);
 		});
-		$(".sortUp", line).click(function(){
+		$(".sortUp", line).on("click",function(){
 			let ele = $(this).closest(".POJO");
 			ele.trigger("sortUp", [ele]);
 		});
-		$(".sortDown", line).click(function(){
+		$(".sortDown", line).on("click",function(){
 			let ele = $(this).closest(".POJO");
 			ele.trigger("sortDown", [ele]);
 		});
@@ -2375,12 +2401,12 @@
 		// remove thousand seperator...
 		if(num.indexOf(",") !== -1 && num.indexOf(".") !== -1)
 		{
-			num = num.replace(new RegExp(",", 'g'), "");
+			num = num.replace(/,/g, "");
 		}
 		else
 		if(num.indexOf(",") !== -1 && num.indexOf(".") === -1)
 		{
-			num = num.replace(new RegExp(",", 'g'), ".");
+			num = num.replace(/,/g, ".");
 		}
 
 		return Number(num);
@@ -2403,7 +2429,7 @@
 		}
 
 		// array
-		if($.isArray(pojo)) {
+		if(Array.isArray(pojo)) {
 			// zero length
 			if(pojo.length === 0) {
 				return true;
@@ -2508,10 +2534,8 @@
 					return false;
 				}
 				}
-			} else {
-				if (b[p]) {
-					return false;
-				}
+			} else if (b[p]) {
+				return false;
 			}
 		}
 
@@ -2769,7 +2793,7 @@
 	$.jsForm = function ( name, initFunc ) {
 		let jsForms = JSFORM_MAP[name];
 		// initFunc is a function -> initialize
-		if($.isFunction(initFunc)) {
+		if(typeof initFunc === "function") {
 			// call init if already initialized
 			if(jsForms) {
 				$.each(jsForms, function(){

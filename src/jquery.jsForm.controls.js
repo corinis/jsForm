@@ -122,9 +122,9 @@
 			} else {
 				$(this).removeClass("valid").addClass("invalid");
 			}
-		}).change();
+		}).trigger("change");
 
-		location.find("select.mandatory").change(function(){
+		location.find("select.mandatory").on("change", function(){
 			if(!$(this).hasClass("mandatory")) {
 				return;
 			}
@@ -135,7 +135,7 @@
 			} else {
 				$(this).removeClass("valid").addClass("invalid");
 			}
-		}).change();
+		}).trigger("change");
 
 		if(window.flatpickr) {
 			window.flatpickr.localize('_lib/3rdparty/flatpickr/l10n/de.js'); // Set localization global
@@ -152,6 +152,7 @@
 					enableTime: false,
 					allowInput: true,
 					time_24hr: false,
+					disableMobile: true,
 					dateFormat: i18n.flatpickrDate,
 					onOpen: [function(dt,value,inst){
 						if($this.val() === '')
@@ -179,9 +180,11 @@
 					$(this).datepicker();
 			}
 		});
-			
-		// date-time picker
-		location.find("input.dateTime").each(function(){
+
+		/**
+		 * date-time picker
+		 */
+		location.find("input.dateTime,input.datetime").each(function(){
 			let dateformat = null;
 			let format = $(this).attr("data-format");
 			const $this = $(this);
@@ -190,6 +193,7 @@
 					enableTime: true,
 					time_24hr: true,
 					allowInput: true,
+					disableMobile: true,
 					dateFormat: i18n.flatpickrDateTime,
 					minuteIncrement: 15,
 					onOpen: [function(_a,_b,inst){
@@ -205,67 +209,78 @@
 			} else if($this.datetimepicker && $this.hasClass("form-control")) {
 				if(format) {
 					dateformat = format;
-				} else if(typeof i18n !== "undefined") {
-					dateformat = i18n.momentDate;
+				} else if(typeof i18n !== "undefined" && i18n.date) {
+					dateformat = i18n.date.format;
 				}
 				
 				// convert to group
 				const id = "DTID_" + $(this).attr("name").replace('.', '_');
-				const group = $('<div class="input-group date" data-target-input="nearest"/>');
+				const group = $('<div class="input-group date" data-target-input="nearest" data-format="'+dateformat+'"/>');
 				group.attr("id", id);
 				$this.parent().append(group);
 				
 				$this.addClass("datetimepicker-input")
 					.attr("data-target", "#" + id);
-				const addendum = $('<div class="input-group-append" data-toggle="datetimepicker">' +
-						'<div class="input-group-text"><i class="fa fa-calendar"></i></div>' + 
-						'</div>');
+				const addendum = $('<div class="input-group-text" data-toggle="datetimepicker"><i class="fa fa-calendar"></i></div>');
 				group.append($this);
 				group.append(addendum);
 				addendum.attr("data-target", "#" + id);
-	
-				// jquery ui
-				if(dateformat)
-					$(this).datetimepicker({format: "DD.MM.YYYY HH:mm"});
-				else {
-					$(this).datetimepicker();
-				}
-			}
-			else if($(this).jqxDateTimeInput) {
-				$(this).data().valclass = "jqxDateTimeInput";
-				const options = {
-						showTimeButton:true
-				};
-				if($(this).attr("data-width")) {
-					options.width = Number($(this).attr("data-width"));
-				} else {
-					options.width = $(this).width();
-				}
 
-				// jqwidget
-				if(format)
-					options.formatString = format;
-				else {
-					// get date format
-					if(typeof i18n !== "undefined") {
-						dateformat = i18n.date;
-					} else if($(document).data().i18n?.date)
-						dateformat = $(document).data().i18n.date;
-					options.formatString = dateformat.shortDateFormat + " HH:mm";
+				if(!dateformat) {
+				 	dateformat = "dd.MM.yyyy";	
 				}
-				$(this).jqxDateTimeInput(options);
+				
+				dateformat = dateformat + " HH:mm";
+				// convert to php format foo datetime
+				dateformat = FormatParser.toPhpString(dateformat);
+				
+				const dtOptions = {
+					format: dateformat,
+					/*
+					parseDate: (date, format) => {
+						console.log("parsedate", date, format, $.jsFormControls.Format.asDate(date))
+						return $.jsFormControls.Format.asDate(date);
+					},
+					formatDate: (date, format) => {
+						console.log("formatdate", date, format)
+						return $.jsFormControls.Format.dateTime(data);
+					},
+					formatMask: (format)=>{
+				        return format
+				            .replace(/Y{4}/g, '9999')
+				            .replace(/Y{2}/g, '99')
+				            .replace(/M{2}/g, '19')
+				            .replace(/D{2}/g, '39')
+				            .replace(/H{2}/g, '29')
+				            .replace(/m{2}/g, '59')
+				            .replace(/s{2}/g, '59');
+				    } 
+					*/
+				};
+				
+				$(this).datetimepicker(dtOptions);
 			}
 		});
 		
 		
-		// show time
-		location.find("input.time").each(function(){			
-			if(window.flatpickr) {
+		/**
+		 * show/edit time
+		 */ 
+		location.find("input.time").each(function(){	
+			// clockpicker requires parent to be clockpicker as well
+			if($(this).clockpicker && $(this).parent().hasClass("clockpicker")) {
+				$(this).attr("type", "text");
+				$(this).parent().clockpicker({ 
+					autoclose: true,
+					placement: 'bottom-adaptive'
+				});
+			} else if(window.flatpickr) {
 				window.flatpickr($(this)[0], {
 					enableTime: true,
 					noCalendar: true,
 					dateFormat: "H:i",
 					time_24hr: true,
+					disableMobile: true,
 					minuteIncrement: 15,
 					onOpen: [function(a,b,inst){
 						if($(inst._input).val() !== '') {
@@ -276,26 +291,15 @@
 					}]
 				});
 			}
-			else if($(this).clockpicker && $(this).parent().hasClass("clockpicker")) {
-				$(this).attr("type", "text");
-				$(this).parent().clockpicker({ 
-						autoclose: true
-					});
-			}
 			else if($(this).datetimepicker) {
 				$(this).datetimepicker();
-			}
-			else if($(this).jqxDateTimeInput) {
-				// jqwidget
-				$(this).jqxDateTimeInput({formatString: 'HH:mm', showTimeButton: true, showDateButton:false});
-				$(this).data().valclass = "jqxDateTimeInput"; 
 			}
 		});
 
 		
 		// input validation (number)
 		const numberRegexp =  /^[0-9.,-]+$/;
-		location.find("input.number").keyup(function(){
+		location.find("input.number").on("keyup", function(){
 			let val = $(this).val();
 			if($(this).hasClass("currency") && val)
 				val = $.jsFormControls.Format._getNumber(val);
@@ -310,7 +314,7 @@
 			} else {
 				$(this).removeClass("valid").addClass("invalid");
 			}
-		}).keyup();
+		}).trigger("keyup");
 		
 		// currency formatting (add decimal)
 		location.find("input.currency").each(function(){
@@ -321,7 +325,7 @@
 				}			
 			});
 
-			$(this).focus(function(){
+			$(this).on("focus", function(){
 				const val = $(this).val();
 				if(val.length > 0) {
 					$(this).val($.jsFormControls.Format._getNumber(val));
@@ -330,13 +334,13 @@
 			});
 		});
 
-		location.find("input.percent").change(function(){
+		location.find("input.percent").on("change", function(){
 			const cval = $(this).val();
 			if(cval.length > 0) {
 				$(this).val($.jsFormControls.Format.decimal($.jsFormControls.Format._getNumber(cval)));
 			}			
 
-			$(this).focus(function(){
+			$(this).on("focus", function(){
 				const val = $(this).val();
 				if(val.length > 0) {
 					$(this).val($.jsFormControls.Format._getNumber(val));
@@ -347,7 +351,7 @@
 
 
 		// decimal formatting (add decimal)
-		location.find("input.decimal").change(function(){
+		location.find("input.decimal").on("change", function(){
 			const val = $(this).val();
 			if(val.length > 0) {
 				$(this).val($.jsFormControls.Format.decimal($.jsFormControls.Format._getNumber(val)));
@@ -355,7 +359,7 @@
 		});
 
 		// variable unit
-		location.find("input.vunit").change(function(){
+		location.find("input.vunit").on("change", function(){
 			let val = $(this).val();
 			if(val.length > 0) {
 				// save the actual data
@@ -366,7 +370,7 @@
 		});
 
 		const integerRegexp = /\D+$/;
-		location.find("input.integer").keyup(function(){
+		location.find("input.integer").on("keyup", function(){
 			const val = $(this).val();
 			if(val.length == 0)
 				return;			
@@ -378,11 +382,11 @@
 			} else {
 				$(this).removeClass("valid").addClass("invalid");
 			}
-		}).keyup();
+		}).trigger("keyup");
 
 		// regular expression
 		location.find("input.regexp").each(function(){
-			$(this).keyup(function(){
+			$(this).on("keyup", function(){
 				if($(this).hasClass("autoclean")) {
 					$(this).data("regexp", new RegExp($(this).attr("data-regexp"), 'g'));
 				}
@@ -404,9 +408,9 @@
 				} else if(!$(this).hasClass("mandatory")) { // if not mandatory: nothing is valid
 					$(this).removeClass("invalid").addClass("valid");
 				}
-			}).keyup();
-			$(this).change(function(){
-				$(this).keyup();
+			}).trigger("keyup");
+			$(this).on("change", function(){
+				$(this).trigger("keyup");
 			});
 		});
 		
@@ -437,7 +441,7 @@
 		      events: {
 		          change: function() {
 		        	  $text.val($text.data().editor.getMarkdown());
-		        	  $text.change();
+		        	  $text.trigger("change");
 		          }
 	          }
 		    });
@@ -506,11 +510,11 @@
 				
 				$(control).attr("value", newState.value);
 				// trigger change
-				$(control).change();
+				$(control).trigger("change");
 			});
 			
 			// make sure to update state if the value is changed
-			$(this).change(function(){
+			$(this).on("change", function(){
 				const control = $($(this).data().control);
 				const cState = control.data().activeState;
 				const cStates = control.data().states;
@@ -535,7 +539,7 @@
 			});
 			
 			// trigger initial state
-			$(this).change();
+			$(this).trigger("change");
 			$(this).after(stateControl);
 			$(this).hide();
 		});		
@@ -548,7 +552,7 @@
 	 */
 	JsFormControls.prototype.validate = function() {
 		// validation
-		$(".required,.regexp,.date,.mandatory,.number,.validate", this.element).change();
+		$(".required,.regexp,.date,.mandatory,.number,.validate", this.element).trigger("change");
 		
 		// check for invalid fields
 		return $(".invalid", this.element).length <= 0;
@@ -857,7 +861,9 @@
 					"d.M.y H:m",
 					"d.M.y",
 					"d/M/y H:m",
-					"d/M/y"];
+					"d/M/y",
+					"M/dd/yy HH:mm",
+					"M/dd/yyyy HH:mm"];
 				
 				if(value.toFormat)
 					return value;
@@ -1193,8 +1199,10 @@
 
 				if($.format) {
 					return $.format.date(d, dateformat.shortDateFormat);
-				} else
+				} else {
+					// fallback: german version
 					return this._pad(d.getDate()) + "." + this._pad((d.getMonth()+1)) + "." + this._pad(year);
+				}
 			},
 			
 			timeNum : (row, cell, value, columnDef, dataContext) => {
