@@ -2176,7 +2176,7 @@
 			// check if there is an up
 			const ele = $(this);
 			const prev = ele.prev(".POJO");
-			if(prev.size() === 0) {
+			if(prev.length === 0) {
 				// no previous element - return
 				return;
 			}
@@ -2193,7 +2193,7 @@
 			// check if there is a down
 			let ele = $(this);
 			let next = ele.next(".POJO");
-			if(next.size() === 0) {
+			if(next.length === 0) {
 				// no next element - return
 				return;
 			}
@@ -2570,7 +2570,7 @@
 		let changed = false;
 		const that = this;
 		$.each(this._getForm(), function(){
-			if($("." + that.options.trackChanges, this).size() > 0) {
+			if($("." + that.options.trackChanges, this).length > 0) {
 				changed = true;
 				return false;
 			}
@@ -2678,6 +2678,24 @@
 		
 		$(this.element).trigger("filled", this, pojo);
 	};
+
+	/**
+	 * repaint a dom.
+	 * this will update any inputs and other fields, but NOT change the core data
+	 * @param subdom if set, what part to fill
+ 	 * @param noInput set true to not set any inputs
+	 */
+	JsForm.prototype.repaint = function(subdom, noInput) {
+		if(!subdom) {
+			subdom = this.element;
+		}
+			
+		try {
+			this._fillDom(subdom, noInput);
+		} catch (ex) {
+			console.log("Exception while filling form", ex, new Error().stack);
+		}
+	}
 
 	/**
 	 * fill the fields with data. Not inputs or selects

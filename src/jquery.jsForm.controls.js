@@ -22,6 +22,11 @@
 				return $.jsFormControls.Format.currency(0);
 			return $.jsFormControls.Format.currency(data);
 		});
+		Handlebars.registerHelper("iban", function(data){
+			if(!data)
+				return "";
+			return $.jsFormControls.Format.iban(data);
+		});
 		Handlebars.registerHelper("dec", function(data){
 			if(!data)
 				return "";
@@ -167,7 +172,7 @@
 			} 
 			else if($this.datepicker) {
 				// get date format
-				if(typeof format !== "undefined") {
+				if(format) {
 					dateformat = format;
 				} else if(typeof i18n !== "undefined") {
 					dateformat = i18n.jqdate;
@@ -270,9 +275,33 @@
 			// clockpicker requires parent to be clockpicker as well
 			if($(this).clockpicker && $(this).parent().hasClass("clockpicker")) {
 				$(this).attr("type", "text");
-				$(this).parent().clockpicker({ 
+				$(this).clockpicker({ 
+					placement: 'bottom-adaptive',
+					donetext: 'Ok',
+					forcedone: true,
 					autoclose: true,
-					placement: 'bottom-adaptive'
+					afterDone: function(a, b, c) {
+						// only round on touch devices
+						if(!$(document).data().touch) {
+							return;
+						}
+						let timeInput = $(this).find("input"); 
+						if(timeInput.length == 0)
+							timeInput = $(this);
+						
+						const val = timeInput.val();
+						if(!val || val.indexOf(':') == -1)
+							return;
+						// round
+						const parts = val.split(":")
+						let min = Number(parts[1]);
+						if(min % 5 < 3) {
+							min -= min % 5;
+						} else {
+							min += 5 - min % 5;
+						}
+						timeInput.val(parts[0] + ":" + (min < 10?'0':'') + min);
+					}
 				});
 			} else if(window.flatpickr) {
 				window.flatpickr($(this)[0], {
@@ -296,6 +325,45 @@
 			}
 		});
 
+		const isValidIBAN = (iban)=>{
+		  iban = iban.replace(/\s+/g, '').toUpperCase();
+
+		  // Basic IBAN pattern (2 letters + 2 digits + up to 30 alphanumeric)
+		  const pattern = /^[A-Z]{2}\d{2}[A-Z0-9]{1,30}$/;
+		  if (!pattern.test(iban)) return false;
+
+		  // Rearrange and convert letters to numbers (A=10, B=11, ...)
+		  iban = iban.slice(4) + iban.slice(0, 4);
+		  const numeric = iban.replace(/[A-Z]/g, ch => ch.charCodeAt(0) - 55);
+
+		  // Perform mod-97 check
+		  let remainder = numeric;
+		  while (remainder.length > 2) {
+		    const part = remainder.slice(0, 9); // Take up to 9 digits at a time
+		    remainder = (parseInt(part, 10) % 97) + remainder.slice(part.length);
+		  }
+		  return parseInt(remainder, 10) % 97 === 1;
+		};
+		
+		location.find("input.iban").on("change keyup", function(){
+			let val = $(this).val().trim();
+			if(val === "" && !$(this).hasClass("mandatory")) {
+				$(this).addClass("valid").removeClass("invalid");
+				return;
+			}
+
+			if($(this).hasClass("autoclean")) {
+				val = val.toUpperCase();
+				$(this).val(val.replace(/[^A-Z0-9]/g, "").replace(/(.{4})(?=.)/g, '$1 ').trim());
+			}
+			
+			if(isValidIBAN(val)) {
+				$(this).val($.jsFormControls.Format.iban(val))
+				$(this).addClass("valid").removeClass("invalid");
+			} else {
+				$(this).removeClass("valid").addClass("invalid");
+			}
+		});
 		
 		// input validation (number)
 		const numberRegexp =  /^[0-9.,-]+$/;
@@ -421,22 +489,33 @@
 			let editContainer = $('<div />');
 			editContainer.insertBefore($text);
 			editContainer.css('height', $text.css('height'));
-		     
-		     // if fullEdit = true -> show all otherwise just simple formatting
-			$text.data().editor = new toastui.Editor({
+			
+			const tb = [];
+		    if($text.data().fullEdit) {
+			 	tb.push(['heading', 'bold', 'italic', 'quote']);
+				tb.push(['ul', 'ol', 'task', 'indent', 'outdent']);
+				tb.push(['table']);	
+			} else {
+				tb.push(['bold', 'italic', 'quote']);
+				tb.push(['ul', 'ol']);
+			}
+
+			if($text.data().image) {
+				tb.push(["image"]);
+			}
+			
+			if($text.data().href) {
+				tb.push(["link"]);
+			}
+			
+			
+			const tuiconfig = {
 		      el: editContainer.get(0),
-		      toolbarItems: $text.data().fullEdit ? [
-		        ['heading', 'bold', 'italic', 'quote'],
-		        ['ul', 'ol', 'task', 'indent', 'outdent'],
-		        ['table'] 
-		      ] : [
-		        ['bold', 'italic', 'quote'],
-		        ['ul', 'ol']
-		     ],
+		      toolbarItems: tb,
 		      height: $text.height() + "px",
 		      //height: "450px",
 		      initialEditType: 'wysiwyg',
-		      initialValue: $('#PsychTextArea').val(),
+		      initialValue: "",
 		      hideModeSwitch:true,
 		      events: {
 		          change: function() {
@@ -444,7 +523,11 @@
 		        	  $text.trigger("change");
 		          }
 	          }
-		    });
+		    };
+
+			
+		     // if fullEdit = true -> show all otherwise just simple formatting
+			$text.data().editor = new toastui.Editor(tuiconfig);
 		    // hide textarea
 		    $(this).hide();  
 		    $text.on("fill", function(){
@@ -666,6 +749,8 @@
 						return $.jsFormControls.Format.time(cdata);
 				} else if($ele.hasClass("currency")) {
 					return $.jsFormControls.Format.currency(cdata);
+				} else if($ele.hasClass("iban")) {
+					return $.jsFormControls.Format.iban(cdata);
 				} else if($ele.hasClass("select")) {
 					if(!cdata)
 						return "";
@@ -728,14 +813,16 @@
 			 */
 			_getValue: function(row, cell, value, _columnDef, _dataContext) {
 				// if value is undefined: this is probably a direct call
-				if(typeof cell === "undefined" && typeof value === "undefined") {
+				if(cell === undefined && value === undefined) {
 					return row;
 				}
 				
 				// check for slickGrid: row/cell/value  
-				if(!isNaN(row) && typeof cell !== "undefined" && typeof value !== "undefined") {
+				if(!isNaN(row) && cell !== undefined && value !== undefined) {
 					return value;
 				}
+				
+				return row;
 			},
 			
 			/**
@@ -852,6 +939,10 @@
 			 * 
 			 */
 			asMoment: function(value) {
+				// dont have one or it is already
+				if(!value)
+					return value;
+
 				let m = null;
 				const formats = [i18n.date.format + " " + i18n.date.timeFormat, i18n.date.dateTimeFormat, 
 					i18n.date.format,
@@ -860,24 +951,22 @@
 					// add common formats:
 					"d.M.y H:m",
 					"d.M.y",
+					"d.M.y, H:m",
 					"d/M/y H:m",
 					"d/M/y",
 					"M/dd/yy HH:mm",
 					"M/dd/yyyy HH:mm"];
 				
-				if(value.toFormat)
-					return value;
 				
 				// luxon parsing
 				if(typeof luxon !== "undefined") {
 					if(luxon.DateTime.isDateTime(value))
 						return value;
 					
-					//console.log("parsing ", value, formats, i18n.date)
 					if(!isNaN(value)) {
 						if(value.getTime)
 							return luxon.DateTime.fromJSDate(value);
-						return luxon.DateTime.fromMillis(value);
+						return luxon.DateTime.fromMillis(Number(value));
 					}
 			
 					if(value.year)
@@ -905,6 +994,8 @@
 				}
 				
 				// moment.js parsing
+				if(value.toFormat)
+					return value;
 				if(typeof moment !== "undefined") {
 					for(let i = 0; i < formats.length; i++)
 						formats[i] = moment().toMomentFormatString(formats[i]);
@@ -1069,7 +1160,7 @@
 				// convert to a nice number for display
 				let n = num;
 				const t = numberformat?.groupingSeparator || ',';
-				const i = parseInt(n = Math.abs( + n || 0), 10) + "";
+				const i = Number.parseInt(n = Math.abs( + n || 0), 10) + "";
 				const il = i.length;
 				const j = il > 3 ? il % 3 : 0;
 				return (num<0 ? "-" : "") + (j ? i.substring(0, j) + t : "") + i.substring(j).replace(/(\d{3})(?=\d)/g, "$1" + t);
@@ -1113,6 +1204,24 @@
 			},
 
 			/**
+			 * Format a value to iban format
+			 * @private
+			 */
+			iban: function(row, cell, value, columnDef, dataContext) {
+				value = $.jsFormControls.Format._getValue(row, cell, value, columnDef);
+				
+				if(!value) {
+					if(cell) {
+						return "&#160;";
+					}
+					return "";
+				}
+				value = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+				return value.replace(/(.{4})(?=.)/g, '$1 ').trim();
+			},
+
+			/**
+			 * Format a value to currency
 			 * @private
 			 */
 			currency: function(row, cell, value, columnDef, dataContext) {
@@ -1150,7 +1259,7 @@
 			/**
 			 * @private
 			 */
-			dateTime: function(row, cell, value, columnDef, dataContext) {
+			dateTime: function(row, cell, value, columnDef, _dataContext) {
 				value = $.jsFormControls.Format._getValue(row, cell, value, columnDef);
 
 				if(!value) {
@@ -1159,14 +1268,13 @@
 					}
 					return "";
 				}
-				
 				return (this.date(value) + " " + this.time(value));
 			},
 			
 			/**
 			 * @private
 			 */
-			date: function(row, cell, value, columnDef, dataContext) {
+			date: function(row, cell, value, columnDef, _dataContext) {
 				value = $.jsFormControls.Format._getValue(row, cell, value, columnDef);
 				if(!value || value === "") {
 					if(cell) {
@@ -1233,11 +1341,14 @@
 						timeFormat = i18n.timeFormat;
 					else if (i18n.date?.timeFormat)
 						timeFormat = i18n.date.timeFormat;
-				} else if($(document).data().i18n && typeof $(document).data().i18n.timeFormat !== "undefined")
+				} else if($(document).data().i18n && $(document).data().i18n.timeFormat)
 					timeFormat = $(document).data().i18n.timeFormat;
 				
 				if(typeof luxon !== "undefined") {
-					return luxon.DateTime.fromMillis(value).toFormat(timeFormat);
+					if(!isNaN(value))
+						return luxon.DateTime.fromMillis(Number(value)).toFormat(timeFormat);
+					if(value.getTime)
+						return luxon.DateTime.fromJSDate(value).toFormat(timeFormat);
 				}
 				
 				const d = new Date();
@@ -1435,42 +1546,50 @@
 })( jQuery, window );
 
 
-/**
- * @returns the trimmed string
- */
-String.prototype.trim = function() {
-	return this.replace(/^\s+|\s+$/g, "");
-};
+if(!String.prototype.trim) {
+	/**
+	 * @returns the trimmed string
+	 */
+	String.prototype.trim = function() {
+		return this.replace(/^\s+|\s+$/g, "");
+	};
+}
 
-/* check start of a string */
-String.prototype.startsWith = function(str) {
-	if((this === null) || (this.length <= 0))
+if(!String.prototype.startsWith) {
+	/* check start of a string */
+	String.prototype.startsWith = function(str) {
+		if((this === null) || (this.length <= 0))
+			return false;
+		if((str === null) || (str == "null") || (str.length <= 0))
+			return false;
+		if(this.substr(0, str.length) == str)
+			return true;
 		return false;
-	if((str === null) || (str == "null") || (str.length <= 0))
-		return false;
-	if(this.substr(0, str.length) == str)
-		return true;
-	return false;
-};
+	};
+}
 
-/* check start of a string */
-String.prototype.startsWithIgnoreCase = function(str) {
-	if((this === null) || (this.length <= 0))
+if(!String.prototype.startsWithIgnoreCase) {
+	/* check start of a string */
+	String.prototype.startsWithIgnoreCase = function(str) {
+		if((this === null) || (this.length <= 0))
+			return false;
+		if((str === null) || (str == "null") || (str.length <= 0))
+			return false;
+		if(this.substr(0, str.length).toLowerCase() == str.toLowerCase())
+			return true;
 		return false;
-	if((str === null) || (str == "null") || (str.length <= 0))
-		return false;
-	if(this.substr(0, str.length).toLowerCase() == str.toLowerCase())
-		return true;
-	return false;
-};
+	};
+}
 
-/* check end of a string */
-String.prototype.endsWith = function(str) {
-	if((this === null) || (this.length <= 0))
+if(!String.prototype.endsWith) {
+	/* check end of a string */
+	String.prototype.endsWith = function(str) {
+		if((this === null) || (this.length <= 0))
+			return false;
+		if((str === null) || (str == "null") || (str.length <= 0) || (str.length > this.length))
+			return false;
+		if(this.substr(this.length - str.length) == str)
+			return true;
 		return false;
-	if((str === null) || (str == "null") || (str.length <= 0) || (str.length > this.length))
-		return false;
-	if(this.substr(this.length - str.length) == str)
-		return true;
-	return false;
-};
+	};
+}
