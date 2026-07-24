@@ -184,7 +184,7 @@
 	JsForm.prototype._debug = function(msg, param) {
 		try {
 			const cons = console || (window?window.console:null);
-			if (!cons || !cons.log)
+			if (!cons?.log)
 				return;
 
 			let p = null;
@@ -1139,14 +1139,13 @@
 
 				if(!cid)
 					return;
-
 				for(let i = 0; i < colData.length; i++) {
 					let did = colData[i];
 					if(id && did)
 						did = did[id];
 
 					// found it
-					if(cid == did){
+					if(cid == did || cid == did.id){
 						if(selectedClass) {
 							$(this).addClass(selectedClass).trigger("selected");
 						}

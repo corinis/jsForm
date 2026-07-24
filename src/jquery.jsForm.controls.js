@@ -96,7 +96,7 @@
 		
 		// validation
 		// check required (this is the first check)
-		location.find("input.mandatory,textarea.mandatory").on("keyup", function(){
+		location.find("input.mandatory,textarea.mandatory").on("input keyup", function(){
 			if(!$(this).hasClass("mandatory")) {
 				return;
 			}
@@ -159,6 +159,13 @@
 					time_24hr: false,
 					disableMobile: true,
 					dateFormat: i18n.flatpickrDate,
+					parseDate: val => {
+						let result = $.jsFormControls.Format.asMoment(val);
+						if(result)
+							return result.toJSDate();
+						else
+							return new Date();
+					},
 					onOpen: [function(dt,value,inst){
 						if($this.val() === '')
 							inst.jumpToDate(new Date());
@@ -275,20 +282,30 @@
 			// clockpicker requires parent to be clockpicker as well
 			if($(this).clockpicker && $(this).parent().hasClass("clockpicker")) {
 				$(this).attr("type", "text");
+				$(this).on("change", function(){
+					const val = $(this).val();
+					if(val.length === 4 && !isNaN(val)) {
+						$(this).val(val.substring(0,2) + ":" + val.substring(2));
+					}
+				});
 				$(this).clockpicker({ 
 					placement: 'bottom-adaptive',
 					donetext: 'Ok',
 					forcedone: true,
 					autoclose: true,
 					afterDone: function(a, b, c) {
-						// only round on touch devices
-						if(!$(document).data().touch) {
+						// only round on touch devices						
+						let timeInput = $(this).find("input"); 
+						if(timeInput.length == 0) {
+							timeInput = $(this);
+						}
+
+
+						// data-round="true" -> always round						
+						if(!$(document).data().touch && !timeInput.data().round) {
 							return;
 						}
-						let timeInput = $(this).find("input"); 
-						if(timeInput.length == 0)
-							timeInput = $(this);
-						
+
 						const val = timeInput.val();
 						if(!val || val.indexOf(':') == -1)
 							return;
@@ -300,6 +317,8 @@
 						} else {
 							min += 5 - min % 5;
 						}
+						if(min >= 60)
+							min = min % 60;
 						timeInput.val(parts[0] + ":" + (min < 10?'0':'') + min);
 					}
 				});
@@ -345,7 +364,7 @@
 		  return parseInt(remainder, 10) % 97 === 1;
 		};
 		
-		location.find("input.iban").on("change keyup", function(){
+		location.find("input.iban").on("change input keyup", function(){
 			let val = $(this).val().trim();
 			if(val === "" && !$(this).hasClass("mandatory")) {
 				$(this).addClass("valid").removeClass("invalid");
@@ -367,11 +386,16 @@
 		
 		// input validation (number)
 		const numberRegexp =  /^[0-9.,-]+$/;
-		location.find("input.number").on("keyup", function(){
+		location.find("input.number").on("input keyup", function(){
 			let val = $(this).val();
 			if($(this).hasClass("currency") && val)
 				val = $.jsFormControls.Format._getNumber(val);
 			if(val.length == 0) {
+				if($(this).hasClass("mandatory")) {
+					$(this).removeClass("valid").addClass("invalid");
+				} else {
+					$(this).addClass("valid").removeClass("invalid");					
+				}
 				return;
 			}
 			if($(this).hasClass("autoclean")) {
@@ -438,7 +462,7 @@
 		});
 
 		const integerRegexp = /\D+$/;
-		location.find("input.integer").on("keyup", function(){
+		location.find("input.integer").on("input keyup", function(){
 			const val = $(this).val();
 			if(val.length == 0)
 				return;			
@@ -454,7 +478,7 @@
 
 		// regular expression
 		location.find("input.regexp").each(function(){
-			$(this).on("keyup", function(){
+			$(this).on("input keyup", function(){
 				if($(this).hasClass("autoclean")) {
 					$(this).data("regexp", new RegExp($(this).attr("data-regexp"), 'g'));
 				}
@@ -942,6 +966,14 @@
 				// dont have one or it is already
 				if(!value)
 					return value;
+				
+				if(value.length == 8 && !isNaN(value)) {
+					value = value.substring(0,2) + "." + value.substring(2,4) + "." + value.substring(4);
+				} else if(value.length == 12 && !isNaN(value)) {
+					value = value.substring(0,2) + "." + value.substring(2,4) + "." + value.substring(4, 8) + " " + value.substring(8, 10) + ":" + value.substring(10);
+				}
+
+				
 
 				let m = null;
 				const formats = [i18n.date.format + " " + i18n.date.timeFormat, i18n.date.dateTimeFormat, 
@@ -955,7 +987,8 @@
 					"d/M/y H:m",
 					"d/M/y",
 					"M/dd/yy HH:mm",
-					"M/dd/yyyy HH:mm"];
+					"M/dd/yyyy HH:mm",
+				];
 				
 				
 				// luxon parsing
@@ -1270,6 +1303,30 @@
 				}
 				return (this.date(value) + " " + this.time(value));
 			},
+			/**
+			 * convert a string date to millis 
+			 * @private
+			 */
+			_getMillis(value) {
+				if(!value || value === "" || !isNaN(value)) {
+					return value;
+				}
+				
+				// check iso format: 2025-12-24T00:46:41.000Z
+				if(value.length !== 10 && (value.length > 15 && value[10] != 'T' && value[10] != ' '))
+					return value;
+				
+				// try to read the date
+				let dt = luxon.DateTime.fromISO(value);
+				if(!dt.invalid)
+					return dt.toMillis();
+
+				dt = luxon.DateTime.fromRFC2822(value);
+				if(!dt.invalid)
+					return dt.toMillis();
+				
+				return value;
+			},
 			
 			/**
 			 * @private
@@ -1283,8 +1340,10 @@
 					return "";
 				}
 				
-				if(isNaN(value))
+				value = $.jsFormControls.Format._getMillis(value);
+				if(isNaN(value)) {
 					return value;
+				}
 
 				// get date format
 				let dateformat = null;
@@ -1332,9 +1391,11 @@
 					}
 					return "";
 				}
-				if(isNaN(value))
+				value = $.jsFormControls.Format._getMillis(value);
+				if(isNaN(value)) {
 					return value;
-
+				}
+				
 				let timeFormat = "HH:mm";
 				if(typeof i18n !== "undefined") {
 					if(i18n.timeFormat)
