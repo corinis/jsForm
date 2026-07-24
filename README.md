@@ -10,7 +10,9 @@ JsForm only takes care of the rendering of data in a html. The controller can be
 The main features of this library are:
 
 * Use html markup to fill your forms/page with almost any js object dynamically 
-* Update an existing js object with changes done within a form (=manipulate data without extra code)
+* Uses minimal performance and does not require any shadow dom or similar by ONLY groing through the dom on request (save or load)
+* Compatible with any code or framework that updates the browser DOM
+* Update an existing js object with any use changes in form controls (=manipulate data without extra code)
 * Provide basic functions for formatting (i.e. date/time, money, byte) using html markup
 * Provide form validation functionality
 * handle collections (arrays) with subobjects
@@ -42,7 +44,7 @@ Optional Libraries are used with jquery.jsForm.controls.js to allow various inpu
 
 # Download
 
-Current Version: 1.7.0
+Current Version: 1.7.1
 
 * [Minified](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.min.js)
 * [Combined Source](https://github.com/corinis/jsForm/raw/master/js/jquery.jsForm.js)
